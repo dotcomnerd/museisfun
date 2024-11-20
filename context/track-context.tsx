@@ -2,9 +2,17 @@
 
 import { createContext, useContext, useRef, useState } from "react";
 
+interface TrackContextType {
+  currentTrack: any;
+  setCurrentTrack: React.Dispatch<React.SetStateAction<any>>;
+  isPlaying: boolean;
+  setIsPlaying: React.Dispatch<React.SetStateAction<boolean>>;
+  trackProgress: {};
+  setTrackProgress: React.Dispatch<React.SetStateAction<{}>>;
+  audioRef: React.MutableRefObject<HTMLAudioElement>;
+}
 
-
-const TrackContext = createContext(null);
+const TrackContext = createContext<TrackContextType | null>(null);
 
 export function TrackProvider({
   children,

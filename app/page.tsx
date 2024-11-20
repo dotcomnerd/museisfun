@@ -1,5 +1,5 @@
-import { SpotifyCloneComponent } from "@/components/spotify-clone"
+import { SkeletonLayout } from "@/components/skeleton";
 
 export default function Page() {
-  return <SpotifyCloneComponent />
+  return <SkeletonLayout />;
 }

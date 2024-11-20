@@ -7,9 +7,11 @@ interface TrackContextType {
   setCurrentTrack: React.Dispatch<React.SetStateAction<any>>;
   isPlaying: boolean;
   setIsPlaying: React.Dispatch<React.SetStateAction<boolean>>;
-  trackProgress: {};
+  trackProgress: {
+    [key: string]: number;
+  };
   setTrackProgress: React.Dispatch<React.SetStateAction<{}>>;
-  audioRef: React.MutableRefObject<HTMLAudioElement>;
+  audioRef: any;
 }
 
 const TrackContext = createContext<TrackContextType | null>(null);
@@ -20,7 +22,7 @@ export function TrackProvider({
   const [currentTrack, setCurrentTrack] = useState(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [trackProgress, setTrackProgress] = useState({});
-  const audioRef = useRef(new Audio());
+  const audioRef = useRef();
 
   const value = {
     currentTrack,

@@ -2,51 +2,36 @@
 
 import { AddTrackDialog } from "@/components/dialogs/add-track";
 import { useAudioPlayer } from "@/hooks/use-audio";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { DragDropContext, Draggable, Droppable } from "react-beautiful-dnd";
+import { type Track } from "@/lib/utils";
 
-type Track = {
-  id: string;
-  title: string;
-  artist: string;
-  album: string;
-  duration: string;
-};
-
-const initialTracks: Track[] = [
-  {
-    id: "1",
-    title: "Track 1",
-    artist: "Artist 1",
-    album: "Album 1",
-    duration: "3:45",
-  },
-  {
-    id: "2",
-    title: "Track 2",
-    artist: "Artist 2",
-    album: "Album 2",
-    duration: "4:20",
-  },
-  {
-    id: "3",
-    title: "Track 3",
-    artist: "Artist 3",
-    album: "Album 3",
-    duration: "3:15",
-  },
-  {
-    id: "4",
-    title: "Track 4",
-    artist: "Artist 4",
-    album: "Album 4",
-    duration: "5:10",
-  },
-];
+function toDuration(duration: string) {
+  const minutes = Math.floor(Number(duration) / 60);
+  const seconds = Number(duration) % 60;
+  return `${minutes}:${seconds.toString().padStart(2, "0")}`;
+}
 
 export function LibraryView() {
-  const [libraryTracks, setLibraryTracks] = useState<Track[]>(initialTracks);
+  const [libraryTracks, setLibraryTracks] = useState<Track[]>([]);
   const { playTrack, trackProgress } = useAudioPlayer();
+
+  const [tracks, setTracks] = useState([]);
+
+  useEffect(() => {
+    const fetchTracks = async () => {
+      const res = await fetch("/api/get-tracks", {
+        method: "GET",
+      });
+
+      const data = await res.json();
+      if (!data.error) {
+        setTracks(data);
+      }
+    };
+
+    fetchTracks();
+  }, []);
 
   const onDragEnd = (result: any) => {
     if (!result.destination) return;
@@ -83,7 +68,7 @@ export function LibraryView() {
                 </tr>
               </thead>
               <tbody>
-                {libraryTracks.map((track, index) => (
+                {tracks.map((track: Track, index) => (
                   <Draggable
                     key={track.id}
                     draggableId={track.id}
@@ -108,7 +93,7 @@ export function LibraryView() {
                         </td>
                         <td className="py-2">{track.artist}</td>
                         <td className="py-2">{track.album}</td>
-                        <td className="py-2">{track.duration}</td>
+                        <td className="py-2">{toDuration(track.duration)}</td>
                         <td className="py-2 w-24">
                           <div className="w-full bg-gray-700 h-1 rounded-full overflow-hidden">
                             <div

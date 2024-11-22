@@ -1,7 +1,11 @@
 "use client";
 
 import { useTrackContext } from "@/context/track-context";
+import { createClient } from "@/lib/supabase/client";
+import { type Track } from "@/lib/utils";
 import { useEffect } from "react";
+
+const supabase = createClient();
 
 export function useAudioPlayer() {
   const {
@@ -38,13 +42,33 @@ export function useAudioPlayer() {
     return () => audio.removeEventListener("timeupdate", updateProgress);
   }, [currentTrack, audioRef, setTrackProgress]);
 
-  const playTrack = (track: any) => {
+  const playTrack = async (track: Track) => {
     if (!track) return;
     if (!audioRef.current) return;
     setCurrentTrack(track);
-    audioRef.current.src = `/placeholder.mp3`;
+    if (!track.file_url) {
+      throw new Error("File URL not found.");
+    }
+
+    const { data, error } = await supabase.storage
+      .from("audio")
+      .createSignedUrl(track.file_url, 60);
+    if (error) {
+      throw new Error(error.message);
+    }
+
+    if (!data) {
+      throw new Error("Signed URL not found.");
+    }
+
+    audioRef.current.src = data.signedUrl;
+    audioRef.current.play();
+
     setIsPlaying(true);
-    setTrackProgress((prev) => ({ ...prev, [track.id]: 0 }));
+    setTrackProgress((prev) => ({
+      ...prev,
+      [track.id]: 0,
+    }));
   };
 
   const togglePlayPause = () => {

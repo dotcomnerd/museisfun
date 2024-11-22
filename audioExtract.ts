@@ -4,24 +4,33 @@ import { exec } from "child_process";
 import fs from "fs/promises";
 import { parseBuffer } from "music-metadata";
 import path from "path";
+import { createClient } from "./lib/supabase/server";
 
 /**
- * Downloads a YouTube video as MP3 using yt-dlp.
+ * Downloads a YouTube video as MP3 using yt-dlp and uploads it to Supabase.
  * @param {string} url - The URL of the YouTube video.
  * @param {string} outputDir - The directory where the MP3 file will be saved.
  */
 export async function downloadYouTubeAudio(
   url: string,
-  outputDir: string = "./"
+  outputDir: string = "./downloads"
 ) {
+  const supabase = await createClient();
   if (!url) {
     console.error("URL is required.");
     return;
   }
 
+  const auth = await supabase.auth.getUser();
+  const userId = auth.data.user?.id;
+
+  if (!userId) {
+    throw new Error("User ID not found.");
+  }
+
   const command = `yt-dlp -x --audio-format mp3 --add-metadata --embed-thumbnail --output "${outputDir}/%(title)s.%(ext)s" "${url}"`;
 
-  exec(command, (error: any, stdout: any, stderr: any) => {
+  exec(command, async (error: any, stdout: any, stderr: any) => {
     if (error) {
       console.error(`Error: ${error.message}`);
       return;
@@ -31,6 +40,35 @@ export async function downloadYouTubeAudio(
       return;
     }
     console.log(`stdout: ${stdout}`);
+
+    const files = await fs.readdir(outputDir);
+
+    for (const file of files.filter(
+      (file) => path.extname(file).toLowerCase() === ".mp3"
+    )) {
+      const filePath = path.join(outputDir, file);
+      try {
+        const fileBuffer = await fs.readFile(filePath);
+        const { data, error: uploadError } = await supabase.storage
+          .from("audio")
+          .upload(`${userId}/${path.basename(filePath)}`, fileBuffer, {
+            cacheControl: "3600",
+            upsert: false,
+            contentType: "audio/mpeg",
+          });
+
+        if (uploadError) {
+          console.error(
+            "Error uploading file to Supabase:",
+            uploadError.message
+          );
+        } else {
+          console.log("File uploaded successfully:", data);
+        }
+      } catch (readError) {
+        console.error("Error reading file:", readError);
+      }
+    }
   });
 }
 
@@ -64,15 +102,3 @@ async function processDownloadedAudio(tracksDir: string) {
     console.error("Error processing MP3 files:", error);
   }
 }
-
-async function main() {
-  console.log("Downloading audio...");
-  await downloadYouTubeAudio(
-    "https://www.youtube.com/watch?app=desktop&v=KE3SwHOmlok",
-    "./downloads"
-  );
-  console.log("Processing downloaded audio...");
-  await processDownloadedAudio("./downloads");
-}
-
-main().then(() => console.log("Done!"));

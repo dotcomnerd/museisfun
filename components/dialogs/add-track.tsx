@@ -47,7 +47,7 @@ export function AddTrackDialog() {
 
     setIsSubmitting(true);
     try {
-      await downloadYouTubeAudio(youtubeLink);
+      await downloadYouTubeAudio(youtubeLink, "./downloads");
       setYoutubeLink("");
       setOpen(false);
     } catch (err) {

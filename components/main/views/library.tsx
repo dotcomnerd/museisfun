@@ -1,5 +1,6 @@
 "use client";
 
+import AddTrackDialog from "@/components/dialogs/add-track";
 import { Button } from "@/components/ui/button";
 import { useAudioPlayer } from "@/hooks/use-audio";
 import { useState } from "react";
@@ -62,9 +63,7 @@ export function LibraryView() {
     <div>
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold mb-6">Your Library</h1>
-        <Button variant="ghost" className="mb-4">
-          Add Track
-        </Button>
+        <AddTrackDialog />
       </div>
       <DragDropContext onDragEnd={onDragEnd}>
         <Droppable droppableId="tracks">

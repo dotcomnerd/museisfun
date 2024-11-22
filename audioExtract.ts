@@ -2,7 +2,7 @@
 
 import { exec } from "child_process";
 import fs from "fs/promises";
-import { parseBuffer } from "music-metadata";
+import { IPicture, parseBuffer, selectCover } from "music-metadata";
 import path from "path";
 import { createClient } from "./lib/supabase/server";
 
@@ -64,6 +64,73 @@ export async function downloadYouTubeAudio(
           );
         } else {
           console.log("File uploaded successfully:", data);
+
+          const metadata = await parseBuffer(fileBuffer, {
+            mimeType: "audio/mpeg",
+          });
+          const cover = selectCover(metadata.common.picture as IPicture[]);
+          const songData: {
+            title: string;
+            artist: string;
+            album: string;
+            duration: number;
+            image: string | undefined;
+          } = {
+            title: metadata.common.title || path.parse(file).name,
+            artist: metadata.common.artist || "Unknown Artist",
+            album: metadata.common.album || "Unknown Album",
+            duration: Math.round(metadata.format.duration || 0),
+            image: undefined,
+          };
+
+          if (cover?.data) {
+            const { data: coverData, error: coverError } =
+              await supabase.storage
+                .from("track_images")
+                .upload(
+                  `${userId}/${path.basename(filePath, ".mp3")}.${
+                    cover.format
+                  }`,
+                  cover.data,
+                  {
+                    cacheControl: "3600",
+                    upsert: false,
+                    contentType: cover.format,
+                  }
+                );
+
+            songData.image = coverData?.path;
+
+            if (coverError) {
+              console.error(
+                "Error uploading cover image to Supabase:",
+                coverError.message
+              );
+            } else {
+              console.log("Cover image uploaded successfully:", coverData);
+            }
+          }
+
+          const { data: song, error: insertError } = await supabase
+            .from("tracks")
+            .insert([
+              {
+                user_id: userId,
+                title: songData.title,
+                file_url: data.path,
+                created_at: new Date(),
+                album: songData.album,
+                artist: songData.artist,
+                duration: songData.duration,
+                image_url: songData.image ? songData.image : null,
+              },
+            ]);
+
+          if (insertError) {
+            console.error("Error inserting track into database:", insertError);
+          }
+
+          console.log("Track inserted successfully:", song);
         }
       } catch (readError) {
         console.error("Error reading file:", readError);

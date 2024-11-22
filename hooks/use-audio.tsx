@@ -4,7 +4,6 @@ import { useTrackContext } from "@/context/track-context";
 import { useEffect } from "react";
 
 export function useAudioPlayer() {
-
   const {
     currentTrack,
     setCurrentTrack,
@@ -16,6 +15,7 @@ export function useAudioPlayer() {
   } = useTrackContext()!;
 
   useEffect(() => {
+    if (!audioRef.current) return;
     if (isPlaying) {
       audioRef.current.play();
     } else {
@@ -25,6 +25,7 @@ export function useAudioPlayer() {
 
   useEffect(() => {
     const audio = audioRef.current;
+    if (!audio) return;
     const updateProgress = () => {
       if (currentTrack) {
         setTrackProgress((prev) => ({
@@ -38,6 +39,8 @@ export function useAudioPlayer() {
   }, [currentTrack, audioRef, setTrackProgress]);
 
   const playTrack = (track: any) => {
+    if (!track) return;
+    if (!audioRef.current) return;
     setCurrentTrack(track);
     audioRef.current.src = `/placeholder.mp3`;
     setIsPlaying(true);

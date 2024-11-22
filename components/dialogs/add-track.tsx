@@ -1,5 +1,7 @@
 "use client";
 
+import { downloadYouTubeAudio } from "@/audioExtract";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -11,16 +13,49 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { useState } from "react";
+import { useCallback, useState } from "react";
 
 export function AddTrackDialog() {
-    const [youtubeLink, setYoutubeLink] = useState<string>("");
+    const [youtubeLink, setYoutubeLink] = useState("");
     const [open, setOpen] = useState(false);
+    const [error, setError] = useState("");
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const youtubeRegex = /^(https?:\/\/)?(www\.)?(youtube\.com|youtu\.be)\/.+$/;
+
+  const validateYoutubeLink = useCallback((link: string) => {
+    if (!link) {
+      return "To add a track, please enter a YouTube URL";
+    }
+    if (!youtubeRegex.test(link)) {
+      return "Please enter a valid YouTube URL";
+    }
+    return "";
+  }, []);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setYoutubeLink(e.target.value);
+    const value = e.target.value;
+    setYoutubeLink(value);
+    if (error) setError("");
   };
 
+  const handleSubmit = async () => {
+    const validationError = validateYoutubeLink(youtubeLink);
+    if (validationError) {
+      setError(validationError);
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      await downloadYouTubeAudio(youtubeLink);
+      setYoutubeLink("");
+      setOpen(false);
+    } catch (err) {
+      setError("Failed to add track. Please try again.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -29,27 +64,45 @@ export function AddTrackDialog() {
           Add Track
         </Button>
       </DialogTrigger>
-      <DialogContent>
+      <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>Add a new track</DialogTitle>
           <DialogDescription>
-            Enter the YouTube video link below:
+            Enter the YouTube video link below to add a new track to your
+            playlist.
           </DialogDescription>
         </DialogHeader>
-        <Input
-          type="text"
-          placeholder="YouTube video link"
-          value={youtubeLink}
-          onChange={handleInputChange}
-        />
-        <DialogFooter>
-          <Button variant="ghost" onClick={() => setOpen(false)}>
-            Add
+
+        <div className="space-y-4">
+          <Input
+            type="text"
+            placeholder="https://youtube.com/watch?v=..."
+            value={youtubeLink}
+            onChange={handleInputChange}
+            className={error ? "border-red-500" : ""}
+            disabled={isSubmitting}
+          />
+
+          {error && (
+            <Alert variant="destructive" className="mt-2">
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
+          )}
+        </div>
+
+        <DialogFooter className="flex gap-2">
+          <Button
+            variant="ghost"
+            onClick={() => setOpen(false)}
+            disabled={isSubmitting}
+          >
+            Cancel
+          </Button>
+          <Button onClick={handleSubmit} disabled={isSubmitting}>
+            {isSubmitting ? "Adding..." : "Add Track"}
           </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
   );
 }
-
-export default AddTrackDialog;

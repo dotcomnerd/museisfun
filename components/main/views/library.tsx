@@ -1,7 +1,6 @@
 "use client";
 
-import AddTrackDialog from "@/components/dialogs/add-track";
-import { Button } from "@/components/ui/button";
+import { AddTrackDialog } from "@/components/dialogs/add-track";
 import { useAudioPlayer } from "@/hooks/use-audio";
 import { useState } from "react";
 import { DragDropContext, Draggable, Droppable } from "react-beautiful-dnd";

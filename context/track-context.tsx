@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useRef, useState } from "react";
+import { createContext, useContext, useEffect, useRef, useState } from "react";
 
 interface TrackContextType {
   currentTrack: any;
@@ -11,7 +11,7 @@ interface TrackContextType {
     [key: string]: number;
   };
   setTrackProgress: React.Dispatch<React.SetStateAction<{}>>;
-  audioRef: any;
+  audioRef: React.MutableRefObject<HTMLAudioElement | undefined>;
 }
 
 const TrackContext = createContext<TrackContextType | null>(null);
@@ -22,7 +22,16 @@ export function TrackProvider({
   const [currentTrack, setCurrentTrack] = useState(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [trackProgress, setTrackProgress] = useState({});
-  const audioRef = useRef(new Audio());
+  // const [audio, setAudio] = useState<HTMLAudioElement | undefined>(undefined);
+  const audio = useRef<HTMLAudioElement | undefined>(undefined);
+
+  useEffect(() => {
+    audio.current = new Audio();
+    return () => {
+      audio.current?.pause();
+      audio.current = undefined;
+    };
+  }, []);
 
   const value = {
     currentTrack,
@@ -31,7 +40,7 @@ export function TrackProvider({
     setIsPlaying,
     trackProgress,
     setTrackProgress,
-    audioRef,
+    audioRef: audio,
   };
 
   return (

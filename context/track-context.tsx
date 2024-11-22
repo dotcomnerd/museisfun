@@ -22,7 +22,7 @@ export function TrackProvider({
   const [currentTrack, setCurrentTrack] = useState(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [trackProgress, setTrackProgress] = useState({});
-  const audioRef = useRef();
+  const audioRef = useRef(new Audio());
 
   const value = {
     currentTrack,

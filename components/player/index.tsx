@@ -146,14 +146,12 @@ export function Player() {
           <Button
             size="icon"
             variant="ghost"
-            className="text-gray-400 hover:text-white transition-colors"
           >
             <Shuffle size={20} />
           </Button>
           <Button
             size="icon"
             variant="ghost"
-            className="text-gray-400 hover:text-white transition-colors"
           >
             <SkipBack size={20} />
           </Button>
@@ -167,14 +165,12 @@ export function Player() {
           <Button
             size="icon"
             variant="ghost"
-            className="text-gray-400 hover:text-white transition-colors"
           >
             <SkipForward size={20} />
           </Button>
           <Button
             size="icon"
             variant="ghost"
-            className="text-gray-400 hover:text-white transition-colors"
           >
             <Repeat size={20} />
           </Button>
@@ -208,21 +204,18 @@ export function Player() {
         <Button
           size="icon"
           variant="ghost"
-          className="text-gray-400 hover:text-white transition-colors"
         >
           <Mic2 size={20} />
         </Button>
         <Button
           size="icon"
           variant="ghost"
-          className="text-gray-400 hover:text-white transition-colors"
         >
           <ListMusic size={20} />
         </Button>
         <Button
           size="icon"
           variant="ghost"
-          className="text-gray-400 hover:text-white transition-colors"
         >
           <Laptop2 size={20} />
         </Button>
@@ -231,7 +224,6 @@ export function Player() {
             size="icon"
             variant="ghost"
             onClick={toggleMute}
-            className="text-gray-400 hover:text-white transition-colors"
           >
             {isMuted || volume === 0 ? (
               <VolumeX size={20} />
@@ -250,7 +242,6 @@ export function Player() {
         <Button
           size="icon"
           variant="ghost"
-          className="text-gray-400 hover:text-white transition-colors"
         >
           <Maximize2 size={20} />
         </Button>

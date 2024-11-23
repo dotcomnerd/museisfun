@@ -3,23 +3,35 @@
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { useAudioPlayer } from "@/hooks/use-audio";
+import { formatTrackProgress, toDuration } from "@/lib/utils";
 import {
-  Play,
+  Laptop2,
+  ListMusic,
+  Maximize2,
+  Mic2,
   Pause,
+  Play,
+  Repeat,
+  Shuffle,
   SkipBack,
   SkipForward,
-  Shuffle,
-  Repeat,
-  Mic2,
-  ListMusic,
-  Laptop2,
   Volume,
-  Maximize2,
 } from "lucide-react";
 
 export function Player() {
-  const { currentTrack, isPlaying, togglePlayPause, trackProgress } =
-    useAudioPlayer();
+  const {
+    currentTrack,
+    isPlaying,
+    togglePlayPause,
+    trackProgress,
+    seekToPosition,
+  } = useAudioPlayer();
+
+  const handleProgressChange = (value: number[]) => {
+    if (currentTrack) {
+      seekToPosition(value[0]);
+    }
+  };
 
   return (
     <footer className="h-20 bg-gray-900 border-t border-gray-800 p-4 flex items-center justify-between">
@@ -57,14 +69,26 @@ export function Player() {
           </Button>
         </div>
         <div className="flex items-center gap-x-2 w-full">
-          <span className="text-xs text-gray-400">1:23</span>
+          <span className="text-xs text-gray-400">
+            {currentTrack?.duration
+              ? formatTrackProgress(
+                  trackProgress[currentTrack?.id || ""] || 0,
+                  currentTrack.duration
+                )
+              : "0:00"}
+          </span>
           <Slider
-            value={[trackProgress[currentTrack?.id] || 0]}
+            value={[trackProgress[currentTrack?.id || ""] || 0]}
             max={100}
             step={1}
             className="w-full"
+            onValueChange={handleProgressChange}
           />
-          <span className="text-xs text-gray-400">3:45</span>
+          <span className="text-xs text-gray-400">
+            {currentTrack?.duration
+              ? toDuration(currentTrack.duration)
+              : "0:00"}
+          </span>
         </div>
       </div>
       <div className="flex items-center gap-x-2">

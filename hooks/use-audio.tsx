@@ -30,14 +30,16 @@ export function useAudioPlayer() {
   useEffect(() => {
     const audio = audioRef.current;
     if (!audio) return;
+
     const updateProgress = () => {
-      if (currentTrack) {
+      if (currentTrack && audio.duration > 0) {
         setTrackProgress((prev) => ({
           ...prev,
           [currentTrack.id]: (audio.currentTime / audio.duration) * 100,
         }));
       }
     };
+
     audio.addEventListener("timeupdate", updateProgress);
     return () => audio.removeEventListener("timeupdate", updateProgress);
   }, [currentTrack, audioRef, setTrackProgress]);
@@ -75,9 +77,22 @@ export function useAudioPlayer() {
     setIsPlaying((prev) => !prev);
   };
 
+  const seekToPosition = (percentage: number) => {
+    if (!audioRef.current || !currentTrack) return;
+
+    const time = (percentage / 100) * audioRef.current.duration;
+    audioRef.current.currentTime = time;
+
+    setTrackProgress((prev) => ({
+      ...prev,
+      [currentTrack.id]: percentage,
+    }));
+  };
+
   return {
     playTrack,
     togglePlayPause,
+    seekToPosition,
     currentTrack,
     isPlaying,
     trackProgress,

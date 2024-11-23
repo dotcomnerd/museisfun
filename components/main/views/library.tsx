@@ -4,13 +4,7 @@ import { AddTrackDialog } from "@/components/dialogs/add-track";
 import { useAudioPlayer } from "@/hooks/use-audio";
 import { useEffect, useState } from "react";
 import { DragDropContext, Draggable, Droppable } from "react-beautiful-dnd";
-import { type Track } from "@/lib/utils";
-
-function toDuration(duration: string) {
-  const minutes = Math.floor(Number(duration) / 60);
-  const seconds = Number(duration) % 60;
-  return `${minutes}:${seconds.toString().padStart(2, "0")}`;
-}
+import { toDuration, type Track } from "@/lib/utils";
 
 export function LibraryView() {
   const [libraryTracks, setLibraryTracks] = useState<Track[]>([]);

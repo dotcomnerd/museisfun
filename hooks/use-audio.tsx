@@ -1,25 +1,21 @@
-"use client";
-
-import { useTrackContext } from "@/context/track-context";
-import { createClient } from "@/lib/supabase/client";
-import { type Track } from "@/lib/utils";
+import { useAudioStore } from "@/stores/audio";
 import { useEffect } from "react";
-
-const supabase = createClient();
 
 export function useAudioPlayer() {
   const {
     currentTrack,
-    setCurrentTrack,
     isPlaying,
-    setIsPlaying,
     trackProgress,
-    setTrackProgress,
     audioRef,
-  } = useTrackContext()!;
+    setTrackProgress,
+    seekToPosition,
+  } = useAudioStore();
+    
+    
+    console.log({currentTrack, isPlaying, trackProgress, audioRef, setTrackProgress, seekToPosition})
 
   useEffect(() => {
-    if (!audioRef.current) return;
+    if (!audioRef.current) throw new Error("Audio element not found.");
     if (isPlaying) {
       audioRef.current.play();
     } else {
@@ -33,68 +29,16 @@ export function useAudioPlayer() {
 
     const updateProgress = () => {
       if (currentTrack && audio.duration > 0) {
-        setTrackProgress((prev) => ({
-          ...prev,
+        setTrackProgress({
+          ...trackProgress,
           [currentTrack.id]: (audio.currentTime / audio.duration) * 100,
-        }));
+        });
       }
     };
 
     audio.addEventListener("timeupdate", updateProgress);
     return () => audio.removeEventListener("timeupdate", updateProgress);
-  }, [currentTrack, audioRef, setTrackProgress]);
+  }, [currentTrack, audioRef, setTrackProgress, trackProgress]);
 
-  const playTrack = async (track: Track) => {
-    if (!track) return;
-    if (!audioRef.current) return;
-    setCurrentTrack(track);
-    if (!track.file_url) {
-      throw new Error("File URL not found.");
-    }
-
-    const { data, error } = await supabase.storage
-      .from("audio")
-      .createSignedUrl(track.file_url, 60);
-    if (error) {
-      throw new Error(error.message);
-    }
-
-    if (!data) {
-      throw new Error("Signed URL not found.");
-    }
-
-    audioRef.current.src = data.signedUrl;
-    audioRef.current.play();
-
-    setIsPlaying(true);
-    setTrackProgress((prev) => ({
-      ...prev,
-      [track.id]: 0,
-    }));
-  };
-
-  const togglePlayPause = () => {
-    setIsPlaying((prev) => !prev);
-  };
-
-  const seekToPosition = (percentage: number) => {
-    if (!audioRef.current || !currentTrack) return;
-
-    const time = (percentage / 100) * audioRef.current.duration;
-    audioRef.current.currentTime = time;
-
-    setTrackProgress((prev) => ({
-      ...prev,
-      [currentTrack.id]: percentage,
-    }));
-  };
-
-  return {
-    playTrack,
-    togglePlayPause,
-    seekToPosition,
-    currentTrack,
-    isPlaying,
-    trackProgress,
-  };
+  return { seekToPosition, trackProgress };
 }

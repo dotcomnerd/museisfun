@@ -23,7 +23,6 @@ export function TrackProvider({
   const [currentTrack, setCurrentTrack] = useState(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [trackProgress, setTrackProgress] = useState({});
-  // const [audio, setAudio] = useState<HTMLAudioElement | undefined>(undefined);
   const audio = useRef<HTMLAudioElement | undefined>(undefined);
 
   useEffect(() => {

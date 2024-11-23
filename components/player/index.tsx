@@ -23,14 +23,6 @@ import Image from "next/image";
 import { useEffect } from "react";
 import { create } from "zustand";
 
-const startViewTransition = (callback: () => void) => {
-  if (document.startViewTransition) {
-    document.startViewTransition(callback);
-  } else {
-    callback();
-  }
-};
-
 interface PlayerUIState {
   image: string;
   setImage: (url: string) => void;
@@ -57,8 +49,6 @@ export function Player() {
   const {
     image,
     setImage,
-    previousTrack,
-    setPreviousTrack,
     isMuted,
     setIsMuted,
     previousVolume,
@@ -111,8 +101,12 @@ export function Player() {
   }, [currentTrack]);
 
   return (
-    <footer className="h-20 bg-gray-900 border-t border-gray-800 p-4 flex items-center justify-between">
-      <div className="flex items-center gap-x-4">
+    <footer className="h-20 bg-gray-900 border-t border-gray-800 p-2 px-4 grid grid-cols-3">
+      {/* Left section - Track Info */}
+      <div
+        className="flex items-center gap-x-4"
+        style={{ viewTransitionName: "track-container" }}
+      >
         <div
           className="w-20 h-14 relative overflow-hidden rounded-sm"
           style={{ viewTransitionName: "track-image" }}
@@ -131,23 +125,24 @@ export function Player() {
             </div>
           )}
         </div>
-        <div>
+        <div className="min-w-0">
           <h4
-            className="font-semibold text-sm"
+            className="font-semibold text-sm truncate"
             style={{ viewTransitionName: "track-title" }}
           >
             {currentTrack?.title || "No track selected"}
           </h4>
           <p
-            className="text-xs text-gray-400"
+            className="text-xs text-gray-400 truncate"
             style={{ viewTransitionName: "track-artist" }}
           >
             {currentTrack?.artist || "Select a track to play"}
           </p>
         </div>
       </div>
-      <div className="flex flex-col items-center gap-y-2 min-w-xl">
-        <div className="flex items-center gap-x-6">
+
+      <div className="flex flex-col items-center justify-center gap-y-2">
+        <div className="flex items-center justify-center gap-x-6">
           <Button
             size="icon"
             variant="ghost"
@@ -166,7 +161,6 @@ export function Player() {
             size="icon"
             className="bg-white text-black hover:bg-gray-100 rounded-full transition-all duration-200 active:scale-95 hover:scale-105"
             onClick={togglePlayPause}
-            style={{ viewTransitionName: "play-button" }}
           >
             {isPlaying ? <Pause size={20} /> : <Play size={20} />}
           </Button>
@@ -185,7 +179,7 @@ export function Player() {
             <Repeat size={20} />
           </Button>
         </div>
-        <div className="flex items-center gap-x-2 w-full">
+        <div className="flex items-center gap-x-2 w-full max-w-md">
           <span className="text-xs text-gray-400 min-w-[40px] text-right">
             {currentTrack?.duration
               ? formatTrackProgress(
@@ -208,7 +202,9 @@ export function Player() {
           </span>
         </div>
       </div>
-      <div className="flex items-center gap-x-2">
+
+      {/* Right section - Volume Controls */}
+      <div className="flex items-center justify-end gap-x-2">
         <Button
           size="icon"
           variant="ghost"

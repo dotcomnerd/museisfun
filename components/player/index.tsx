@@ -3,22 +3,29 @@
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { useAudioPlayer } from "@/hooks/use-audio";
+import { createClient } from "@/lib/supabase/client";
 import { formatTrackProgress, toDuration } from "@/lib/utils";
 import {
-  Laptop2,
-  ListMusic,
-  Maximize2,
-  Mic2,
-  Pause,
-  Play,
-  Repeat,
-  Shuffle,
-  SkipBack,
-  SkipForward,
-  Volume,
+    Laptop2,
+    ListMusic,
+    Maximize2,
+    Mic2,
+    Pause,
+    Play,
+    Repeat,
+    Shuffle,
+    SkipBack,
+    SkipForward,
+    Volume,
 } from "lucide-react";
+import Image from "next/image";
+import { useEffect, useState } from "react";
+
+const buildImageUrl = (bucket: string, key: string) =>
+  `https://${process.env.NEXT_PUBLIC_SUPABASE_PROJECT_ID}.supabase.co/storage/v1/object/authenticated/${bucket}/${key}`;
 
 export function Player() {
+  const [image, setImage] = useState("");
   const {
     currentTrack,
     isPlaying,
@@ -33,10 +40,29 @@ export function Player() {
     }
   };
 
+  useEffect(() => {
+    const supabase = createClient();
+    (async () => {
+      if (currentTrack && currentTrack.image_url) {
+        const { data, error } = await supabase.storage
+          .from("track_images")
+          .createSignedUrl(currentTrack.image_url, 60 * 60 * 24);
+
+        if (error) {
+          console.error("Error fetching image", error);
+        }
+
+        if (data) {
+          setImage(data.signedUrl);
+        }
+      }
+    })();
+  }, [currentTrack]);
+
   return (
     <footer className="h-20 bg-gray-900 border-t border-gray-800 p-4 flex items-center justify-between">
       <div className="flex items-center gap-x-4">
-        <div className="w-14 h-14 bg-gray-500"></div>
+          <Image src={image} alt="track image" width={56} height={56} className="object-cover rounded-sm w-20" />
         <div>
           <h4 className="font-semibold">
             {currentTrack?.title || "No track selected"}
@@ -73,7 +99,7 @@ export function Player() {
             {currentTrack?.duration
               ? formatTrackProgress(
                   trackProgress[currentTrack?.id || ""] || 0,
-                  currentTrack.duration
+                  parseInt(currentTrack.duration)
                 )
               : "0:00"}
           </span>

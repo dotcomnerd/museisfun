@@ -1,9 +1,10 @@
 "use client";
 
+import { Track } from "@/lib/utils";
 import { createContext, useContext, useEffect, useRef, useState } from "react";
 
 interface TrackContextType {
-  currentTrack: any;
+  currentTrack: Track | null;
   setCurrentTrack: React.Dispatch<React.SetStateAction<any>>;
   isPlaying: boolean;
   setIsPlaying: React.Dispatch<React.SetStateAction<boolean>>;

@@ -1,8 +1,8 @@
 import axios, { AxiosInstance, AxiosResponse } from "axios";
 
 const BASE_URL = import.meta.env.DEV
-    ? "http://localhost:3000"
-    : "https://museisfun.fly.dev";
+    ? "http://localhost:3000/v2"
+    : "https://museisfun.fly.dev/v2";
 
 class Fetcher {
     private static instance: AxiosInstance;

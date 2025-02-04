@@ -60,13 +60,13 @@ const colorfulLogger = (req: Request, res: Response, next: Function) => {
 app.use(colorfulLogger);
 
 
-app.use("/users", usersRouter);
-app.use("/auth", authRouter);
-app.use("/api", playlistRouter);
-app.use("/", authMiddleware, songRouter);
-app.use("/refresh-token", refreshTokenMiddleware);
+app.use("/v2/users", usersRouter);
+app.use("/v2/auth", authRouter);
+app.use("/v2/api", playlistRouter);
+app.use("/v2", authMiddleware, songRouter);
+app.use("/v2/refresh-token", refreshTokenMiddleware);
 
-app.get("/health", (_, res) => {
+app.get("/v2/health", (_, res) => {
     res.status(200).send("OK");
 });
 

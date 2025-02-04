@@ -1,0 +1,12 @@
+node_modules
+.next
+.env.*
+downloads
+temp/*
+# Local Netlify folder
+.netlify
+droplet
+droplet.pub
+shared/dist
+shared/node_modules
+shared/package-lock.json

@@ -30,8 +30,10 @@ const addSongSchema = z.object({
       (url) =>
         url.includes("youtube.com") ||
         url.includes("youtu.be") ||
-        url.includes("soundcloud.com"),
-      "URL must be from YouTube or SoundCloud"
+        url.includes("soundcloud.com") ||
+        url.includes("music.apple.com") ||
+        url.includes("spotify.com"),  
+      "URL must be from YouTube, SoundCloud, Apple Music, or Spotify"
     ),
 });
 

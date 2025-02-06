@@ -4,7 +4,7 @@ import { authMiddleware, refreshTokenMiddleware } from "@/lib/middleware";
 import User from "@/models/user";
 import { PutObjectCommand } from "@aws-sdk/client-s3";
 import bcrypt from "bcryptjs";
-import { Request, Response, Router } from "express";
+import { Request, RequestHandler, Response, Router } from "express";
 import { Error } from "mongoose";
 import multer from "multer";
 
@@ -137,7 +137,7 @@ const upload = multer({
 router.put(
   "/update",
   authMiddleware,
-  upload.single("pfp"),
+  upload.single("pfp") as unknown as RequestHandler,
   async (req, res) => {
     const user = req.auth;
     let pfpUrl: string | null = null;
@@ -174,7 +174,11 @@ router.put(
 
         updates.pfp = key;
 
-          pfpUrl = await getPresignedUrl({ key, expiresIn: 60 * 60 * 24 * 7, bucket: PFP_BUCKET_NAME });
+        pfpUrl = await getPresignedUrl({
+          key,
+          expiresIn: 60 * 60 * 24 * 7,
+          bucket: PFP_BUCKET_NAME,
+        });
 
         updates.pfp = pfpUrl;
       }

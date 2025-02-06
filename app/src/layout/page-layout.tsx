@@ -86,7 +86,7 @@ export function DashboardPageLayout({
     return (
         <div
             className={cn(
-                "flex flex-col h-full bg-cover bg-center bg-fixed bg-no-repeat border border-primary rounded"
+                "flex flex-col h-full bg-cover bg-center bg-fixed bg-no-repeat"
             )}
             style={{
                 backgroundImage: `linear-gradient(rgba(0, 0, 0, ${resolvedTheme === "light" ? "0.3" : "0.7"}), rgba(0, 0, 0, ${resolvedTheme === "light" ? "0.3" : "0.7"})), url('${BG_URL}')`

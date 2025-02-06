@@ -68,8 +68,6 @@ const MobileSongsList = ({
     onDelete: (id: string) => void
     currentSong: Song | null;
 }) => {
-    const [selectedSongs, setSelectedSongs] = useState<string[]>([]);
-    const [isSelectionMode, setIsSelectionMode] = useState(false);
     const [sortBy, setSortBy] = useState<'title' | 'date' | 'duration'>('title');
     const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
     const { isPlaying, isBuffering } = useAudioStore();
@@ -103,23 +101,6 @@ const MobileSongsList = ({
         },
     });
 
-    const handleLongPress = () => {
-        setIsSelectionMode(true);
-    };
-
-    const handleSongSelect = (songId: string) => {
-        if (isSelectionMode) {
-            setSelectedSongs(prev =>
-                prev.includes(songId)
-                    ? prev.filter(id => id !== songId)
-                    : [...prev, songId]
-            );
-        } else {
-            // Always restart the song on click
-            onPlay(songId);
-        }
-    };
-
     const handleSort = (songs: Song[]) => {
         return [...songs].sort((a, b) => {
             let compareValue = 0;
@@ -140,79 +121,35 @@ const MobileSongsList = ({
 
     const sortedSongs = handleSort(songs);
 
-    const handleBulkDelete = async () => {
-        try {
-            await Promise.all(selectedSongs.map(id => onDelete(id)));
-            toast.success('Songs deleted successfully');
-            setSelectedSongs([]);
-            setIsSelectionMode(false);
-        } catch (error) {
-            if (error instanceof Error) {
-                toast.error(error.message);
-            } else {
-                toast.error('Failed to delete songs');
-            }
-        }
-    };
-
     return (
         <div className="flex flex-col">
             <div className="rounded-lg z-10 bg-primary/20 backdrop-blur-sm px-4 py-3 flex items-center justify-between">
-                {isSelectionMode ? (
-                    <>
+                <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
                         <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => {
-                                setIsSelectionMode(false);
-                                setSelectedSongs([]);
-                            }}
                             className="text-white/70 hover:text-white"
                         >
-                            Cancel
+                            Sort By
                         </Button>
-                        <span className="text-sm text-white/70">
-                            {selectedSongs.length} selected
-                        </span>
-                        <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={handleBulkDelete}
-                            className="text-red-400 hover:text-red-300"
-                        >
-                            Delete
-                        </Button>
-                    </>
-                ) : (
-                    <>
-                        <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                                <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    className="text-white/70 hover:text-white"
-                                >
-                                    Sort By
-                                </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent className="bg-black/90 backdrop-blur-sm border-none">
-                                <DropdownMenuItem onClick={() => setSortBy('title')} className="text-white/70">
-                                    Title {sortBy === 'title' && '✓'}
-                                </DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => setSortBy('date')} className="text-white/70">
-                                    Date Added {sortBy === 'date' && '✓'}
-                                </DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => setSortBy('duration')} className="text-white/70">
-                                    Duration {sortBy === 'duration' && '✓'}
-                                </DropdownMenuItem>
-                                <DropdownMenuSeparator className="bg-white/10" />
-                                <DropdownMenuItem onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')} className="text-white/70">
-                                    {sortOrder === 'asc' ? 'Ascending ↑' : 'Descending ↓'}
-                                </DropdownMenuItem>
-                            </DropdownMenuContent>
-                        </DropdownMenu>
-                    </>
-                )}
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent className="bg-black/90 backdrop-blur-sm border-none">
+                        <DropdownMenuItem onClick={() => setSortBy('title')} className="text-white/70">
+                            Title {sortBy === 'title' && '✓'}
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => setSortBy('date')} className="text-white/70">
+                            Date Added {sortBy === 'date' && '✓'}
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => setSortBy('duration')} className="text-white/70">
+                            Duration {sortBy === 'duration' && '✓'}
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator className="bg-white/10" />
+                        <DropdownMenuItem onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')} className="text-white/70">
+                            {sortOrder === 'asc' ? 'Ascending ↑' : 'Descending ↓'}
+                        </DropdownMenuItem>
+                    </DropdownMenuContent>
+                </DropdownMenu>
             </div>
 
             {/* Songs List */}
@@ -225,28 +162,10 @@ const MobileSongsList = ({
                         transition={{ delay: index * 0.05 }}
                         className={cn(
                             "px-2 py-2 flex items-center gap-2 hover:bg-primary/5 transition-colors",
-                            index !== songs.length - 1 && "border-b border-primary/10",
-                            isSelectionMode && "hover:bg-transparent",
-                            selectedSongs.includes(song._id) && "bg-primary/10"
+                            index !== songs.length - 1 && "border-b border-primary/10"
                         )}
-                        onTouchStart={() => {
-                            const timer = setTimeout(handleLongPress, 500);
-                            return () => clearTimeout(timer);
-                        }}
-                        onClick={() => handleSongSelect(song._id)}
+                        onClick={() => onPlay(song._id)}
                     >
-                        {/* Selection Checkbox */}
-                        {isSelectionMode && (
-                            <div className="flex-shrink-0">
-                                <input
-                                    type="checkbox"
-                                    checked={selectedSongs.includes(song._id)}
-                                    onChange={() => handleSongSelect(song._id)}
-                                    className="rounded-sm"
-                                />
-                            </div>
-                        )}
-
                         {/* Thumbnail */}
                         <div className="relative flex-shrink-0">
                             <img
@@ -284,45 +203,43 @@ const MobileSongsList = ({
                         </div>
 
                         {/* Actions */}
-                        {!isSelectionMode && (
-                            <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                    <Button
-                                        variant="ghost"
-                                        size="icon"
-                                        className="h-6 w-6"
-                                        onClick={(e) => e.stopPropagation()}
-                                    >
-                                        <MoreVertical className="h-3.5 w-3.5 text-muted-foreground" />
-                                    </Button>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent align="end" className="w-48" onClick={(e) => e.stopPropagation()}>
-                                    <DropdownMenuItem onClick={(e) => {
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-6 w-6"
+                                    onClick={(e) => e.stopPropagation()}
+                                >
+                                    <MoreVertical className="h-3.5 w-3.5 text-muted-foreground" />
+                                </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="w-48" onClick={(e) => e.stopPropagation()}>
+                                <DropdownMenuItem onClick={(e) => {
+                                    e.stopPropagation();
+                                    setSelectedSongId(song._id);
+                                    setShowPlaylistDrawer(true);
+                                }}>
+                                    <Plus className="h-3.5 w-3.5 mr-2" />
+                                    Add to Playlist
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={(e) => e.stopPropagation()}>
+                                    <Pencil className="h-3.5 w-3.5 mr-2" />
+                                    <s>Edit Details</s>
+                                </DropdownMenuItem>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem
+                                    className="text-destructive focus:text-destructive"
+                                    onClick={(e) => {
                                         e.stopPropagation();
-                                        setSelectedSongId(song._id);
-                                        setShowPlaylistDrawer(true);
-                                    }}>
-                                        <Plus className="h-3.5 w-3.5 mr-2" />
-                                        Add to Playlist
-                                    </DropdownMenuItem>
-                                    <DropdownMenuItem onClick={(e) => e.stopPropagation()}>
-                                        <Pencil className="h-3.5 w-3.5 mr-2" />
-                                        <s>Edit Details</s>
-                                    </DropdownMenuItem>
-                                    <DropdownMenuSeparator />
-                                    <DropdownMenuItem
-                                        className="text-destructive focus:text-destructive"
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            onDelete(song._id);
-                                        }}
-                                    >
-                                        <Trash2 className="h-3.5 w-3.5 mr-2" />
-                                        Delete Song
-                                    </DropdownMenuItem>
-                                </DropdownMenuContent>
-                            </DropdownMenu>
-                        )}
+                                        onDelete(song._id);
+                                    }}
+                                >
+                                    <Trash2 className="h-3.5 w-3.5 mr-2" />
+                                    Delete Song
+                                </DropdownMenuItem>
+                            </DropdownMenuContent>
+                        </DropdownMenu>
                     </motion.div>
                 ))}
             </div>
@@ -382,32 +299,34 @@ const DesktopSongsList = React.memo(({ songs, onPlay, onDelete }: {
     const queryClient = useQueryClient();
     const { currentSong, isPlaying, isBuffering } = useAudioStore();
     const [editingField, setEditingField] = useState<{id: string, field: string} | null>(null);
+    const [isEditing, setIsEditing] = useState(false);
 
     const editMutation = useMutation({
         mutationFn: async ({ id, field, value }: { id: string, field: string, value: string }) => {
-            const response = await api.patch(`/api/songs/${id}`, {
-                [field]: value,
-            });
-            if (response.status !== 200) {
-                throw new Error('Failed to update song');
+            if (isEditing) return null;
+            setIsEditing(true);
+            try {
+                const response = await api.patch(`/api/songs/${id}`, {
+                    [field]: value,
+                });
+                if (response.status !== 200) {
+                    throw new Error('Failed to update song');
+                }
+                return response.data;
+            } finally {
+                setIsEditing(false);
             }
-            return response.data;
         },
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['songs'] });
-            setEditingField(null);
-        },
-        onError: () => {
-            // TODO: Send to sentry or dd 0.o
-        },
-        onSettled: (_, error) => {
-            if (error) {
-                toast.error('Failed to update song. Please try again later');
+        onSuccess: (data) => {
+            if (data) {
+                queryClient.invalidateQueries({ queryKey: ['songs'] });
                 setEditingField(null);
-            } else {
                 toast.success('Song updated successfully');
             }
         },
+        onError: () => {
+            toast.error('Failed to update song. Please try again later');
+        }
     });
 
     type FavoriteState = "added" | "removed" | "failed";
@@ -436,7 +355,7 @@ const DesktopSongsList = React.memo(({ songs, onPlay, onDelete }: {
     });
 
     const handleSubmit = useCallback((song: Song, field: string, value: string) => {
-        if (value !== song[field as keyof Song]) {
+        if (value !== song[field as keyof Song] && !isEditing) {
             editMutation.mutate({
                 id: song._id,
                 field,
@@ -444,7 +363,7 @@ const DesktopSongsList = React.memo(({ songs, onPlay, onDelete }: {
             });
         }
         setEditingField(null);
-    }, [editMutation]);
+    }, [editMutation, isEditing]);
 
     const handleFavorite = useCallback((songId: string, e: React.MouseEvent) => {
         e.stopPropagation();
@@ -523,39 +442,57 @@ const DesktopSongsList = React.memo(({ songs, onPlay, onDelete }: {
                         </div>
                         <div className="flex items-center gap-2 flex-1">
                             <div className="flex items-center gap-2 flex-1">
-                                <div className={cn(
-                                    "font-medium w-full max-w-[550px] lg:max-w-[800px] px-1 group-hover:relative",
-                                    editingField?.id === song._id && editingField?.field === 'title' && "ring-1 ring-primary rounded"
-                                )}>
-                                    {editingField?.id === song._id && editingField?.field === 'title' ? (
-                                        <input
-                                            type="text"
-                                            defaultValue={song.title}
-                                            className="w-full bg-transparent border-none focus:outline-none"
-                                            onBlur={(e) => handleSubmit(song, 'title', e.target.value)}
-                                            onKeyDown={(e) => {
-                                                if (e.key === 'Enter') {
-                                                    handleSubmit(song, 'title', e.currentTarget.value);
-                                                    e.currentTarget.blur();
-                                                }
-                                            }}
-                                            onClick={(e) => e.stopPropagation()}
-                                            autoFocus
-                                        />
-                                    ) : (
-                                        <div className="flex items-center gap-2">
-                                            <span>{song.title}</span>
-                                            <Button
-                                                variant="ghost"
-                                                size="icon"
-                                                className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity p-1 translate-y-[-1px]"
-                                                onClick={(e) => handleEditClick(song._id, 'title', e)}
-                                            >
-                                                <Pencil className="h-3.5 w-3.5 text-muted-foreground" />
-                                            </Button>
-                                        </div>
+                                <motion.div
+                                    layout
+                                    className={cn(
+                                        "font-medium w-full max-w-[550px] lg:max-w-[800px] px-1 group-hover:relative rounded",
+                                        editingField?.id === song._id && editingField?.field === 'title' && "ring-1 ring-primary"
                                     )}
-                                </div>
+                                >
+                                    <AnimatePresence mode="wait">
+                                        {editingField?.id === song._id && editingField?.field === 'title' ? (
+                                            <motion.div
+                                                initial={{ opacity: 0, y: -4 }}
+                                                animate={{ opacity: 1, y: 0 }}
+                                                exit={{ opacity: 0, y: 4 }}
+                                                transition={{ duration: 0.15 }}
+                                            >
+                                                <input
+                                                    type="text"
+                                                    defaultValue={song.title}
+                                                    className="w-full bg-transparent border-none focus:outline-none"
+                                                    onBlur={(e) => handleSubmit(song, 'title', e.target.value)}
+                                                    onKeyDown={(e) => {
+                                                        if (e.key === 'Enter') {
+                                                            handleSubmit(song, 'title', e.currentTarget.value);
+                                                            e.currentTarget.blur();
+                                                        }
+                                                    }}
+                                                    onClick={(e) => e.stopPropagation()}
+                                                    autoFocus
+                                                />
+                                            </motion.div>
+                                        ) : (
+                                            <motion.div
+                                                initial={{ opacity: 0, y: 4 }}
+                                                animate={{ opacity: 1, y: 0 }}
+                                                exit={{ opacity: 0, y: -4 }}
+                                                transition={{ duration: 0.15 }}
+                                                className="flex items-center gap-2"
+                                            >
+                                                <span>{song.title}</span>
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity p-1 translate-y-[-1px]"
+                                                    onClick={(e) => handleEditClick(song._id, 'title', e)}
+                                                >
+                                                    <Pencil className="h-3.5 w-3.5 text-muted-foreground" />
+                                                </Button>
+                                            </motion.div>
+                                        )}
+                                    </AnimatePresence>
+                                </motion.div>
                             </div>
                         </div>
                     </div>
@@ -645,9 +582,11 @@ const DesktopSongsList = React.memo(({ songs, onPlay, onDelete }: {
             </Table>
         </div>
     );
-}, (prevProps, nextProps) => {
-    return JSON.stringify(prevProps.songs) === JSON.stringify(nextProps.songs);
-});
+}) as React.FC<{
+    songs: Song[];
+    onPlay: (id: string) => void;
+    onDelete: (id: string) => void;
+}>;
 
 // Main Songs View Component
 export function SongsView() {

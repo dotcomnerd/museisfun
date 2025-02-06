@@ -55,7 +55,7 @@ export function CollapseMenuButton({
                 asChild
             >
                 <Button
-                    variant={active ? "secondary" : "ghost"}
+                    variant={active ? "link" : "ghost"}
                     className="h-10 w-full justify-start"
                 >
                     <div className="flex w-full items-center justify-between">
@@ -94,7 +94,7 @@ export function CollapseMenuButton({
                 {submenus.map(({ href, label, active, icon: SubMenuIcon }, index) => (
                     <Button
                         key={index}
-                        variant={active ? "secondary" : "ghost"}
+                        variant={active ? "link" : "ghost"}
                         className="mb-1 h-10 w-full justify-start"
                         asChild
                     >
@@ -130,7 +130,7 @@ export function CollapseMenuButton({
                     <TooltipTrigger asChild>
                         <DropdownMenuTrigger asChild>
                             <Button
-                                variant={active ? "secondary" : "ghost"}
+                                variant={active ? "link" : "ghost"}
                                 className="mb-1 h-10 w-full justify-start"
                             >
                                 <div className="flex w-full items-center justify-between">
@@ -163,7 +163,9 @@ export function CollapseMenuButton({
                 <DropdownMenuSeparator />
                 {submenus.map(({ href, label }, index) => (
                     <DropdownMenuItem key={index} asChild>
-                        <Link className="cursor-pointer" to={href}>
+                        <Link className={cn(active ? "bg-secondary" : "",
+                            "cursor-pointer"
+                        )} to={href} >
                             <p className="max-w-[180px] truncate">{label}</p>
                         </Link>
                     </DropdownMenuItem>

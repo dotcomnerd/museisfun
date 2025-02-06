@@ -32,8 +32,9 @@ const addSongSchema = z.object({
         url.includes("youtu.be") ||
         url.includes("soundcloud.com") ||
         url.includes("music.apple.com") ||
-        url.includes("spotify.com"),  
-      "URL must be from YouTube, SoundCloud, Apple Music, or Spotify"
+        url.includes("spotify.com") ||
+        url.includes("last.fm/music"),
+      "URL must be from YouTube, SoundCloud, Apple Music, Spotify, or Last.fm"
     ),
 });
 
@@ -104,7 +105,7 @@ export function AddSongDialog({ children }: { children: React.ReactNode }) {
             Add New Song
           </DialogTitle>
           <DialogDescription className="text-sm md:text-base">
-            Paste a YouTube or SoundCloud URL to add a song to your library
+            Paste a YouTube, SoundCloud, or Last.fm URL to add a song to your library
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 md:space-y-6">
@@ -115,7 +116,7 @@ export function AddSongDialog({ children }: { children: React.ReactNode }) {
                 id="url"
                 className="bg-black/20 h-12 md:h-10 text-base md:text-sm"
                 {...register("url")}
-                placeholder="Paste YouTube or SoundCloud URL"
+                placeholder="Paste YouTube, SoundCloud, or Last.fm URL"
                 type="url"
                 inputMode="url"
               />

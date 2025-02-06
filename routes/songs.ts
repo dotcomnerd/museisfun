@@ -9,6 +9,9 @@ import { Router } from "express";
 import fs from "fs";
 import mongoose from 'mongoose';
 import path from "path";
+import { google } from 'googleapis';
+import dotenv from 'dotenv';
+import axios from 'axios';
 
 interface SongMetadata {
     title: string;
@@ -31,19 +34,22 @@ interface DownloadResult {
 
 const router = Router();
 const __dirname = path.resolve();
+const youtube = google.youtube('v3');
+dotenv.config({ path: path.join(__dirname, '../.env.local') });
+const API_KEY = process.env.YOUTUBE_API_KEY;
 
 async function downloadSong(url: string): Promise<DownloadResult> {
     const metadata = await new Promise<SongMetadata>((resolve, reject) => {
         let jsonData = "";
         const ytDlpInfo = spawn("yt-dlp", ["--dump-json", url]);
 
-        ytDlpInfo.stdout.on("data", (data) => {
-            jsonData += data.toString();
-        });
+            ytDlpInfo.stdout.on("data", (data) => {
+                jsonData += data.toString();
+            });
 
-        ytDlpInfo.stderr.on("data", (data) => {
-            console.log(`yt-dlp metadata stderr: ${data}`);
-        });
+            ytDlpInfo.stderr.on("data", (data) => {
+                console.log(`yt-dlp metadata stderr: ${data}`);
+            });
 
         ytDlpInfo.on("close", (code) => {
             if (code === 0) {
@@ -136,7 +142,7 @@ router.post("/api/songs", async (req, res) => {
         const user = req.auth;
         const validator = new UrlValidator();
 
-        if (!validator.validate(url)) throw new Error("Invalid URL");
+
         if (!user) return res.status(401).json({ error: "Unauthorized" });
 
         const { filePath, metadata } = await downloadSong(url);
@@ -213,7 +219,6 @@ router.get("/api/songs/:id/stream", async (req, res) => {
     }
 });
 
-// Update song endpoint
 router.patch("/api/songs/:id", async (req, res) => {
     try {
         const { id } = req.params;
@@ -243,7 +248,6 @@ router.patch("/api/songs/:id", async (req, res) => {
     }
 });
 
-// Get all songs endpoint
 router.get("/api/songs", async (req, res) => {
     if (!req.auth) {
         return res.status(401).json({ error: "Unauthorized" });
@@ -273,7 +277,6 @@ router.get("/api/songs", async (req, res) => {
     }
 });
 
-// Delete song endpoint
 router.delete("/api/songs/:id", async (req, res) => {
     try {
         const song = await Song.findById(req.params.id);
@@ -286,7 +289,6 @@ router.delete("/api/songs/:id", async (req, res) => {
             return res.status(404).json({ error: "Song not found" });
         }
 
-        // Delete from R2
         await R2.send(
             new DeleteObjectCommand({
                 Bucket: BUCKET_NAME,
@@ -294,7 +296,6 @@ router.delete("/api/songs/:id", async (req, res) => {
             })
         );
 
-        // Delete metadata
         await Song.deleteOne({ _id: req.params.id });
 
         res.json({ message: "Song deleted successfully" });
@@ -307,6 +308,7 @@ router.delete("/api/songs/:id", async (req, res) => {
 export const extractors = [
     "youtube",
     "soundcloud",
+    "lastfm"
 ]
 
 router.get("/api/songs/:type", async (req, res) => {
@@ -402,6 +404,117 @@ router.get("/api/songs/top/listened", async (req, res) => {
     } catch (error) {
         console.error("Error fetching songs:", error);
         res.status(500).json({ error: error });
+    }
+});
+
+interface SimpleSongResult {
+    title: string;
+    thumbnail: string;
+    watchUrl: string;
+}
+
+async function getVideoDetails(id: string) {
+    const response = await youtube.videos.list({
+        key: API_KEY,
+        part: ['contentDetails', 'snippet', 'statistics'],
+        id: [id]
+    });
+
+    if (!response.data.items || response.data.items.length === 0) {
+        return null;
+    }
+
+    return response.data.items[0];
+}
+
+async function searchYouTube(query: string, maxResults: number = 10) {
+    try {
+        const response = await youtube.search.list({
+            key: API_KEY,
+            part: ['snippet'],
+            q: query,
+            type: ['video'],
+            maxResults: maxResults,
+            videoEmbeddable: 'true',
+        });
+
+        if (!response.data.items) {
+            return [];
+        }
+
+        return response.data.items.map(item => ({
+            id: item.id?.videoId || '',
+            title: item.snippet?.title || '',
+            thumbnail: item.snippet?.thumbnails?.default?.url || '',
+            watchUrl: `https://www.youtube.com/watch?v=${item.id?.videoId}`,
+        }));
+    } catch (error) {
+        console.error('YouTube API Error:', error);
+        throw error;
+    }
+}
+
+router.get("/api/youtube/search", async (req, res) => {
+    try {
+        const { q: query, limit } = req.query;
+
+        if (!query || typeof query !== "string") {
+            return res.status(400).json({ error: "Search query is required" });
+        }
+
+        const maxResults = limit ? parseInt(limit as string) : 10;
+
+        if (isNaN(maxResults) || maxResults < 1 || maxResults > 50) {
+            return res.status(400).json({ error: "Invalid limit value (1-50)" });
+        }
+
+        const results = await searchYouTube(query, maxResults);
+        const songIds = results.map(result => result.id);
+
+        const videoDetails = await Promise.all(songIds.map(id => getVideoDetails(id)));
+
+        const simplifiedResults: SimpleSongResult[] = videoDetails
+            .filter((video): video is NonNullable<typeof video> => video !== null)
+            .map(video => ({
+                title: video.snippet?.title || '',
+                thumbnail: video.snippet?.thumbnails?.high?.url || '',
+                watchUrl: `https://www.youtube.com/watch?v=${video.id}`
+            }));
+
+        res.json(simplifiedResults);
+
+    } catch (error) {
+        console.error("Error searching YouTube:", error);
+        res.status(500).json({
+            error: "Failed to search YouTube",
+            details: error instanceof Error ? error.message : "Unknown error"
+        });
+    }
+});
+
+router.get("/api/youtube/videos/:id", async (req, res) => {
+    try {
+        const { id } = req.params;
+        const video = await getVideoDetails(id);
+
+        if (!video) {
+            return res.status(404).json({ error: "Video not found" });
+        }
+
+        const simplifiedVideo: SimpleSongResult = {
+            title: video.snippet?.title || '',
+            thumbnail: video.snippet?.thumbnails?.high?.url || '',
+            watchUrl: `https://www.youtube.com/watch?v=${video.id}`
+        };
+
+        res.json(simplifiedVideo);
+
+    } catch (error) {
+        console.error("Error fetching video details:", error);
+        res.status(500).json({
+            error: "Failed to fetch video details",
+            details: error instanceof Error ? error.message : "Unknown error"
+        });
     }
 });
 

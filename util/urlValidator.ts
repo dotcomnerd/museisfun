@@ -1,6 +1,6 @@
 import { Types } from "mongoose";
 
-type SupportedPlatforms = "youtube" | "soundcloud" | "applemusic" | "spotify";
+type SupportedPlatforms = "youtube" | "soundcloud" | "applemusic" | "spotify" | "lastfm";
 
 interface PlatformValidator {
     validate(url: string): boolean;
@@ -34,6 +34,13 @@ class SpotifyValidator implements PlatformValidator {
     }
 }
 
+class LastFmValidator implements PlatformValidator {
+    validate(url: string): boolean {
+        const lastFmRegex = /^(https?:\/\/)?(www\.)?(last\.fm\/music)\/.+$/;
+        return lastFmRegex.test(url);
+    }
+}
+
 export class UrlValidator {
     private platformValidators: Map<SupportedPlatforms, PlatformValidator> =
         new Map();
@@ -43,6 +50,7 @@ export class UrlValidator {
         this.registerValidator("soundcloud", new SoundCloudValidator());
         this.registerValidator("applemusic", new AppleMusicValidator());
         this.registerValidator("spotify", new SpotifyValidator());
+        this.registerValidator("lastfm", new LastFmValidator());
     }
 
     registerValidator(

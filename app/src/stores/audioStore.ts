@@ -27,6 +27,7 @@ interface AudioState {
     originalQueue: Partial<Song>[];
     isShuffled: boolean;
     isRepeating: boolean;
+    autoPlayOnEnd: boolean;
 
     // Context state
     currentPlaylist: Playlist | null;
@@ -52,6 +53,7 @@ interface AudioState {
     clearQueue: () => void;
     toggleShuffle: () => void;
     toggleRepeat: () => void;
+    toggleAutoPlayOnEnd: () => void;
     setPlayerMode: (mode: Partial<PlayerMode>) => void;
     playQueueItem: (index: number) => void;
     updateListeningTime: (songId: string, time: number) => Promise<void>;
@@ -65,6 +67,65 @@ export const useAudioStore = create<AudioState>()(
     persist(
         (set, get) => {
             let audioElement: HTMLAudioElement | null = null;
+            let wakeLock: any = null;
+
+            const requestWakeLock = async () => {
+                try {
+                    if ('wakeLock' in navigator) {
+                        wakeLock = await (navigator as any).wakeLock.request('screen');
+                    }
+                } catch (err) {
+                    console.error('Wake Lock error:', err);
+                }
+            };
+
+            const releaseWakeLock = () => {
+                if (wakeLock) {
+                    wakeLock.release();
+                    wakeLock = null;
+                }
+            };
+
+            const updateMediaSession = (song: Partial<Song>) => {
+                if ("mediaSession" in navigator) {
+                    navigator.mediaSession.metadata = new MediaMetadata({
+                        title: song.title || "",
+                        artist: song.uploader || "",
+                        artwork: [
+                            { src: song.thumbnail || "", sizes: "96x96", type: "image/jpeg" },
+                            { src: song.thumbnail || "", sizes: "128x128", type: "image/jpeg" },
+                            { src: song.thumbnail || "", sizes: "192x192", type: "image/jpeg" },
+                            { src: song.thumbnail || "", sizes: "256x256", type: "image/jpeg" },
+                            { src: song.thumbnail || "", sizes: "384x384", type: "image/jpeg" },
+                            { src: song.thumbnail || "", sizes: "512x512", type: "image/jpeg" }
+                        ]
+                    });
+
+                    navigator.mediaSession.setActionHandler("play", () => get().play());
+                    navigator.mediaSession.setActionHandler("pause", () => get().pause());
+                    navigator.mediaSession.setActionHandler("previoustrack", () => get().previousSong());
+                    navigator.mediaSession.setActionHandler("nexttrack", () => get().nextSong());
+                    navigator.mediaSession.setActionHandler("seekto", (details) => {
+                        if (details.seekTime) {
+                            get().seek(details.seekTime);
+                        }
+                    });
+                    navigator.mediaSession.setActionHandler("seekbackward", () => {
+                        if (audioElement) {
+                            get().seek(Math.max(audioElement.currentTime - 10, 0));
+                        }
+                    });
+                    navigator.mediaSession.setActionHandler("seekforward", () => {
+                        if (audioElement) {
+                            get().seek(Math.min(audioElement.currentTime + 10, audioElement.duration));
+                        }
+                    });
+                    navigator.mediaSession.setActionHandler("stop", () => {
+                        get().pause();
+                        get().seek(0);
+                    });
+                }
+            };
 
             const startListeningTimer = () => {
                 const state = get();
@@ -132,11 +193,22 @@ export const useAudioStore = create<AudioState>()(
                 audioElement.addEventListener("waiting", bufferingHandler);
                 audioElement.addEventListener("playing", playingHandler);
 
+                updateMediaSession(song);
+
                 return audioElement;
             };
 
             const timeUpdateHandler = () => {
-                if (audioElement) set({ currentTime: audioElement.currentTime });
+                if (audioElement) {
+                    set({ currentTime: audioElement.currentTime });
+                    if ("mediaSession" in navigator) {
+                        navigator.mediaSession.setPositionState({
+                            duration: audioElement.duration,
+                            playbackRate: audioElement.playbackRate,
+                            position: audioElement.currentTime
+                        });
+                    }
+                }
             };
 
             const loadedMetadataHandler = () => {
@@ -153,14 +225,34 @@ export const useAudioStore = create<AudioState>()(
             };
 
             const bufferingHandler = () => set({ isBuffering: true });
-            const playingHandler = () => set({ isBuffering: false });
+            const playingHandler = () => {
+                set({ isBuffering: false });
+                if ("mediaSession" in navigator) {
+                    navigator.mediaSession.playbackState = "playing";
+                }
+                requestWakeLock();
+            };
 
             const endedHandler = () => {
                 stopListeningTimer();
+                if ("mediaSession" in navigator) {
+                    navigator.mediaSession.playbackState = "none";
+                }
                 const state = get();
-                if (state.isRepeating && state.queueIndex === state.queue.length - 1) {
-                    get().playQueueItem(0);
-                } else if (state.queueIndex < state.queue.length - 1) {
+                if (state.queueIndex === state.queue.length - 1) {
+                    if (state.autoPlayOnEnd) {
+                        get().playQueueItem(0);
+                    } else {
+                        set({
+                            queueIndex: 0,
+                            currentSong: state.queue[0],
+                            currentTime: 0,
+                            isPlaying: false
+                        });
+                        setupAudioElement(state.queue[0]);
+                        releaseWakeLock();
+                    }
+                } else {
                     get().nextSong();
                 }
             };
@@ -180,6 +272,7 @@ export const useAudioStore = create<AudioState>()(
                 originalQueue: [],
                 isShuffled: false,
                 isRepeating: false,
+                autoPlayOnEnd: true,
                 currentPlaylist: null,
                 playerMode: {
                     isExpanded: false,
@@ -205,7 +298,6 @@ export const useAudioStore = create<AudioState>()(
                             },
                         });
                     } else {
-                        // TODO: This might cause regressions, evaluate if it's necessary
                         set({
                             queue: songs,
                             originalQueue: [...songs],
@@ -220,7 +312,6 @@ export const useAudioStore = create<AudioState>()(
                             },
                         });
                     }
-
 
                     setupAudioElement(songs[startIndex]);
 
@@ -270,6 +361,9 @@ export const useAudioStore = create<AudioState>()(
                                 .then(() => {
                                     set({ isPlaying: true });
                                     startListeningTimer();
+                                    if ("mediaSession" in navigator) {
+                                        navigator.mediaSession.playbackState = "playing";
+                                    }
                                 })
                                 .catch(() => set({ isPlaying: false }));
                         }
@@ -281,6 +375,10 @@ export const useAudioStore = create<AudioState>()(
                         stopListeningTimer();
                         audioElement.pause();
                         set({ isPlaying: false });
+                        if ("mediaSession" in navigator) {
+                            navigator.mediaSession.playbackState = "paused";
+                        }
+                        releaseWakeLock();
                     }
                 },
 
@@ -297,6 +395,13 @@ export const useAudioStore = create<AudioState>()(
                     if (audioElement) {
                         audioElement.currentTime = time;
                         set({ currentTime: time });
+                        if ("mediaSession" in navigator) {
+                            navigator.mediaSession.setPositionState({
+                                duration: audioElement.duration,
+                                playbackRate: audioElement.playbackRate,
+                                position: time
+                            });
+                        }
                     }
                 },
 
@@ -311,8 +416,18 @@ export const useAudioStore = create<AudioState>()(
                     const state = get();
                     if (state.queueIndex < state.queue.length - 1) {
                         get().playQueueItem(state.queueIndex + 1);
-                    } else if (state.isRepeating) {
-                        get().playQueueItem(0);
+                    } else {
+                        if (state.autoPlayOnEnd) {
+                            get().playQueueItem(0);
+                        } else {
+                            set({
+                                queueIndex: 0,
+                                currentSong: state.queue[0],
+                                currentTime: 0,
+                                isPlaying: false
+                            });
+                            setupAudioElement(state.queue[0]);
+                        }
                     }
                 },
 
@@ -353,6 +468,8 @@ export const useAudioStore = create<AudioState>()(
                 },
 
                 toggleRepeat: () => set(state => ({ isRepeating: !state.isRepeating })),
+
+                toggleAutoPlayOnEnd: () => set(state => ({ autoPlayOnEnd: !state.autoPlayOnEnd })),
 
                 addToQueue: (song) => {
                     set(state => ({
@@ -397,6 +514,10 @@ export const useAudioStore = create<AudioState>()(
                             isMiniPlayer: true,
                         },
                     });
+                    if ("mediaSession" in navigator) {
+                        navigator.mediaSession.playbackState = "none";
+                    }
+                    releaseWakeLock();
                 },
 
                 setSearchTerm: (searchTerm) => {
@@ -428,6 +549,7 @@ export const useAudioStore = create<AudioState>()(
                 volume: state.volume,
                 isShuffled: state.isShuffled,
                 isRepeating: state.isRepeating,
+                autoPlayOnEnd: state.autoPlayOnEnd,
                 playerMode: state.playerMode,
             }),
         }
@@ -445,7 +567,6 @@ export function usePlayerControls() {
     });
 
     const store = useAudioStore();
-
     const playSong = async (songId: string, playlistId?: string) => {
         try {
             if (playlistId) {
@@ -453,12 +574,8 @@ export function usePlayerControls() {
                 const songIndex = playlist.songs.findIndex(song => song._id === songId);
 
                 if (songIndex !== -1) {
-                    if (store.currentSong?._id === songId) {
-                        store.playPause();
-                    } else {
-                        store.initializeAudio(playlist.songs, songIndex, playlist);
-                        store.play();
-                    }
+                    store.initializeAudio(playlist.songs, songIndex, playlist);
+                    store.play();
                     return;
                 }
             }
@@ -467,24 +584,17 @@ export function usePlayerControls() {
             const songIndex = allSongs.findIndex(song => song._id === songId);
             if (songIndex === -1) return;
 
-            if (store.currentSong?._id === songId) {
-                store.playPause();
-            } else {
-                store.initializeAudio(allSongs, songIndex, null);
-                store.play();
-            }
+            store.initializeAudio(allSongs, songIndex, null);
+            store.play();
+
         } catch (error) {
             console.error('Error playing song:', error);
             if (!allSongs) return;
             const songIndex = allSongs.findIndex(song => song._id === songId);
             if (songIndex === -1) return;
 
-            if (store.currentSong?._id === songId) {
-                store.playPause();
-            } else {
-                store.initializeAudio(allSongs, songIndex, null);
-                store.play();
-            }
+            store.initializeAudio(allSongs, songIndex, null);
+            store.play();
         }
     };
 

@@ -105,19 +105,34 @@ export const useAudioStore = create<AudioState>()(
                     navigator.mediaSession.setActionHandler("pause", () => get().pause());
                     navigator.mediaSession.setActionHandler("previoustrack", () => get().previousSong());
                     navigator.mediaSession.setActionHandler("nexttrack", () => get().nextSong());
+                    navigator.mediaSession.setActionHandler("seekbackward", (details) => {
+                        if (audioElement) {
+                            const skipTime = details?.seekOffset || 19;
+                            const newTime = Math.max(audioElement.currentTime - skipTime, 0);
+
+                            if (newTime === 0 && audioElement.currentTime < skipTime) {
+                                get().previousSong();
+                            } else {
+                                get().seek(newTime);
+                            }
+                        }
+                    });
+                    navigator.mediaSession.setActionHandler("seekforward", (details) => {
+                        if (audioElement) {
+                            const skipTime = details?.seekOffset || 19;
+                            const newTime = Math.min(audioElement.currentTime + skipTime, audioElement.duration);
+
+                            if (newTime === audioElement.duration) {
+                                get().nextSong();
+                            } else {
+                                get().seek(newTime);
+                            }
+                        }
+                    });
                     navigator.mediaSession.setActionHandler("seekto", (details) => {
-                        if (details.seekTime) {
-                            get().seek(details.seekTime);
-                        }
-                    });
-                    navigator.mediaSession.setActionHandler("seekbackward", () => {
-                        if (audioElement) {
-                            get().seek(Math.max(audioElement.currentTime - 10, 0));
-                        }
-                    });
-                    navigator.mediaSession.setActionHandler("seekforward", () => {
-                        if (audioElement) {
-                            get().seek(Math.min(audioElement.currentTime + 10, audioElement.duration));
+                        if (audioElement && details.seekTime !== undefined) {
+                            const newTime = Math.max(0, Math.min(details.seekTime, audioElement.duration));
+                            get().seek(newTime);
                         }
                     });
                     navigator.mediaSession.setActionHandler("stop", () => {
@@ -235,14 +250,22 @@ export const useAudioStore = create<AudioState>()(
 
             const endedHandler = () => {
                 stopListeningTimer();
-                if ("mediaSession" in navigator) {
-                    navigator.mediaSession.playbackState = "none";
-                }
                 const state = get();
+
+                // Always continue playing on mobile
+                const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+                const shouldContinue = isMobile || state.autoPlayOnEnd;
+
                 if (state.queueIndex === state.queue.length - 1) {
-                    if (state.autoPlayOnEnd) {
+                    if (shouldContinue) {
+                        if ("mediaSession" in navigator) {
+                            navigator.mediaSession.playbackState = "playing";
+                        }
                         get().playQueueItem(0);
                     } else {
+                        if ("mediaSession" in navigator) {
+                            navigator.mediaSession.playbackState = "none";
+                        }
                         set({
                             queueIndex: 0,
                             currentSong: state.queue[0],
@@ -253,6 +276,9 @@ export const useAudioStore = create<AudioState>()(
                         releaseWakeLock();
                     }
                 } else {
+                    if ("mediaSession" in navigator) {
+                        navigator.mediaSession.playbackState = "playing";
+                    }
                     get().nextSong();
                 }
             };
@@ -342,14 +368,40 @@ export const useAudioStore = create<AudioState>()(
                     const song = state.queue[index];
                     if (!song) return;
 
-                    setupAudioElement(song);
+                    const audio = setupAudioElement(song);
+
+                    // Ensure we have the audio context before proceeding
+                    if (!audio) return;
+
                     set({
                         currentSong: song,
                         queueIndex: index,
                         currentTime: 0,
                         isPlaying: true,
                     });
-                    audioElement?.play();
+
+                    // Set media session state before playing
+                    if ("mediaSession" in navigator) {
+                        navigator.mediaSession.playbackState = "playing";
+                    }
+
+                    const playPromise = audio.play();
+                    if (playPromise !== undefined) {
+                        playPromise.catch((error) => {
+                            console.error("Playback failed:", error);
+                            // If autoplay was prevented, retry with user interaction
+                            const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+                            if (isMobile) {
+                                const retryPlay = () => {
+                                    audio.play().then(() => {
+                                        document.removeEventListener('touchend', retryPlay);
+                                    }).catch(console.error);
+                                };
+                                document.addEventListener('touchend', retryPlay, { once: true });
+                            }
+                        });
+                    }
+
                     startListeningTimer();
                 },
 
@@ -433,12 +485,14 @@ export const useAudioStore = create<AudioState>()(
 
                 previousSong: () => {
                     const state = get();
-                    if (state.currentTime > 3) {
-                        get().seek(0);
-                    } else if (state.queueIndex > 0) {
-                        get().playQueueItem(state.queueIndex - 1);
-                    } else {
-                        get().seek(0);
+                    if (audioElement) {
+                        if (audioElement.currentTime > 19) {
+                            get().seek(0);
+                        } else if (state.queueIndex > 0) {
+                            get().playQueueItem(state.queueIndex - 1);
+                        } else {
+                            get().seek(0);
+                        }
                     }
                 },
 

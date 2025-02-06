@@ -1,29 +1,30 @@
 import {
     Heart,
+    HeartIcon,
     HelpCircle,
-    LayoutDashboardIcon,
-    LayoutGrid,
-    LockIcon,
     LucideIcon,
     Settings2Icon,
-    User2,
-    UserCog
+    Shield,
+    Volume2,
+    User,
+    UserCog,
+    Search,
 } from "lucide-react";
 import { IconType } from "react-icons/lib";
-import { PiList, PiMusicNote, PiPlaylist, PiSoundcloudLogo, PiYoutubeLogoLight } from "react-icons/pi";
+import { PiHouse, PiList, PiMusicNote, PiPlaylist, PiSoundcloudLogo, PiYoutubeLogoLight } from "react-icons/pi";
 
 export type Submenu = {
     href: string;
     label: string;
     active: boolean;
-    icon?: LucideIcon | IconType | undefined | Element;
+    icon?: LucideIcon | IconType;
 };
 
 type Menu = {
     href: string;
     label: string;
     active: boolean;
-    icon: LucideIcon | IconType | undefined | Element;
+    icon: LucideIcon | IconType;
     submenus: Submenu[];
 };
 
@@ -38,10 +39,17 @@ export function getMenuList(pathname: string): Group[] {
             groupLabel: "",
             menus: [
                 {
+                    href: "#",
+                    label: "Search",
+                    active: false,
+                    icon: Search,
+                    submenus: [],
+                },
+                {
                     href: "/dashboard",
                     label: "Home",
                     active: pathname === "/dashboard",
-                    icon: LayoutGrid,
+                    icon: PiHouse,
                     submenus: [],
                 },
             ],
@@ -52,7 +60,7 @@ export function getMenuList(pathname: string): Group[] {
                 {
                     href: "/songs",
                     label: "Songs",
-                    active: false,
+                    active: pathname.includes("/dashboard/songs"),
                     icon: PiMusicNote,
                     submenus: [
                         {
@@ -97,26 +105,32 @@ export function getMenuList(pathname: string): Group[] {
                 {
                     href: "/dashboard/settings",
                     label: "Settings",
-                    active: false,
+                    active: pathname.includes("/settings") || window?.location?.hash?.startsWith("#"),
                     icon: Settings2Icon,
                     submenus: [
                         {
-                            href: "/dashboard/settings/account",
-                            label: "Account",
-                            icon: User2,
-                            active: pathname.includes("/account"),
-                        },
-                        {
-                            href: "/dashboard/settings/privacy",
+                            href: "/dashboard/settings#privacy",
                             label: "Privacy",
-                            icon: LockIcon,
-                            active: pathname.includes("/privacy"),
+                            icon: Shield,
+                            active: pathname.includes("/settings") && window?.location?.hash === "#privacy",
                         },
                         {
-                            href: "/dashboard/settings/preferences",
+                            href: "/dashboard/settings#preferences",
                             label: "Preferences",
-                            icon: LayoutDashboardIcon,
-                            active: pathname.includes("/preferences"),
+                            icon: HeartIcon,
+                            active: pathname.includes("/settings") && window?.location?.hash === "#preferences",
+                        },
+                        {
+                            href: "/dashboard/settings#playback",
+                            label: "Playback",
+                            icon: Volume2,
+                            active: pathname.includes("/settings") && window?.location?.hash === "#playback",
+                        },
+                        {
+                            href: "/dashboard/settings#account",
+                            label: "Account",
+                            icon: User,
+                            active: pathname.includes("/settings") && window?.location?.hash === "#account",
                         },
                     ],
                 },
@@ -132,8 +146,7 @@ export function getMenuList(pathname: string): Group[] {
                     label: "Need Help?",
                     active: pathname.includes("/help"),
                     icon: HelpCircle,
-                    submenus: [
-                    ],
+                    submenus: [],
                 },
             ],
         },

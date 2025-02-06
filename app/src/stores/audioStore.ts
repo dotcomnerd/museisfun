@@ -144,12 +144,7 @@ export const useAudioStore = create<AudioState>()(
 
             const startListeningTimer = () => {
                 const state = get();
-                if (state.listeningTimer) {
-                    clearInterval(state.listeningTimer);
-                }
-
-                console.log(get().currentSong);
-
+                if (state.listeningTimer) clearInterval(state.listeningTimer);
                 const timer = setInterval(() => {
                     const currentState = get();
                     if (currentState.currentSong && currentState.isPlaying) {
@@ -162,7 +157,6 @@ export const useAudioStore = create<AudioState>()(
                         }
                     }
                 }, 5000);
-
                 set({
                     listeningTimer: timer,
                     lastUpdateTime: Date.now()
@@ -200,6 +194,18 @@ export const useAudioStore = create<AudioState>()(
                 audioElement = new Audio(song.stream_url!);
                 audioElement.volume = get().volume;
                 audioElement.preload = "auto";
+                (audioElement as any).playsInline = true;
+
+                audioElement.addEventListener('play', () => {
+                    if (!audioElement) return;
+                    try {
+                        (audioElement as any).mozAudioChannelType = 'content';
+                        (audioElement as any).preservesPitch = false;
+                        audioElement.crossOrigin = "anonymous";
+                    } catch (e) {
+                        console.warn('Audio channel type not supported');
+                    }
+                });
 
                 audioElement.addEventListener("timeupdate", timeUpdateHandler);
                 audioElement.addEventListener("loadedmetadata", loadedMetadataHandler);
@@ -216,7 +222,7 @@ export const useAudioStore = create<AudioState>()(
             const timeUpdateHandler = () => {
                 if (audioElement) {
                     set({ currentTime: audioElement.currentTime });
-                    if ("mediaSession" in navigator) {
+                    if ("mediaSession" in navigator && !isNaN(audioElement.duration) && audioElement.duration > 0) {
                         navigator.mediaSession.setPositionState({
                             duration: audioElement.duration,
                             playbackRate: audioElement.playbackRate,
@@ -252,29 +258,11 @@ export const useAudioStore = create<AudioState>()(
                 stopListeningTimer();
                 const state = get();
 
-                // Always continue playing on mobile
-                const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-                const shouldContinue = isMobile || state.autoPlayOnEnd;
-
                 if (state.queueIndex === state.queue.length - 1) {
-                    if (shouldContinue) {
-                        if ("mediaSession" in navigator) {
-                            navigator.mediaSession.playbackState = "playing";
-                        }
-                        get().playQueueItem(0);
-                    } else {
-                        if ("mediaSession" in navigator) {
-                            navigator.mediaSession.playbackState = "none";
-                        }
-                        set({
-                            queueIndex: 0,
-                            currentSong: state.queue[0],
-                            currentTime: 0,
-                            isPlaying: false
-                        });
-                        setupAudioElement(state.queue[0]);
-                        releaseWakeLock();
+                    if ("mediaSession" in navigator) {
+                        navigator.mediaSession.playbackState = "playing";
                     }
+                    get().playQueueItem(0);
                 } else {
                     if ("mediaSession" in navigator) {
                         navigator.mediaSession.playbackState = "playing";
@@ -284,7 +272,6 @@ export const useAudioStore = create<AudioState>()(
             };
 
             return {
-                // Initial state
                 currentSong: null,
                 isPlaying: false,
                 currentTime: 0,
@@ -370,7 +357,6 @@ export const useAudioStore = create<AudioState>()(
 
                     const audio = setupAudioElement(song);
 
-                    // Ensure we have the audio context before proceeding
                     if (!audio) return;
 
                     set({
@@ -380,7 +366,6 @@ export const useAudioStore = create<AudioState>()(
                         isPlaying: true,
                     });
 
-                    // Set media session state before playing
                     if ("mediaSession" in navigator) {
                         navigator.mediaSession.playbackState = "playing";
                     }
@@ -389,7 +374,6 @@ export const useAudioStore = create<AudioState>()(
                     if (playPromise !== undefined) {
                         playPromise.catch((error) => {
                             console.error("Playback failed:", error);
-                            // If autoplay was prevented, retry with user interaction
                             const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
                             if (isMobile) {
                                 const retryPlay = () => {
@@ -588,7 +572,6 @@ export const useAudioStore = create<AudioState>()(
                 },
 
                 async updateListeningTime(songId, time) {
-                    console.log("Updating listening time for song", songId, "with time", time);
                     try {
                         await Fetcher.getInstance().post(`/api/songs/${songId}/listen`, { time });
                     } catch (error) {

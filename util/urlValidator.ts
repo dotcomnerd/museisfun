@@ -1,6 +1,6 @@
 import { Types } from "mongoose";
 
-type SupportedPlatforms = "youtube" | "soundcloud";
+type SupportedPlatforms = "youtube" | "soundcloud" | "applemusic" | "spotify";
 
 interface PlatformValidator {
     validate(url: string): boolean;
@@ -20,6 +20,20 @@ class SoundCloudValidator implements PlatformValidator {
     }
 }
 
+class AppleMusicValidator implements PlatformValidator {
+    validate(url: string): boolean {
+        const appleMusicRegex = /^(https?:\/\/)?(www\.)?(music\.apple\.com)\/.+$/;
+        return appleMusicRegex.test(url);
+    }
+}
+
+class SpotifyValidator implements PlatformValidator {
+    validate(url: string): boolean {
+        const spotifyRegex = /^(https?:\/\/)?(www\.)?(spotify\.com)\/.+$/;
+        return spotifyRegex.test(url);
+    }
+}
+
 export class UrlValidator {
     private platformValidators: Map<SupportedPlatforms, PlatformValidator> =
         new Map();
@@ -27,6 +41,8 @@ export class UrlValidator {
     constructor() {
         this.registerValidator("youtube", new YouTubeValidator());
         this.registerValidator("soundcloud", new SoundCloudValidator());
+        this.registerValidator("applemusic", new AppleMusicValidator());
+        this.registerValidator("spotify", new SpotifyValidator());
     }
 
     registerValidator(

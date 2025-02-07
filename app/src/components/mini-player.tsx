@@ -31,7 +31,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { toast } from "sonner";
 import { useIsMobile } from '@/hooks/use-mobile';
 
-const ProgressBar = ({
+export const ProgressBar = ({
     mini = false,
     collapsed = false,
     duration,

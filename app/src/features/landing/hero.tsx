@@ -10,7 +10,7 @@ import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@
 import { GridIllustration } from '@/components/ui/grid-bg';
 import { InfiniteSlider } from "@/components/ui/inf-slider";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
-import { HoverCard, HoverCardTrigger, HoverCardContent } from "@/components/ui/hover-card";
+import { Input } from '@/components/ui/input';
 
 export function HeroSection() {
     const { data: user } = useUser();
@@ -219,12 +219,35 @@ export function HeroSection() {
                                 </div>
 
                                 <div className="hidden lg:block">
-                                    <div className="relative w-full">
-                                        <img
-                                            className="w-full rounded-lg shadow-2xl transform hover:scale-105 transition-transform duration-300 border-primary/20 border-2 ring-primary/5 ring-2"
-                                            src="/songs-preview.png"
-                                            alt="Muse Dashboard Preview"
-                                        />
+                                    <div className="relative w-full max-w-4xl mx-auto">
+                                        <div className="rounded-xl overflow-hidden shadow-[0_20px_50px_-15px_rgba(139,92,246,0.15)] bg-background/95 backdrop-blur-sm border border-primary/20 transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_20px_50px_-12px_rgba(139,92,246,0.25)]">
+                                            {/* Safari Browser Chrome */}
+                                            <div className="bg-primary/5 dark:bg-primary/10 p-2.5 flex items-center gap-2 border-b border-primary/10 backdrop-blur-md">
+                                                <div className="flex gap-1.5">
+                                                    <div className="w-3 h-3 rounded-full bg-red-500/90" />
+                                                    <div className="w-3 h-3 rounded-full bg-yellow-500/90" />
+                                                    <div className="w-3 h-3 rounded-full bg-green-500/90" />
+                                                </div>
+                                                <div className="flex-1 flex justify-center">
+                                                    <Input
+                                                        disabled
+                                                        type="text"
+                                                        value="https://ohits.fun"
+                                                        readOnly
+                                                        className="max-w-full mx-2 text-center text-xs font-medium bg-background/50 backdrop-blur-sm border-primary/10 focus-visible:ring-primary/20 focus-visible:ring-offset-0"
+                                                    />
+                                                </div>
+                                            </div>
+
+                                            {/* Content */}
+                                            <div className="relative">
+                                                <img
+                                                    className="w-full"
+                                                    src="/dashboard.png"
+                                                    alt="Muse Dashboard Preview"
+                                                />
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                             </motion.div>
@@ -234,82 +257,76 @@ export function HeroSection() {
                         </div>
                     </div>
                 </div>
-                <LogoSlider />
             </section>
         </>
     );
 }
 
-export function LogoSlider() {
+export function LogoSlider({ className, cardClassName }: { className?: string, cardClassName?: string }) {
     return (
 
-        <div className="w-full pt-12 pb-32 md:pt-0 lg:pt-0 xl:pt-0 md:pb-48 max-w-5xl mx-auto">
-            <Card className="w-full bg-background/50 backdrop-blur-sm">
+        <div className={cn("w-full mx-auto", className)}>
+            <Card className={cn("w-full bg-background/50 backdrop-blur-sm", cardClassName)}>
                 <CardHeader>
                     <CardTitle>
                         <h2 className="text-4xl font-bold">Supported Platforms</h2>
                     </CardTitle>
                     <CardDescription>
-                        Seamlessly integrate with your favorite music services
+                        <div className="flex flex-col gap-2">
+                            From SoundCloud to YouTube Music, Pandora, Deezer, and more, Muse integrates with all of your favorite streaming services.
+                            <div className="pl-4 border-l-4 border-purple-500">
+                                <p className="text-sm text-purple-800 dark:text-purple-200">
+                                    Muse cannot guarantee the availability of all services at all times.
+                                </p>
+                            </div>
+                        </div>
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
                     <div className="flex flex-col gap-2">
-                        <HoverCard>
-                            <HoverCardTrigger asChild>
-                                <div className="-mx-6">
-                                    <InfiniteSlider
-                                        gap={48}
-                                        reverse
-                                        className="w-full py-8 bg-purple-200/50 dark:bg-purple-950/30 backdrop-blur-sm"
-                                    >
-                                        <img
-                                            src="/spotify.svg"
-                                            alt="Spotify logo"
-                                            className="h-[80px] w-auto opacity-60 hover:opacity-100 transition-opacity duration-300 [&>path]:fill-[#1DB954] dark:brightness-0 dark:invert hover:scale-110 transform"
-                                        />
-                                        <img
-                                            src="https://upload.wikimedia.org/wikipedia/commons/9/9d/AppleMusic_2019.svg"
-                                            alt="Apple Music logo"
-                                            className="h-[60px] w-auto opacity-60 hover:opacity-100 transition-opacity duration-300 dark:brightness-0 dark:invert hover:scale-110 transform"
-                                        />
-                                        <img
-                                            src="/ytmusic.svg"
-                                            alt="YouTube Music logo"
-                                            className='h-[60px] w-auto opacity-60 hover:opacity-100 transition-opacity duration-300 dark:hidden hover:scale-110 transform'
-                                        />
-                                        <img
-                                            src="/ytmusic-dark.svg"
-                                            alt="YouTube Music logo"
-                                            className='h-[60px] w-auto opacity-60 hover:opacity-100 transition-opacity duration-300 dark:block hidden hover:scale-110 transform'
-                                        />
-                                        <img
-                                            src="https://upload.wikimedia.org/wikipedia/commons/d/dd/Deezer_logo_2019.svg"
-                                            alt="Deezer logo"
-                                            className="h-[60px] w-auto opacity-60 hover:opacity-100 transition-opacity duration-300 dark:invert hover:scale-110 transform"
-                                        />
-                                        <img
-                                            src="https://upload.wikimedia.org/wikipedia/commons/5/56/Pandora_Logo_2019.svg"
-                                            alt="Pandora logo"
-                                            className="h-[60px] w-auto opacity-60 hover:opacity-100 transition-opacity duration-300 dark:invert hover:scale-110 transform"
-                                        />
-                                        <img
-                                            src="/soundcloud.svg"
-                                            alt="SoundCloud logo"
-                                            className="h-[60px] w-auto opacity-60 hover:opacity-100 transition-opacity duration-300 dark:invert hover:scale-110 transform"
-                                        />
-                                    </InfiniteSlider>
-                                </div>
-                            </HoverCardTrigger>
-                            <HoverCardContent className="w-80">
-                                <div className="space-y-2">
-                                    <h4 className="text-sm font-semibold">Integrated Services</h4>
-                                    <p className="text-sm">
-                                        Connect and manage your music from multiple streaming platforms in one place.
-                                    </p>
-                                </div>
-                            </HoverCardContent>
-                        </HoverCard>
+                        <div className="-mx-6">
+                            <InfiniteSlider
+                                gap={48}
+                                reverse
+                                className="w-full py-8 bg-purple-200/50 dark:bg-purple-950/30 backdrop-blur-sm"
+                            >
+                                <img
+                                    src="/spotify.svg"
+                                    alt="Spotify logo"
+                                    className="h-[80px] w-auto opacity-80 [&>path]:fill-[#1DB954] dark:brightness-0 dark:invert"
+                                />
+                                <img
+                                    src="https://upload.wikimedia.org/wikipedia/commons/9/9d/AppleMusic_2019.svg"
+                                    alt="Apple Music logo"
+                                    className="h-[60px] w-auto opacity-80 dark:brightness-0 dark:invert"
+                                />
+                                <img
+                                    src="/ytmusic.svg"
+                                    alt="YouTube Music logo"
+                                    className='h-[60px] w-auto opacity-80 dark:hidden'
+                                />
+                                <img
+                                    src="/ytmusic-dark.svg"
+                                    alt="YouTube Music logo"
+                                    className='h-[60px] w-auto opacity-80 dark:block hidden'
+                                />
+                                <img
+                                    src="https://upload.wikimedia.org/wikipedia/commons/d/dd/Deezer_logo_2019.svg"
+                                    alt="Deezer logo"
+                                    className="h-[60px] w-auto opacity-80 dark:invert"
+                                />
+                                <img
+                                    src="https://upload.wikimedia.org/wikipedia/commons/5/56/Pandora_Logo_2019.svg"
+                                    alt="Pandora logo"
+                                    className="h-[60px] w-auto opacity-80 dark:invert"
+                                />
+                                <img
+                                    src="/soundcloud.svg"
+                                    alt="SoundCloud logo"
+                                    className="h-[60px] w-auto opacity-80 dark:invert"
+                                />
+                            </InfiniteSlider>
+                        </div>
                     </div>
                 </CardContent>
             </Card>

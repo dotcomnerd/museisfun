@@ -1,11 +1,13 @@
 import { motion, AnimatePresence } from 'framer-motion'
-import { Headphones, ListMusic, Music, ChevronDown, Clock, BarChart2, Settings } from 'lucide-react'
-import { useRef, useState, useEffect } from 'react'
+import { Headphones, ListMusic, Music, ChevronDown, BarChart2, Settings } from 'lucide-react'
+import { useState, useEffect } from 'react'
+import { LogoSlider } from './hero'
+import { DemoPlayer } from './player-stub'
 
-export function Features() {
+export function DesktopFeatures() {
     const [activeCard, setActiveCard] = useState(1)
     const [progress, setProgress] = useState(0)
-
+    const [shouldPlay,] = useState(false)
     const featureData = [
         {
             id: 1,
@@ -89,20 +91,17 @@ export function Features() {
     }, [activeCard, currentFeature?.duration])
 
     return (
-        <section className="w-full pt-24 md:pt-32 pb-20">
-            <div className="mx-auto max-w-7xl px-4">
-                <div className="mx-auto max-w-2xl space-y-4 text-center mb-16">
-                    <div className="mb-2 inline-block rounded-full bg-primary/20 px-2 py-1 text-xs font-medium uppercase text-primary">
-                        Features
-                    </div>
-                    <h2 className="text-3xl font-semibold tracking-tight text-foreground sm:text-4xl">
-                        See Muse in action
-                    </h2>
-                    <p className="text-md text-muted-foreground max-w-lg mx-auto">
-                        Discover the features that make Muse your perfect music companion. Everything you need in one place.
-                    </p>
-                </div>
+        <section className="w-full px-8 py-12">
+            <div className="text-center">
+                <h2 className="text-4xl font-bold tracking-tight text-foreground sm:text-5xl lg:text-6xl">Muse at a glance</h2>
+                <p className="mt-2 text-muted-foreground">See for yourself 👇🏿 - including our live demo</p>
+            </div>
 
+            <div className="mx-auto px-4">
+                <LogoSlider className='my-6' />
+                <div className="flex flex-col items-center justify-center w-full mx-auto my-4">
+                    <DemoPlayer className='mx-auto' shouldPlay={shouldPlay} />
+                </div>
                 <div className="grid grid-cols-[300px_1fr] gap-8">
                     <div className="space-y-4">
                         <div className="flex flex-col gap-4">
@@ -111,11 +110,10 @@ export function Features() {
                                     key={feature.id}
                                     initial={false}
                                     animate={activeCard === feature.id ? "expanded" : "collapsed"}
-                                    className={`relative rounded-lg border transition-all duration-300 ease-in-out ${
-                                        activeCard === feature.id
-                                            ? "ring-1 ring-primary"
-                                            : ""
-                                    } overflow-hidden`}
+                                    className={`relative rounded-lg border transition-all duration-300 ease-in-out ${activeCard === feature.id
+                                        ? "ring-1 ring-primary"
+                                        : ""
+                                        } overflow-hidden`}
                                 >
                                     <div className="relative">
                                         <button
@@ -124,11 +122,10 @@ export function Features() {
                                         >
                                             <div className="flex items-center justify-between">
                                                 <div className="flex items-center gap-3">
-                                                    <div className={`rounded-lg p-1 transition-colors ${
-                                                        activeCard === feature.id
-                                                            ? "bg-primary text-primary-foreground"
-                                                            : "bg-accent text-primary"
-                                                    }`}>
+                                                    <div className={`rounded-lg p-1 transition-colors ${activeCard === feature.id
+                                                        ? "bg-primary text-primary-foreground"
+                                                        : "bg-accent text-primary"
+                                                        }`}>
                                                         {feature.icon}
                                                     </div>
                                                     <h3 className="text-md font-medium">{feature.title}</h3>

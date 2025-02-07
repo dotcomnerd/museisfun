@@ -9,37 +9,75 @@ import mongoose, { mongo } from 'mongoose';
 const router = Router();
 
 const internetConnection: boolean = false;
+const usersCache = new Map();
+const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
 
-const getUsers = (req: Request, res: Response) => {
-    User.find()
-        .select("-password")
-        .populate("songs")
-        .then((users) => {
-            res.json(users);
-        })
-        .catch((error) => {
-            res.status(500).json({ message: "Internal server error", error });
+const getUsers = async (req: Request, res: Response) => {
+    try {
+        const now = Date.now();
+        for (const [key, value] of usersCache.entries()) {
+            if (now - value.timestamp > CACHE_DURATION) {
+                usersCache.delete(key);
+            }
+        }
+
+        const cacheKey = 'all_users';
+        const cached = usersCache.get(cacheKey);
+        if (cached && now - cached.timestamp < CACHE_DURATION) {
+            return res.json(cached.users);
+        }
+
+        const users = await User.find()
+            .select("-password")
+            .populate("songs");
+
+        usersCache.set(cacheKey, {
+            users,
+            timestamp: now
         });
+
+        res.json(users);
+    } catch (error) {
+        res.status(500).json({ message: "Internal server error", error });
+    }
 };
 
 // TODO: Send less info back to the client
 const getUser = async (req: Request, res: Response) => {
-    const { username } = req.params
+    const { username } = req.params;
 
     if (!username) {
         return res.status(400).json({ message: "Invalid input" });
     }
 
     try {
+        const now = Date.now();
+
+        for (const [key, value] of usersCache.entries()) {
+            if (now - value.timestamp > CACHE_DURATION) {
+                usersCache.delete(key);
+            }
+        }
+
+        const cacheKey = `user_${username}`;
+        const cached = usersCache.get(cacheKey);
+        if (cached && now - cached.timestamp < CACHE_DURATION) {
+            return res.json(cached.user);
+        }
+
         const maybeUser = await User
-            .findOne
-            ({ username })
+            .findOne({ username })
             .select("-password")
             .populate("songs");
 
         if (!maybeUser) {
             return res.status(404).json({ message: "User not found" });
         }
+
+        usersCache.set(cacheKey, {
+            user: maybeUser,
+            timestamp: now
+        });
 
         return res.json(maybeUser);
     } catch (error) {

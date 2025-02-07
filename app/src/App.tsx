@@ -20,11 +20,9 @@ import {
 import { Link, Route, Routes, useNavigate, useParams } from "react-router"
 import { AuthLayout, LoginCard, RegisterCard } from "./components/auth"
 import { HelpView } from "./features/help/view"
-import { Features } from './features/landing/features'
 import { Footer } from './features/landing/footer'
 import { HeroSection } from "./features/landing/hero"
 import { Navbar } from "./features/landing/nav"
-import { PricingPage } from './features/landing/pricing'
 import { Playlist, PlaylistViewNested } from "./features/playlists/nested"
 import { PlaylistView } from "./features/playlists/view"
 import { ProfileViewNested, UserProfile } from "./features/profile/nested"
@@ -46,7 +44,7 @@ import { FavoritesView } from './features/favorites/view'
 import { motion } from "framer-motion";
 import { toast } from 'sonner'
 import { Song } from './features/songs/dashboard/view'
-
+import { Features } from './features/landing/features-all'
 type TrackType = GetRecentDownloadsResponse[number];
 interface ExtendedTrack extends TrackType {
     isFavorited?: boolean;
@@ -58,7 +56,6 @@ export default function App() {
             <Navbar />
             <HeroSection />
             <Features />
-            <PricingPage />
             <Footer />
         </div>
     );
@@ -67,6 +64,8 @@ export default function App() {
 function About() {
     return <h1>About</h1>;
 }
+
+
 
 function PlaylistsPage() {
     return (

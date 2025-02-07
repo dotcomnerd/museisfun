@@ -15,7 +15,7 @@ export const authMiddleware = (
     res: Response,
     next: NextFunction
 ): void => {
-    if (req.url === "/health") {
+    if (req.url === "/health" || req.originalUrl === "/v2/api/songs/demo/random") {
         next();
         return;
     }

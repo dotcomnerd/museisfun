@@ -518,4 +518,56 @@ router.get("/api/youtube/videos/:id", async (req, res) => {
     }
 });
 
+const songCache = new Map();
+const CACHE_DURATION = 10 * 1000;
+
+router.get("/api/songs/demo/random", async (req, res) => {
+    try {
+        const now = Date.now();
+        for (const [key, value] of songCache.entries()) {
+            if (now - value.timestamp > CACHE_DURATION) {
+                songCache.delete(key);
+            }
+        }
+
+        const cachedSongs = Array.from(songCache.values());
+        if (cachedSongs.length > 0) {
+            console.log("Returning cached song");
+            const randomCached = cachedSongs[Math.floor(Math.random() * cachedSongs.length)];
+            return res.json(randomCached.song);
+        }
+
+        const count = await Song.countDocuments();
+        const random = Math.floor(Math.random() * count);
+        const song = await Song.findOne().skip(random);
+
+        if (!song) {
+            return res.status(404).json({ error: "No songs found" });
+        }
+
+        if (song.r2Key) {
+            song.stream_url = await getPresignedUrl({ key: song.r2Key, bucket: BUCKET_NAME, expiresIn: 60 * 60 * 24 }) || '';
+        }
+
+        const songResponse = {
+            _id: song._id,
+            title: song.title,
+            uploader: song.uploader,
+            thumbnail: song.thumbnail,
+            stream_url: song.stream_url,
+            duration: song.duration
+        };
+
+        songCache.set(song._id.toString(), {
+            song: songResponse,
+            timestamp: now
+        });
+
+        res.json(songResponse);
+    } catch (error) {
+        console.error("Error fetching random song:", error);
+        res.status(500).json({ error: error });
+    }
+});
+
 export default router;

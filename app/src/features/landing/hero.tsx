@@ -7,6 +7,10 @@ import { ArrowRight } from "lucide-react";
 import { PiSoundcloudLogoFill } from "react-icons/pi";
 import { Link } from "react-router";
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
+import { GridIllustration } from '@/components/ui/grid-bg';
+import { InfiniteSlider } from "@/components/ui/inf-slider";
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
+import { HoverCard, HoverCardTrigger, HoverCardContent } from "@/components/ui/hover-card";
 
 export function HeroSection() {
     const { data: user } = useUser();
@@ -224,10 +228,91 @@ export function HeroSection() {
                                     </div>
                                 </div>
                             </motion.div>
+                            <div className="absolute inset-0 opacity-30 rotate-180">
+                                <GridIllustration />
+                            </div>
                         </div>
                     </div>
                 </div>
+                <LogoSlider />
             </section>
         </>
+    );
+}
+
+export function LogoSlider() {
+    return (
+
+        <div className="w-full pt-12 pb-32 md:pt-0 lg:pt-0 xl:pt-0 md:pb-48 max-w-5xl mx-auto">
+            <Card className="w-full bg-background/50 backdrop-blur-sm">
+                <CardHeader>
+                    <CardTitle>
+                        <h2 className="text-4xl font-bold">Supported Platforms</h2>
+                    </CardTitle>
+                    <CardDescription>
+                        Seamlessly integrate with your favorite music services
+                    </CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <div className="flex flex-col gap-2">
+                        <HoverCard>
+                            <HoverCardTrigger asChild>
+                                <div className="-mx-6">
+                                    <InfiniteSlider
+                                        gap={48}
+                                        reverse
+                                        className="w-full py-8 bg-purple-200/50 dark:bg-purple-950/30 backdrop-blur-sm"
+                                    >
+                                        <img
+                                            src="/spotify.svg"
+                                            alt="Spotify logo"
+                                            className="h-[80px] w-auto opacity-60 hover:opacity-100 transition-opacity duration-300 [&>path]:fill-[#1DB954] dark:brightness-0 dark:invert hover:scale-110 transform"
+                                        />
+                                        <img
+                                            src="https://upload.wikimedia.org/wikipedia/commons/9/9d/AppleMusic_2019.svg"
+                                            alt="Apple Music logo"
+                                            className="h-[60px] w-auto opacity-60 hover:opacity-100 transition-opacity duration-300 dark:brightness-0 dark:invert hover:scale-110 transform"
+                                        />
+                                        <img
+                                            src="/ytmusic.svg"
+                                            alt="YouTube Music logo"
+                                            className='h-[60px] w-auto opacity-60 hover:opacity-100 transition-opacity duration-300 dark:hidden hover:scale-110 transform'
+                                        />
+                                        <img
+                                            src="/ytmusic-dark.svg"
+                                            alt="YouTube Music logo"
+                                            className='h-[60px] w-auto opacity-60 hover:opacity-100 transition-opacity duration-300 dark:block hidden hover:scale-110 transform'
+                                        />
+                                        <img
+                                            src="https://upload.wikimedia.org/wikipedia/commons/d/dd/Deezer_logo_2019.svg"
+                                            alt="Deezer logo"
+                                            className="h-[60px] w-auto opacity-60 hover:opacity-100 transition-opacity duration-300 dark:invert hover:scale-110 transform"
+                                        />
+                                        <img
+                                            src="https://upload.wikimedia.org/wikipedia/commons/5/56/Pandora_Logo_2019.svg"
+                                            alt="Pandora logo"
+                                            className="h-[60px] w-auto opacity-60 hover:opacity-100 transition-opacity duration-300 dark:invert hover:scale-110 transform"
+                                        />
+                                        <img
+                                            src="/soundcloud.svg"
+                                            alt="SoundCloud logo"
+                                            className="h-[60px] w-auto opacity-60 hover:opacity-100 transition-opacity duration-300 dark:invert hover:scale-110 transform"
+                                        />
+                                    </InfiniteSlider>
+                                </div>
+                            </HoverCardTrigger>
+                            <HoverCardContent className="w-80">
+                                <div className="space-y-2">
+                                    <h4 className="text-sm font-semibold">Integrated Services</h4>
+                                    <p className="text-sm">
+                                        Connect and manage your music from multiple streaming platforms in one place.
+                                    </p>
+                                </div>
+                            </HoverCardContent>
+                        </HoverCard>
+                    </div>
+                </CardContent>
+            </Card>
+        </div>
     );
 }

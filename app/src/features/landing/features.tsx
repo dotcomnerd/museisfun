@@ -1,5 +1,5 @@
 import { motion, AnimatePresence } from 'framer-motion'
-import { Headphones, ListMusic, Music, ChevronDown } from 'lucide-react'
+import { Headphones, ListMusic, Music, ChevronDown, Clock, BarChart2, Settings } from 'lucide-react'
 import { useRef, useState, useEffect } from 'react'
 
 export function Features() {
@@ -9,24 +9,40 @@ export function Features() {
     const featureData = [
         {
             id: 1,
+            title: 'Manage Your Music',
+            description: 'Sort, edit and stream your music collection with an intuitive dashboard. View detailed song information and manage your library effortlessly.',
+            icon: <Settings />,
+            imageSource: '/song-list.png',
+            duration: 5000
+        },
+        {
+            id: 2,
+            title: 'Create & Organize Playlists',
+            description: 'Build unlimited playlists, organize your music just the way you like it, and share your collections with friends.',
+            icon: <ListMusic />,
+            imageSource: '/playlist-create.png',
+            duration: 5000
+        },
+        {
+            id: 3,
+            title: 'Track Listening Stats',
+            description: `Monitor your listening habits with detailed statistics. See how much time you've spent with each song and track your music journey.`,
+            imageSource: '/dashboard.png',
+            icon: <BarChart2 />,
+            duration: 5000
+        },
+        {
+            id: 4,
             title: 'Upload Music',
-            description: 'Upload your favorite songs from YouTube and SoundCloud with just one click.',
+            description: 'Upload your favorite songs from YouTube and SoundCloud with just one click. Build your personal music library.',
             icon: <Music />,
             imageSource: '/upload.png',
             duration: 5000
         },
         {
-            id: 2,
-            title: 'Create Playlists',
-            description: 'Organize your music into unlimited playlists and share them with friends.',
-            icon: <ListMusic />,
-            imageSource: '/create-playlist.png',
-            duration: 5000
-        },
-        {
-            id: 3,
-            title: 'High Quality',
-            description: 'Enjoy crystal clear audio with our high-quality streaming.',
+            id: 5,
+            title: 'High Quality Streaming',
+            description: 'Enjoy crystal clear audio with our high-quality streaming service. Listen to your music in the best possible quality.',
             icon: <Headphones />,
             imageSource: '/high-quality.png',
             duration: 5000
@@ -83,7 +99,7 @@ export function Features() {
                         See Muse in action
                     </h2>
                     <p className="text-md text-muted-foreground max-w-lg mx-auto">
-                        Discover the features that make Muse enough to cancel your Spotify subscription and switch to us.
+                        Discover the features that make Muse your perfect music companion. Everything you need in one place.
                     </p>
                 </div>
 
@@ -170,26 +186,24 @@ export function Features() {
                     </div>
 
                     <div className="relative w-full overflow-hidden rounded-lg border bg-card">
-                        <div className="aspect-[16/9]">
-                            <AnimatePresence mode="wait">
-                                {currentFeature && (
-                                    <motion.div
-                                        key={currentFeature.id}
-                                        initial={{ opacity: 0, filter: 'blur(10px)' }}
-                                        animate={{ opacity: 1, filter: 'blur(0px)' }}
-                                        exit={{ opacity: 0, filter: 'blur(10px)' }}
-                                        transition={{ duration: 0.4, ease: "easeOut" }}
-                                        className="absolute inset-0 flex justify-center p-4"
-                                    >
-                                        <img
-                                            src={currentFeature.imageSource}
-                                            alt={`Muse feature ${currentFeature.title}`}
-                                            className="w-full max-w-5xl rounded-lg object-contain"
-                                        />
-                                    </motion.div>
-                                )}
-                            </AnimatePresence>
-                        </div>
+                        <AnimatePresence mode="wait">
+                            {currentFeature && (
+                                <motion.div
+                                    key={currentFeature.id}
+                                    initial={{ opacity: 0, filter: 'blur(10px)' }}
+                                    animate={{ opacity: 1, filter: 'blur(0px)' }}
+                                    exit={{ opacity: 0, filter: 'blur(10px)' }}
+                                    transition={{ duration: 0.4, ease: "easeOut" }}
+                                    className="flex justify-center"
+                                >
+                                    <img
+                                        src={currentFeature.imageSource}
+                                        alt={`Muse feature ${currentFeature.title}`}
+                                        className="w-full max-w-5xl rounded-lg object-cover"
+                                    />
+                                </motion.div>
+                            )}
+                        </AnimatePresence>
                     </div>
                 </div>
             </div>

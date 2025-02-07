@@ -98,49 +98,49 @@ export function AddSongDialog({ children }: { children: React.ReactNode }) {
       <DialogTrigger asChild>
         {children}
       </DialogTrigger>
-      <DialogContent className="rounded-lg bg-black/90 backdrop-blur-lg border-purple-500/50 sm:max-w-[425px] w-[95vw] mx-auto">
+      <DialogContent className="bg-background/80 backdrop-blur-lg border-primary/30 rounded-lg sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2 text-lg md:text-xl">
-            <Music className="h-5 w-5" />
+          <DialogTitle className="flex items-center gap-2">
+            <Music className="h-4 w-4" />
             Add New Song
           </DialogTitle>
-          <DialogDescription className="text-sm md:text-base">
+          <DialogDescription className="text-muted-foreground/70">
             Paste a YouTube, SoundCloud, or Last.fm URL to add a song to your library
           </DialogDescription>
         </DialogHeader>
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 md:space-y-6">
-          <div className="space-y-3 md:space-y-4">
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+          <div className="space-y-2">
             <div>
-              <Label htmlFor="url" className="text-sm md:text-base">Song URL</Label>
+              <Label htmlFor="url">Song URL</Label>
               <Input
                 id="url"
-                className="bg-black/20 h-12 md:h-10 text-base md:text-sm"
+                className="bg-secondary/10 border-secondary/20 text-foreground/90 placeholder:text-muted-foreground/50 focus-visible:ring-ring/50 focus-visible:border-ring/30 h-8"
                 {...register("url")}
                 placeholder="Paste YouTube, SoundCloud, or Last.fm URL"
                 type="url"
                 inputMode="url"
               />
               {errors.url && (
-                <p className="text-red-500 text-xs md:text-sm mt-1">
+                <p className="text-destructive/90 text-xs mt-1">
                   {errors.url.message}
                 </p>
               )}
             </div>
           </div>
 
-          <DialogFooter className="flex-col space-y-2 sm:flex-row sm:space-y-0 sm:space-x-2">
+          <DialogFooter className="flex gap-2 justify-end">
             <Button
               type="button"
-              variant="outline"
+              variant="ghost"
               onClick={handleClose}
-              className="bg-black/20 w-full sm:w-auto h-12 sm:h-10 text-base sm:text-sm"
+              className="h-8 hover:bg-secondary/20"
             >
               Cancel
             </Button>
             <Button
               type="submit"
               disabled={addSong.isPending}
-              className="bg-purple-500 hover:bg-purple-600 w-full sm:w-auto h-12 sm:h-10 text-base sm:text-sm"
+              className="bg-primary/80 hover:bg-primary/70 text-primary-foreground/90 h-8"
             >
               {addSong.isPending ? (
                 <>

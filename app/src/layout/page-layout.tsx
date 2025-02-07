@@ -1,4 +1,3 @@
-// import { useTheme } from "@/components/theme-provider";
 import { useTheme } from "@/components/theme-provider";
 import { Breadcrumb, BreadcrumbList } from "@/components/ui/breadcrumb";
 import { Separator } from "@/components/ui/separator";
@@ -14,10 +13,7 @@ import { Outlet, useNavigate } from "react-router";
 import { MuseSidebar } from "./components/app-sidebar";
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { Button } from '@/components/ui/button';
-import { Menu, Plus, X, ListMusic, Music, Home, Heart, Settings } from 'lucide-react';
-import { AddSongDialog } from '@/features/songs/add-song-dialog';
-import { Input } from '@/components/ui/input';
-import { useAudioStore } from '@/stores/audioStore';
+import { Menu, X, ListMusic, Music, Home, Heart, Settings } from 'lucide-react';
 import { Drawer, DrawerClose, DrawerTitle, DrawerHeader, DrawerContent } from '@/components/ui/drawer';
 
 export function DashboardLayout() {
@@ -60,7 +56,6 @@ export function DashboardPageLayout({
 }) {
     const { theme } = useTheme();
     const sidebar = useStore(useSidebarToggle, (state) => state);
-    const { searchTerm, setSearchTerm } = useAudioStore();
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
     const navigate = useNavigate();
 
@@ -135,17 +130,6 @@ export function DashboardPageLayout({
                 <Button variant="ghost" size="icon" onClick={() => setMobileMenuOpen(true)}>
                     <Menu className="h-6 w-6" />
                 </Button>
-                <Input
-                    placeholder="Search"
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="mx-2 flex-1 bg-purple-900/20 border-purple-900/30 text-white placeholder:text-purple-300/50 focus:border-purple-500"
-                />
-                <AddSongDialog>
-                    <Button variant="ghost" size="icon">
-                        <Plus className="h-6 w-6" />
-                    </Button>
-                </AddSongDialog>
             </header>
 
             {/* Desktop Header */}
@@ -170,19 +154,6 @@ export function DashboardPageLayout({
                     <Breadcrumb>
                         <BreadcrumbList>{breadcrumbs}</BreadcrumbList>
                     </Breadcrumb>
-                    <div className="flex items-center ml-auto space-x-4">
-                        <Input
-                            placeholder="Search"
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                            className="w-64 bg-purple-900/20 border-purple-900/30 text-white placeholder:text-purple-300/50 focus:border-purple-500"
-                        />
-                        <AddSongDialog>
-                            <Button className="bg-primary hover:bg-primary/80">
-                                <Plus className="mr-2 h-4 w-4" /> Add Song
-                            </Button>
-                        </AddSongDialog>
-                    </div>
                 </div>
             </header>
 

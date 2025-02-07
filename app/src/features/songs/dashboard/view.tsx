@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import React from "react";
+import React, { useLayoutEffect } from "react";
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -11,7 +11,7 @@ import Fetcher from "@/lib/fetcher";
 import { cn } from "@/lib/utils";
 import { useAudioStore, usePlayerControls } from "@/stores/audioStore";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ChevronLeft, ChevronRight, Heart, MoreVertical, Pause, Pencil, Play, Plus, Trash2 } from "lucide-react";
+import { ChevronLeft, ChevronRight, ChevronUp, ChevronDown, Heart, MoreVertical, Pause, Pencil, Play, Plus, Trash2 } from "lucide-react";
 import { useCallback, useMemo, useState } from "react";
 import { formatDate } from "../../../lib/utils";
 import { AnimatePresence, motion } from 'framer-motion';
@@ -24,6 +24,9 @@ import { Breadcrumb } from '@/components/ui/breadcrumb';
 import { Dialog, DialogDescription, DialogTitle, DialogHeader, DialogContent, DialogFooter } from '@/components/ui/dialog';
 import { Playlist } from '@/features/playlists/nested';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { DropdownMenuLabel, DropdownMenuRadioGroup, DropdownMenuRadioItem } from '@/components/ui/dropdown-menu';
+import { Input } from '@/components/ui/input';
+import { AddSongDialog } from '@/features/songs/add-song-dialog';
 
 const api = Fetcher.getInstance();
 
@@ -100,6 +103,39 @@ const MobileSongsList = ({
             queryClient.invalidateQueries({ queryKey: ["playlists"] });
         },
     });
+
+    const removeSongFromPlaylist = useMutation({
+        mutationFn: async ({ playlistId, songId }: { playlistId: string, songId: string }) => {
+            await api.delete(`/api/playlists/${playlistId}/songs/${songId}`);
+        },
+        onSuccess: (_, variables) => {
+            queryClient.invalidateQueries({ queryKey: ["playlists", variables.playlistId] });
+            setShowPlaylistDrawer(false);
+            setSelectedSongId(null);
+            toast.success("Song removed from playlist");
+        },
+        onError: () => {
+            toast.error("Failed to remove song from playlist");
+        },
+        onSettled: () => {
+            queryClient.invalidateQueries({ queryKey: ["playlists"] });
+        },
+    });
+
+    const handlePlaylistAction = (playlist: Playlist, songId: string) => {
+        const songExists = playlist.songs.some(song => song._id === songId);
+        if (songExists) {
+            removeSongFromPlaylist.mutate({
+                playlistId: playlist._id,
+                songId
+            });
+        } else {
+            addSongToPlaylist.mutate({
+                playlistId: playlist._id,
+                songId
+            });
+        }
+    };
 
     const handleSort = (songs: Song[]) => {
         return [...songs].sort((a, b) => {
@@ -192,7 +228,7 @@ const MobileSongsList = ({
 
                         {/* Song Info */}
                         <div className="flex-1 min-w-0">
-                            <div className="font-medium text-xs truncate">
+                            <div className="text-xs truncate">
                                 {song.title}
                             </div>
                             <div className="flex items-center gap-1 text-xs text-muted-foreground">
@@ -225,7 +261,7 @@ const MobileSongsList = ({
                                 </DropdownMenuItem>
                                 <DropdownMenuItem onClick={(e) => e.stopPropagation()}>
                                     <Pencil className="h-3.5 w-3.5 mr-2" />
-                                    <s>Edit Details</s>
+                                    Edit Details
                                 </DropdownMenuItem>
                                 <DropdownMenuSeparator />
                                 <DropdownMenuItem
@@ -245,7 +281,7 @@ const MobileSongsList = ({
             </div>
 
             <Dialog open={showPlaylistDrawer} onOpenChange={setShowPlaylistDrawer}>
-                <DialogContent className="bg-black/10 backdrop-blur-lg border-purple-500/50 rounded-lg sm:w-[400px] max-w-[90vw]">
+                <DialogContent className="bg-black/90 backdrop-blur-lg border-purple-500/50 rounded-lg sm:max-w-[425px]">
                     <DialogHeader>
                         <DialogTitle>Add to Playlist</DialogTitle>
                         <DialogDescription>
@@ -253,32 +289,47 @@ const MobileSongsList = ({
                         </DialogDescription>
                     </DialogHeader>
                     <div className="max-h-[60vh] overflow-y-auto space-y-2">
-                        {playlists?.map((playlist) => (
-                            <div
-                                key={playlist._id}
-                                className="flex items-center gap-4 p-2 hover:bg-black/10 rounded-md cursor-pointer"
-                                onClick={() => {
-                                    if (selectedSongId) {
-                                        addSongToPlaylist.mutate({
-                                            playlistId: playlist._id,
-                                            songId: selectedSongId
-                                        });
-                                    }
-                                }}
-                            >
-                                <img
-                                    src={playlist.coverImage || "/default-cover.svg"}
-                                    alt={playlist.name}
-                                    className="w-12 h-12 object-cover rounded"
-                                />
-                                <div className="flex-1">
-                                    <div className="font-medium">{playlist.name}</div>
-                                    <div className="text-sm text-muted-foreground">
-                                        {playlist.songs.length} songs
+                        {playlists?.map((playlist) => {
+                            const songExists = selectedSongId && playlist.songs.some(song => song._id === selectedSongId);
+                            return (
+                                <div
+                                    key={playlist._id}
+                                    className={cn(
+                                        "flex items-center gap-4 p-2 hover:bg-white/5 rounded-md cursor-pointer transition-colors",
+                                        songExists && "bg-purple-500/10"
+                                    )}
+                                    onClick={() => {
+                                        if (selectedSongId) {
+                                            handlePlaylistAction(playlist, selectedSongId);
+                                        }
+                                    }}
+                                >
+                                    <img
+                                        src={playlist.coverImage || "/default-cover.svg"}
+                                        alt={playlist.name}
+                                        className="w-12 h-12 object-cover rounded"
+                                    />
+                                    <div className="flex-1">
+                                        <div className="font-medium">{playlist.name}</div>
+                                        <div className="text-sm text-muted-foreground">
+                                            {playlist.songs.length} songs
+                                        </div>
                                     </div>
+                                    {songExists && (
+                                        <div className="flex items-center gap-1 text-xs text-purple-400">
+                                            <span>Added</span>
+                                            <Button
+                                                variant="ghost"
+                                                size="icon"
+                                                className="h-6 w-6 hover:text-red-400"
+                                            >
+                                                <Trash2 className="h-3.5 w-3.5" />
+                                            </Button>
+                                        </div>
+                                    )}
                                 </div>
-                            </div>
-                        ))}
+                            );
+                        })}
                     </div>
                     <DialogFooter>
                         <Button variant="outline" onClick={() => setShowPlaylistDrawer(false)}>
@@ -300,6 +351,71 @@ const DesktopSongsList = React.memo(({ songs, onPlay, onDelete }: {
     const { currentSong, isPlaying, isBuffering } = useAudioStore();
     const [editingField, setEditingField] = useState<{id: string, field: string} | null>(null);
     const [isEditing, setIsEditing] = useState(false);
+    const [showPlaylistDrawer, setShowPlaylistDrawer] = useState(false);
+    const [selectedSongId, setSelectedSongId] = useState<string | null>(null);
+    const [sortConfig, setSortConfig] = useState<{
+        key: SortKey;
+        direction: 'asc' | 'desc';
+    }>({ key: 'upload_date', direction: 'desc' });
+
+    const { data: playlists } = useQuery<Playlist[]>({
+        queryKey: ["playlists"],
+        queryFn: async () => {
+            const { data } = await api.get("/api/playlists");
+            return data;
+        },
+    });
+
+    const addSongToPlaylist = useMutation({
+        mutationFn: async ({ playlistId, songId }: { playlistId: string, songId: string }) => {
+            await api.post(`/api/playlists/${playlistId}/songs`, { songId });
+        },
+        onSuccess: (_, variables) => {
+            queryClient.invalidateQueries({ queryKey: ["playlists", variables.playlistId] });
+            setShowPlaylistDrawer(false);
+            setSelectedSongId(null);
+            toast.success("Song added to playlist");
+        },
+        onError: () => {
+            toast.error("Failed to add song to playlist");
+        },
+        onSettled: () => {
+            queryClient.invalidateQueries({ queryKey: ["playlists"] });
+        },
+    });
+
+    const removeSongFromPlaylist = useMutation({
+        mutationFn: async ({ playlistId, songId }: { playlistId: string, songId: string }) => {
+            await api.delete(`/api/playlists/${playlistId}/songs/${songId}`);
+        },
+        onSuccess: (_, variables) => {
+            queryClient.invalidateQueries({ queryKey: ["playlists", variables.playlistId] });
+            setShowPlaylistDrawer(false);
+            setSelectedSongId(null);
+            toast.success("Song removed from playlist");
+        },
+        onError: () => {
+            toast.error("Failed to remove song from playlist");
+        },
+        onSettled: () => {
+            queryClient.invalidateQueries({ queryKey: ["playlists"] });
+        },
+    });
+
+    const handlePlaylistAction = (playlist: Playlist, songId: string) => {
+        const songExists = playlist.songs.some(song => song._id === songId);
+        if (songExists) {
+            removeSongFromPlaylist.mutate({
+                playlistId: playlist._id,
+                songId
+            });
+        } else {
+            addSongToPlaylist.mutate({
+                playlistId: playlist._id,
+                songId
+            });
+        }
+    };
 
     const editMutation = useMutation({
         mutationFn: async ({ id, field, value }: { id: string, field: string, value: string }) => {
@@ -382,104 +498,87 @@ const DesktopSongsList = React.memo(({ songs, onPlay, onDelete }: {
 
     const isMobile = useIsMobile();
 
-    const renderSongRow = useCallback((song: Song) => {
-        const isCurrentSong = song?._id === currentSong?._id;
-
-        return (
-            <TableRow
-                key={song._id}
-                className={cn(
-                    "border-none hover:bg-secondary/40 transition-colors cursor-pointer group h-12",
-                    {"bg-secondary/30": isCurrentSong}
-                )}
-                onClick={() => onPlay(song._id)}
-            >
-                <TableCell className="py-1">
-                    <div className="flex items-center gap-2">
-                        <div className="relative">
-                            <img
-                                src={song.thumbnail}
-                                alt={`${song.title} thumbnail`}
-                                className="rounded-sm object-cover size-8"
-                            />
-                            <AnimatePresence mode="wait">
-                                {isCurrentSong && (
-                                    <motion.div
-                                        className="absolute inset-0 bg-black/80 flex items-center justify-center"
-                                        initial={{ opacity: 0 }}
-                                        animate={{ opacity: 1 }}
-                                        exit={{ opacity: 0 }}
-                                        transition={{
-                                            duration: 0.05
-                                        }}
-                                    >
-                                        <div className="flex items-center justify-center gap-[2px] w-full">
-                                            {[0, 1, 2, 3].map((i) => (
-                                                <motion.div
-                                                    key={i}
-                                                    className="w-[2px] bg-purple-500 rounded-full"
-                                                    animate={{
-                                                        height: isBuffering
-                                                            ? ["10px", "16px", "10px"]
-                                                            : isPlaying
-                                                                ? ["14px", "8px", "14px"]
-                                                                : "10px",
-                                                        opacity: isPlaying ? 1 : 0.5
-                                                    }}
-                                                    transition={{
-                                                        duration: 0.4,
-                                                        repeat: Infinity,
-                                                        repeatType: "reverse",
-                                                        delay: i * 0.1,
-                                                        ease: "linear"
-                                                    }}
-                                                />
-                                            ))}
-                                        </div>
-                                    </motion.div>
-                                )}
-                            </AnimatePresence>
-                        </div>
-                        <div className="flex items-center gap-2 flex-1">
+    return (
+        <>
+            {songs.map((song) => (
+                <TableRow
+                    key={song._id}
+                    className={cn(
+                        "border-b-0 h-10 cursor-pointer group transition-none",
+                        { "bg-secondary/30": song._id === currentSong?._id }
+                    )}
+                    onClick={() => onPlay(song._id)}
+                >
+                    <TableCell className="py-1">
+                        <div className="flex items-center gap-2">
+                            <div className="relative">
+                                <img
+                                    src={song.thumbnail}
+                                    alt={`${song.title} thumbnail`}
+                                    className="rounded-sm object-cover size-8"
+                                />
+                                <AnimatePresence mode="wait">
+                                    {song._id === currentSong?._id && (
+                                        <motion.div
+                                            className="absolute inset-0 bg-black/80 flex items-center justify-center"
+                                            initial={{ opacity: 0 }}
+                                            animate={{ opacity: 1 }}
+                                            exit={{ opacity: 0 }}
+                                            transition={{
+                                                duration: 0.05
+                                            }}
+                                        >
+                                            <div className="flex items-center justify-center gap-[2px] w-full">
+                                                {[0, 1, 2, 3].map((i) => (
+                                                    <motion.div
+                                                        key={i}
+                                                        className="w-[2px] bg-purple-500 rounded-full"
+                                                        animate={{
+                                                            height: isBuffering
+                                                                ? ["10px", "16px", "10px"]
+                                                                : isPlaying
+                                                                    ? ["14px", "8px", "14px"]
+                                                                    : "10px",
+                                                            opacity: isPlaying ? 1 : 0.5
+                                                        }}
+                                                        transition={{
+                                                            duration: 0.4,
+                                                            repeat: Infinity,
+                                                            repeatType: "reverse",
+                                                            delay: i * 0.1,
+                                                            ease: "linear"
+                                                        }}
+                                                    />
+                                                ))}
+                                            </div>
+                                        </motion.div>
+                                    )}
+                                </AnimatePresence>
+                            </div>
                             <div className="flex items-center gap-2 flex-1">
-                                <motion.div
-                                    layout
+                                <div
                                     className={cn(
-                                        "font-medium w-full max-w-[550px] lg:max-w-[800px] px-1 group-hover:relative rounded",
+                                        "w-full max-w-[550px] lg:max-w-[800px] px-1 group-hover:relative rounded",
                                         editingField?.id === song._id && editingField?.field === 'title' && "ring-1 ring-primary"
                                     )}
                                 >
-                                    <AnimatePresence mode="wait">
-                                        {editingField?.id === song._id && editingField?.field === 'title' ? (
-                                            <motion.div
-                                                initial={{ opacity: 0, y: -4 }}
-                                                animate={{ opacity: 1, y: 0 }}
-                                                exit={{ opacity: 0, y: 4 }}
-                                                transition={{ duration: 0.15 }}
-                                            >
-                                                <input
-                                                    type="text"
-                                                    defaultValue={song.title}
-                                                    className="w-full bg-transparent border-none focus:outline-none"
-                                                    onBlur={(e) => handleSubmit(song, 'title', e.target.value)}
-                                                    onKeyDown={(e) => {
-                                                        if (e.key === 'Enter') {
-                                                            handleSubmit(song, 'title', e.currentTarget.value);
-                                                            e.currentTarget.blur();
-                                                        }
-                                                    }}
-                                                    onClick={(e) => e.stopPropagation()}
-                                                    autoFocus
-                                                />
-                                            </motion.div>
-                                        ) : (
-                                            <motion.div
-                                                initial={{ opacity: 0, y: 4 }}
-                                                animate={{ opacity: 1, y: 0 }}
-                                                exit={{ opacity: 0, y: -4 }}
-                                                transition={{ duration: 0.15 }}
-                                                className="flex items-center gap-2"
-                                            >
+                                    {editingField?.id === song._id && editingField?.field === 'title' ? (
+                                        <input
+                                            type="text"
+                                            defaultValue={song.title}
+                                            className="w-full bg-transparent border-none focus:outline-none"
+                                            onBlur={(e) => handleSubmit(song, 'title', e.target.value)}
+                                            onKeyDown={(e) => {
+                                                if (e.key === 'Enter') {
+                                                    handleSubmit(song, 'title', e.currentTarget.value);
+                                                    e.currentTarget.blur();
+                                                }
+                                            }}
+                                            onClick={(e) => e.stopPropagation()}
+                                            autoFocus
+                                        />
+                                    ) : (
+                                            <div className="flex items-center gap-2">
                                                 <span>{song.title}</span>
                                                 <Button
                                                     variant="ghost"
@@ -489,98 +588,85 @@ const DesktopSongsList = React.memo(({ songs, onPlay, onDelete }: {
                                                 >
                                                     <Pencil className="h-3.5 w-3.5 text-muted-foreground" />
                                                 </Button>
-                                            </motion.div>
-                                        )}
-                                    </AnimatePresence>
-                                </motion.div>
+                                        </div>
+                                    )}
+                                </div>
                             </div>
                         </div>
-                    </div>
-                </TableCell>
-                <TableCell className="text-muted-foreground text-xs py-1">
-                    {song.duration_string}
-                </TableCell>
-                <TableCell className="text-muted-foreground text-xs py-1">
-                    {song.uploader}
-                </TableCell>
-                <TableCell className="text-muted-foreground text-xs min-w-[150px] py-1">{formatDate(song.upload_date)}</TableCell>
-                <TableCell className="text-right py-1">
-                    <div className="opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-end gap-1">
-                    <Tooltip delayDuration={500} disableHoverableContent={isMobile}>
-                        <TooltipTrigger asChild>
-                            <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-7 w-7 hover:text-primary"
-                                onClick={(e) => handleFavorite(song._id, e)}
-                            >
-                                {song.isFavorited ? (
-                                    <Heart className="h-3.5 w-3.5 fill-red-500 stroke-red-500" />
-                                ) : (
-                                    <Heart className="h-3.5 w-3.5" />
-                                )}
-                            </Button>
-                        </TooltipTrigger>
-                        <TooltipContent>
-                            {song.isFavorited ? 'Remove from Favorites' : 'Add to Favorites'}
-                        </TooltipContent>
-                    </Tooltip>
-                    <Tooltip delayDuration={500} disableHoverableContent={isMobile}>
-                        <TooltipTrigger asChild>
-                            <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-7 w-7 hover:text-primary"
-                                onClick={(e) => {
-                                    e.stopPropagation();
-                                    // Add to playlist logic
-                                }}
-                            >
-                                <Plus className="h-3.5 w-3.5" />
-                            </Button>
-                        </TooltipTrigger>
-                        <TooltipContent>
-                            Add to Playlist
-                        </TooltipContent>
-                    </Tooltip>
-                    <Tooltip delayDuration={500} disableHoverableContent={isMobile}>
-                        <TooltipTrigger asChild>
-                            <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-7 w-7 hover:text-destructive"
-                                onClick={(e) => handleDelete(song._id, e)}
-                            >
-                                <Trash2 className="h-3.5 w-3.5" />
-                            </Button>
-                        </TooltipTrigger>
-                        <TooltipContent>
-                            Delete Song
-                        </TooltipContent>
-                    </Tooltip>
-                    </div>
-                </TableCell>
-            </TableRow>
-        );
-    }, [currentSong?._id, isPlaying, isBuffering, editingField, handleSubmit, handleFavorite, handleDelete, handleEditClick, isMobile, onPlay]);
-
-    return (
-        <div className="rounded-md border-none backdrop-blur-sm bg-secondary/10">
-            <Table>
-                <TableHeader>
-                    <TableRow className="border-b border-secondary/20">
-                        <TableHead className="w-[60%] lg:w-[70%]">Song</TableHead>
-                        <TableHead>Duration</TableHead>
-                        <TableHead>Uploader</TableHead>
-                        <TableHead>Added</TableHead>
-                        <TableHead className="w-[100px] text-right">Actions</TableHead>
-                    </TableRow>
-                </TableHeader>
-                <TableBody>
-                    {songs?.map(renderSongRow)}
-                </TableBody>
-            </Table>
-        </div>
+                    </TableCell>
+                    <TableCell className="text-muted-foreground text-xs py-1">
+                        {song.duration_string}
+                    </TableCell>
+                    <TableCell className="text-muted-foreground text-xs py-1">
+                        {song.uploader}
+                    </TableCell>
+                    <TableCell className="text-muted-foreground text-xs py-1">
+                        {new Date(parseInt(song.upload_date) * 1000).toLocaleDateString('en-US', {
+                            month: '2-digit',
+                            day: '2-digit',
+                            year: 'numeric'
+                        })}
+                    </TableCell>
+                    <TableCell className="text-right py-1">
+                        <div className="opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-end gap-1">
+                            <Tooltip delayDuration={500} disableHoverableContent={isMobile}>
+                                <TooltipTrigger asChild>
+                                    <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        className="h-7 w-7 hover:text-primary"
+                                        onClick={(e) => handleFavorite(song._id, e)}
+                                    >
+                                        {song.isFavorited ? (
+                                            <Heart className="h-3.5 w-3.5 fill-red-500 stroke-red-500" />
+                                        ) : (
+                                            <Heart className="h-3.5 w-3.5" />
+                                        )}
+                                    </Button>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                    {song.isFavorited ? 'Remove from Favorites' : 'Add to Favorites'}
+                                </TooltipContent>
+                            </Tooltip>
+                            <Tooltip delayDuration={500} disableHoverableContent={isMobile}>
+                                <TooltipTrigger asChild>
+                                    <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        className="h-7 w-7 hover:text-primary"
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            setSelectedSongId(song._id);
+                                            setShowPlaylistDrawer(true);
+                                        }}
+                                    >
+                                        <Plus className="h-3.5 w-3.5" />
+                                    </Button>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                    Add to Playlist
+                                </TooltipContent>
+                            </Tooltip>
+                            <Tooltip delayDuration={500} disableHoverableContent={isMobile}>
+                                <TooltipTrigger asChild>
+                                    <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        className="h-7 w-7 hover:text-destructive"
+                                        onClick={(e) => handleDelete(song._id, e)}
+                                    >
+                                        <Trash2 className="h-3.5 w-3.5" />
+                                    </Button>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                    Delete Song
+                                </TooltipContent>
+                            </Tooltip>
+                        </div>
+                    </TableCell>
+                </TableRow>
+            ))}
+        </>
     );
 }) as React.FC<{
     songs: Song[];
@@ -588,13 +674,94 @@ const DesktopSongsList = React.memo(({ songs, onPlay, onDelete }: {
     onDelete: (id: string) => void;
 }>;
 
-// Main Songs View Component
+type SortKey = 'title' | 'duration' | 'uploader' | 'upload_date';
+
+interface SortIconProps {
+    active: boolean;
+    direction: 'asc' | 'desc';
+}
+
+interface SortableHeaderProps {
+    label: string;
+    sortKey: SortKey;
+}
+
 export function SongsView() {
-    const { searchTerm } = useAudioStore();
+    const [searchTerm, setSearchTerm] = useState("");
     const [currentPage, setCurrentPage] = useState(1);
-    const songsPerPage = 10;
+    const [songsPerPage, setSongsPerPage] = useState(25);
     const queryClient = useQueryClient();
     const query = useQuery({ queryKey: ["songs"], queryFn: getSongs });
+    const [sortConfig, setSortConfig] = useState<{
+        key: SortKey;
+        direction: 'asc' | 'desc';
+    }>({ key: 'upload_date', direction: 'desc' });
+
+    const handleSearch = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+        setSearchTerm(e.target.value);
+        setCurrentPage(1); // Reset to first page when searching
+    }, []);
+
+    const handleSort = useCallback((key: SortKey) => {
+        setSortConfig(current => {
+            if (current.key === key) {
+                // If clicking the same column, toggle direction
+                return {
+                    key,
+                    direction: current.direction === 'asc' ? 'desc' : 'asc'
+                };
+            }
+            // If clicking a new column, default to ascending
+            return {
+                key,
+                direction: 'asc'
+            };
+        });
+    }, []);
+
+    const sortedAndFilteredSongs = useMemo(() => {
+        const filtered = query?.data?.filter(
+            (song) =>
+                song.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                song.uploader.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                song.tags.some((tag) =>
+                    tag.toLowerCase().includes(searchTerm.toLowerCase())
+                )
+        ) || [];
+
+        return [...filtered].sort((a, b) => {
+            let compareResult = 0;
+            switch (sortConfig.key) {
+                case 'title':
+                    compareResult = a.title.localeCompare(b.title);
+                    break;
+                case 'duration':
+                    compareResult = a.duration - b.duration;
+                    break;
+                case 'uploader':
+                    compareResult = a.uploader.localeCompare(b.uploader);
+                    break;
+                case 'upload_date':
+                    compareResult = parseInt(a.upload_date) - parseInt(b.upload_date);
+                    break;
+                default:
+                    compareResult = 0;
+            }
+            return sortConfig.direction === 'asc' ? compareResult : -compareResult;
+        });
+    }, [query.data, searchTerm, sortConfig]);
+
+    const { currentSongs, totalPages } = useMemo(() => {
+        const indexOfLastSong = currentPage * songsPerPage;
+        const indexOfFirstSong = indexOfLastSong - songsPerPage;
+        const currentSongs = sortedAndFilteredSongs?.slice(indexOfFirstSong, indexOfLastSong) || [];
+        const totalPages = Math.ceil((sortedAndFilteredSongs?.length || 0) / songsPerPage);
+        return { currentSongs, totalPages };
+    }, [currentPage, sortedAndFilteredSongs, songsPerPage]);
+
+    const { playSong } = usePlayerControls();
+    const { currentSong } = useAudioStore();
+
     const removeSong = useMutation({
         mutationFn: deleteSong,
         onSuccess: () => {
@@ -602,93 +769,177 @@ export function SongsView() {
         },
     });
 
-    const filteredSongs = useMemo(() => query?.data?.filter(
-        (song) =>
-            song.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            song.uploader.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            song.tags.some((tag) =>
-                tag.toLowerCase().includes(searchTerm.toLowerCase())
-            )
-    ), [query.data, searchTerm]);
-
-    const { currentSongs, totalPages } = useMemo(() => {
-        const indexOfLastSong = currentPage * songsPerPage;
-        const indexOfFirstSong = indexOfLastSong - songsPerPage;
-        const currentSongs = filteredSongs?.slice(indexOfFirstSong, indexOfLastSong) || [];
-        const totalPages = Math.ceil((filteredSongs?.length || 0) / songsPerPage);
-        return { indexOfLastSong, indexOfFirstSong, currentSongs, totalPages };
-    }, [currentPage, filteredSongs]);
-
-    const { playSong } = usePlayerControls();
-    const { currentSong } = useAudioStore();
-
     const handleDelete = useCallback((id: string) => {
         removeSong.mutate(id);
     }, [removeSong]);
+
+    const handleSongsPerPageChange = useCallback((value: number) => {
+        setSongsPerPage(value);
+        setCurrentPage(1);
+    }, []);
 
     return (
         <div className="flex flex-col h-full">
             <DashboardPageLayout breadcrumbs={
                 <Breadcrumb>
                     <BreadcrumbList>
-                    <BreadcrumbItem>
-                        <BreadcrumbLink>Songs</BreadcrumbLink>
-                    </BreadcrumbItem>
-                </BreadcrumbList>
-            </Breadcrumb>
-        }>
-            <div className="flex flex-col flex-1 h-full">
-                <div className="flex-1 min-h-0 overflow-y-auto">
-                    {/* Mobile view */}
-                    <div className="md:hidden h-full">
-                        <div className="space-y-2">
-                            <MobileSongsList
-                                songs={currentSongs}
-                                onPlay={playSong}
-                                onDelete={handleDelete}
-                                currentSong={currentSong as Song | null}
-                            />
+                        <BreadcrumbItem>
+                            <BreadcrumbLink>Songs</BreadcrumbLink>
+                        </BreadcrumbItem>
+                    </BreadcrumbList>
+                </Breadcrumb>
+            }>
+                <div className="flex flex-col flex-1 h-full">
+                    <div className="flex-1 min-h-0 overflow-hidden flex flex-col">
+                        <div className="md:hidden h-full overflow-y-auto">
+                            <div className="space-y-2">
+                                <MobileSongsList
+                                    songs={currentSongs}
+                                    onPlay={playSong}
+                                    onDelete={handleDelete}
+                                    currentSong={currentSong as Song | null}
+                                />
+                            </div>
                         </div>
-                    </div>
 
-                    {/* Desktop view */}
-                    <div className="hidden md:block h-full">
-                        <div className="space-y-1">
-                            <DesktopSongsList
-                                songs={currentSongs}
-                                onPlay={playSong}
-                                onDelete={handleDelete}
-                            />
+                        <div className="hidden md:flex flex-col flex-1 min-h-0">
+                            <div className="flex-1 overflow-auto">
+                                <Table>
+                                    <TableHeader className="bg-secondary/5 backdrop-blur-sm sticky top-0 z-10">
+                                        <TableRow className="border-b-0 hover:bg-transparent">
+                                            <TableHead
+                                                className="w-[60%] lg:w-[70%] h-10"
+                                            >
+                                                <div className="flex items-center gap-4">
+                                                    <div className="flex items-center gap-2">
+                                                        <div className="flex items-center cursor-pointer" onClick={() => handleSort('title')}>
+                                                            Song
+                                                            <div className={cn("inline-flex flex-col ml-1 relative -top-[1px]", sortConfig.key !== 'title' && "opacity-0 group-hover:opacity-100")}>
+                                                                <ChevronUp className={cn("h-2.5 w-2.5", sortConfig.key === 'title' && sortConfig.direction === 'asc' && "text-purple-500")} />
+                                                                <ChevronDown className={cn("h-2.5 w-2.5 -mt-1", sortConfig.key === 'title' && sortConfig.direction === 'desc' && "text-purple-500")} />
+                                                            </div>
+                                                        </div>
+                                                        <DropdownMenu>
+                                                            <DropdownMenuTrigger asChild>
+                                                                <Button
+                                                                    variant="ghost"
+                                                                    size="sm"
+                                                                    className="h-6 px-2 text-muted-foreground hover:text-primary"
+                                                                >
+                                                                    {songsPerPage} per page
+                                                                </Button>
+                                                            </DropdownMenuTrigger>
+                                                            <DropdownMenuContent align="start" className="w-48">
+                                                                <DropdownMenuLabel>Songs per page</DropdownMenuLabel>
+                                                                <DropdownMenuSeparator />
+                                                                <DropdownMenuRadioGroup value={songsPerPage.toString()} onValueChange={(value) => handleSongsPerPageChange(Number(value))}>
+                                                                    <DropdownMenuRadioItem value="5">5 songs</DropdownMenuRadioItem>
+                                                                    <DropdownMenuRadioItem value="10">10 songs</DropdownMenuRadioItem>
+                                                                    <DropdownMenuRadioItem value="15">15 songs</DropdownMenuRadioItem>
+                                                                    <DropdownMenuRadioItem value="20">20 songs</DropdownMenuRadioItem>
+                                                                    <DropdownMenuRadioItem value="25">25 songs</DropdownMenuRadioItem>
+                                                                </DropdownMenuRadioGroup>
+                                                            </DropdownMenuContent>
+                                                        </DropdownMenu>
+                                                    </div>
+                                                    <div className="flex items-center gap-2 ml-auto flex-1">
+                                                        <div className="flex-1">
+                                                            <Input
+                                                                placeholder="Search songs..."
+                                                                value={searchTerm}
+                                                                onChange={handleSearch}
+                                                                className="w-full h-7 bg-secondary/30 border-secondary/30 text-foreground placeholder:text-muted-foreground/70 focus-visible:ring-1 focus-visible:ring-purple-500/50 focus-visible:border-purple-500/50 backdrop-blur-sm"
+                                                            />
+                                                        </div>
+                                                        <AddSongDialog>
+                                                            <Button
+                                                                size="sm"
+                                                                className="h-7 px-3 bg-primary/20 hover:bg-primary/30 text-primary border border-primary/30 transition-colors backdrop-blur-sm"
+                                                            >
+                                                                <Plus className="mr-1.5 h-3.5 w-3.5" /> Add Song
+                                                            </Button>
+                                                        </AddSongDialog>
+                                                    </div>
+                                                </div>
+                                            </TableHead>
+                                            <TableHead
+                                                className="h-10 cursor-pointer group"
+                                                onClick={() => handleSort('duration')}
+                                            >
+                                                <div className="flex items-center">
+                                                    Duration
+                                                    <div className={cn("inline-flex flex-col ml-1 relative -top-[1px]", sortConfig.key !== 'duration' && "opacity-0 group-hover:opacity-100")}>
+                                                        <ChevronUp className={cn("h-2.5 w-2.5", sortConfig.key === 'duration' && sortConfig.direction === 'asc' && "text-purple-500")} />
+                                                        <ChevronDown className={cn("h-2.5 w-2.5 -mt-1", sortConfig.key === 'duration' && sortConfig.direction === 'desc' && "text-purple-500")} />
+                                                    </div>
+                                                </div>
+                                            </TableHead>
+                                            <TableHead
+                                                className="h-10 cursor-pointer group"
+                                                onClick={() => handleSort('uploader')}
+                                            >
+                                                <div className="flex items-center">
+                                                    Uploader
+                                                    <div className={cn("inline-flex flex-col ml-1 relative -top-[1px]", sortConfig.key !== 'uploader' && "opacity-0 group-hover:opacity-100")}>
+                                                        <ChevronUp className={cn("h-2.5 w-2.5", sortConfig.key === 'uploader' && sortConfig.direction === 'asc' && "text-purple-500")} />
+                                                        <ChevronDown className={cn("h-2.5 w-2.5 -mt-1", sortConfig.key === 'uploader' && sortConfig.direction === 'desc' && "text-purple-500")} />
+                                                    </div>
+                                                </div>
+                                            </TableHead>
+                                            <TableHead
+                                                className="h-10 cursor-pointer group"
+                                                onClick={() => handleSort('upload_date')}
+                                            >
+                                                <div className="flex items-center">
+                                                    Added
+                                                    <div className={cn("inline-flex flex-col ml-1 relative -top-[1px]", sortConfig.key !== 'upload_date' && "opacity-0 group-hover:opacity-100")}>
+                                                        <ChevronUp className={cn("h-2.5 w-2.5", sortConfig.key === 'upload_date' && sortConfig.direction === 'asc' && "text-purple-500")} />
+                                                        <ChevronDown className={cn("h-2.5 w-2.5 -mt-1", sortConfig.key === 'upload_date' && sortConfig.direction === 'desc' && "text-purple-500")} />
+                                                    </div>
+                                                </div>
+                                            </TableHead>
+                                            <TableHead className="w-[100px] text-right h-10">Actions</TableHead>
+                                        </TableRow>
+                                    </TableHeader>
+                                    <TableBody className="[&_tr:hover]:bg-secondary/40">
+                                        <DesktopSongsList
+                                            songs={currentSongs}
+                                            onPlay={playSong}
+                                            onDelete={handleDelete}
+                                        />
+                                    </TableBody>
+                                </Table>
+                            </div>
+                        </div>
+
+                        <div className="flex justify-center py-4 mt-2">
+                            <div className="flex items-center space-x-2 bg-purple-900/20 rounded-lg px-2 py-1">
+                                <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+                                    disabled={currentPage === 1}
+                                    className="text-purple-300 hover:text-purple-200 disabled:opacity-50"
+                                >
+                                    <ChevronLeft className="h-4 w-4" />
+                                </Button>
+                                <span className="text-sm text-purple-300">
+                                    {currentPage} / {totalPages}
+                                </span>
+                                <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+                                    disabled={currentPage === totalPages}
+                                    className="text-purple-300 hover:text-purple-200 disabled:opacity-50"
+                                >
+                                    <ChevronRight className="h-4 w-4" />
+                                </Button>
+                            </div>
                         </div>
                     </div>
                 </div>
-
-                {/* Compact Pagination */}
-                <div className="flex justify-center py-4 mt-auto">
-                    <div className="flex items-center space-x-2 bg-purple-900/20 rounded-lg px-2 py-1">
-                        <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
-                            className="text-purple-300 hover:text-purple-200"
-                        >
-                            <ChevronLeft className="h-4 w-4" />
-                        </Button>
-                        <span className="text-sm text-purple-300">
-                            {currentPage} / {totalPages}
-                        </span>
-                        <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
-                            className="text-purple-300 hover:text-purple-200"
-                        >
-                            <ChevronRight className="h-4 w-4" />
-                        </Button>
-                    </div>
-                </div>
-            </div>
-        </DashboardPageLayout>
+            </DashboardPageLayout>
         </div>
     );
 }

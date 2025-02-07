@@ -419,7 +419,7 @@ export function MiniPlayer() {
         initial={{ y: "100%" }}
         animate={{ y: "0%" }}
         exit={{ y: "100%" }}
-        className="fixed bottom-0 right-0 p-2 flex items-center gap-2 bg-background/80 backdrop-blur-lg border rounded-tl-lg shadow-lg"
+        className="fixed bottom-0 right-0 p-2 flex items-center gap-2 bg-background/80 backdrop-blur-lg border rounded-tl-lg shadow-lg z-50 rounded-tr-lg mr-4"
       >
         {/* Thumbnail */}
         <img

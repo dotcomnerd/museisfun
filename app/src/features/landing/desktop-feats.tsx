@@ -4,7 +4,7 @@ import * as Accordion from '@radix-ui/react-accordion'
 import { AnimatePresence, motion } from 'framer-motion'
 import { BarChart2, Headphones, ListMusic, Music, Settings } from 'lucide-react'
 import { useEffect, useState } from 'react'
-import { LogoSlider } from './hero'
+import { LogoMarquee } from './marquee'
 import { DemoPlayer } from './player-stub'
 
 export function DesktopFeatures() {
@@ -90,13 +90,16 @@ export function DesktopFeatures() {
 
     return (
         <section className="w-full px-8 py-12">
-            <div className="text-center">
+            <div className="mx-auto max-w-3xl text-center px-4 flex flex-col gap-2">
+                <div className="mb-2 sm:mb-4 block w-fit mx-auto rounded-full bg-primary/20 px-3 py-1.5 sm:px-4 sm:py-2 text-xs sm:text-sm font-semibold uppercase tracking-wider text-primary">
+                    Overview
+                </div>
                 <h2 className="text-4xl font-bold tracking-tight text-foreground sm:text-5xl lg:text-6xl">Muse at a glance</h2>
                 <p className="mt-2 text-muted-foreground">See for yourself 👇🏿 - including our live demo</p>
             </div>
 
             <div className="mx-auto max-w-7xl px-4">
-                <LogoSlider className='my-6' />
+                <LogoMarquee className='my-6' />
                 <div className="flex flex-col items-center justify-center w-full mx-auto my-4">
                     <DemoPlayer className='mx-auto' shouldPlay={shouldPlay} />
                 </div>

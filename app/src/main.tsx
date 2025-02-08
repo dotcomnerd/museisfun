@@ -1,11 +1,10 @@
+import { ThemeProvider } from "@/components/theme-provider";
+import "@/index.css";
+import { MuseRouting } from '@/pages/routes';
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { createRoot } from "react-dom/client";
 import { BrowserRouter } from "react-router";
 import { Toaster } from "sonner";
-import { MuseRouting } from "./App.tsx";
-import { MiniPlayer } from "./components/mini-player.tsx";
-import { ThemeProvider } from "./components/theme-provider.tsx";
-import "./index.css";
 
 const queryClient = new QueryClient();
 

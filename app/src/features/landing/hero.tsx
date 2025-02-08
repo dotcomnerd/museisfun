@@ -1,9 +1,6 @@
 import { Badge } from "@/components/ui/badge";
 import { Button, buttonVariants } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { GridIllustration } from '@/components/ui/grid-bg';
-import { InfiniteSlider } from "@/components/ui/inf-slider";
-import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useUser } from "@/hooks/use-user";
 import { cn } from "@/lib/utils";
@@ -11,10 +8,17 @@ import { motion } from "framer-motion";
 import { ArrowRight } from "lucide-react";
 import { PiSoundcloudLogoFill } from "react-icons/pi";
 import { Link } from "react-router";
+import { Mockup } from './mockup';
+
+/**
+ * TODO: Add feature flags
+ * @example
+ * type FeatureFlag = "mockup" | "marquee" | "desktop-feats" | "comparison";
+ *
+ */
 
 export function HeroSection() {
     const { data: user } = useUser();
-
     return (
         <>
             <section className="bg-background relative overflow-hidden md:pt-24">
@@ -37,7 +41,7 @@ export function HeroSection() {
                                     y: "-10vh",
                                     x: Math.random() * 100 + "vw",
                                     opacity: 1,
-                                    rotate: Math.random() * 360
+                                    rotate: Math.random() * 10
                                 }}
                                 transition={{
                                     duration: Math.random() * 10 + 15,
@@ -52,8 +56,8 @@ export function HeroSection() {
                     })}
                 </div>
                 <div className="container mx-auto px-4 pt-12 pb-32 md:pt-0 lg:pt-0 xl:pt-0 md:pb-48">
-                    <div className="flex flex-col gap-12 items-center">
-                        <div className="flex-1 space-y-6 md:space-y-8 text-center">
+                    <div className="flex flex-col xl:flex-row xl:items-start gap-12 items-center">
+                        <div className="flex-1 space-y-6 md:space-y-8 text-center xl:text-left">
                             <motion.div
                                 initial={{ opacity: 0, y: -20 }}
                                 animate={{ opacity: 1, y: 0 }}
@@ -62,7 +66,7 @@ export function HeroSection() {
                                     delay: 0.2,
                                     ease: [0.23, 1, 0.32, 1]
                                 }}
-                                className="flex flex-wrap justify-center gap-2 mb-4"
+                                className="flex flex-wrap xl:justify-start justify-center gap-2 mb-4"
                             >
                                 <Badge variant="outline" className="text-xs py-1 px-2 hover:bg-primary/10 transition-colors cursor-default">
                                     <PiSoundcloudLogoFill className="w-3 h-3 text-primary mr-1" />
@@ -88,15 +92,15 @@ export function HeroSection() {
                                 }}
                                 className="space-y-4"
                             >
-                                <h1 className="text-3xl sm:text-4xl lg:text-6xl font-medium leading-tight">
+                                <h1 className="text-3xl sm:text-4xl lg:text-5xl font-semibold leading-tight">
                                     Download and stream<br />
                                     <span className="text-transparent bg-gradient-to-r from-[#D247BF] via-primary to-[#47D2D2] bg-clip-text animate-gradient">
-                                        songs and playlists
+                                        songs you love
                                     </span>
                                     <br />
-                                    you love for free.
+                                    for free.
                                 </h1>
-                                <p className="text-muted-foreground text-sm sm:text-lg max-w-xl mx-auto">
+                                <p className="text-muted-foreground text-sm sm:text-lg max-w-xl xl:mx-0 mx-auto">
                                     Enjoy music the way it always should've been—offline, ad-free, and always free to use.
                                     Host it yourself or use our cloud version, the choice is yours.
                                 </p>
@@ -110,7 +114,7 @@ export function HeroSection() {
                                     delay: 0.4,
                                     ease: [0.23, 1, 0.32, 1]
                                 }}
-                                className="flex flex-wrap justify-center gap-3 text-xs sm:text-sm"
+                                className="flex flex-wrap xl:justify-start justify-center gap-3 text-xs sm:text-sm"
                             >
                                 <div className="flex items-center gap-1.5 text-muted-foreground">
                                     <svg className="w-3 h-3 sm:w-4 sm:h-4 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -140,7 +144,7 @@ export function HeroSection() {
                                     delay: 0.6,
                                     ease: [0.23, 1, 0.32, 1]
                                 }}
-                                className="flex flex-col sm:flex-row justify-center gap-3 pt-4 relative z-20"
+                                className="flex flex-col sm:flex-row xl:justify-start justify-center gap-3 pt-4 relative z-20"
                             >
                                 <Link
                                     to={user ? "/dashboard" : "/register"}
@@ -164,9 +168,67 @@ export function HeroSection() {
                                     </Link>
                                 </Button>
                             </motion.div>
+
+                            <motion.div
+                                initial={{ opacity: 0, y: 20 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{
+                                    duration: 0.7,
+                                    delay: 0.6,
+                                    ease: [0.23, 1, 0.32, 1]
+                                }}
+                                className="hidden xl:block mt-12"
+                            >
+                                <div className="rounded-lg border border-border/50 backdrop-blur-sm bg-background/50 w-[400px]">
+                                    <div className="p-3 space-y-2.5 text-sm font-light">
+                                        <div className="flex items-center justify-between border-b border-border/50 pb-2.5">
+                                            <span className="font-medium">Features</span>
+                                            <div className="flex items-center gap-8">
+                                                <span className="font-medium text-primary">Muse</span>
+                                                <span className="font-medium text-muted-foreground">Others</span>
+                                            </div>
+                                        </div>
+                                        <div className="flex items-center justify-between">
+                                            <span className="text-muted-foreground">Price</span>
+                                            <div className="flex items-center gap-8">
+                                                <span className="text-emerald-500">Free</span>
+                                                <span className="text-red-500">$9.99/mo</span>
+                                            </div>
+                                        </div>
+                                        <div className="flex items-center justify-between">
+                                            <span className="text-muted-foreground">Offline Mode</span>
+                                            <div className="flex items-center gap-8">
+                                                <span className="text-emerald-500">✓</span>
+                                                <span className="text-red-500">Premium</span>
+                                            </div>
+                                        </div>
+                                        <div className="flex items-center justify-between">
+                                            <span className="text-muted-foreground">Ad-free</span>
+                                            <div className="flex items-center gap-8">
+                                                <span className="text-emerald-500">✓</span>
+                                                <span className="text-red-500">Premium</span>
+                                            </div>
+                                        </div>
+                                        <div className="flex items-center justify-between">
+                                            <span className="text-muted-foreground">Custom Uploads</span>
+                                            <div className="flex items-center gap-8">
+                                                <span className="text-emerald-500">✓</span>
+                                                <span className="text-red-500">✗</span>
+                                            </div>
+                                        </div>
+                                        <div className="flex items-center justify-between border-t border-border/50 pt-2.5">
+                                            <span className="text-muted-foreground">Self-hostable</span>
+                                            <div className="flex items-center gap-8">
+                                                <span className="text-emerald-500">✓</span>
+                                                <span className="text-red-500">✗</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </motion.div>
                         </div>
 
-                        <div className="w-full">
+                        <div className="w-full xl:w-[55%]">
                             <motion.div
                                 initial={{ opacity: 0, y: 20 }}
                                 animate={{ opacity: 1, y: 0 }}
@@ -217,39 +279,7 @@ export function HeroSection() {
                                         </Table>
                                     </div>
                                 </div>
-
-                                <div className="hidden lg:block">
-                                    <div className="relative w-full max-w-4xl mx-auto">
-                                        <div className="rounded-xl overflow-hidden shadow-[0_20px_50px_-15px_rgba(139,92,246,0.15)] bg-background/95 backdrop-blur-sm border border-primary/20 transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_20px_50px_-12px_rgba(139,92,246,0.25)]">
-                                            {/* Safari Browser Chrome */}
-                                            <div className="bg-primary/5 dark:bg-primary/10 p-2.5 flex items-center gap-2 border-b border-primary/10 backdrop-blur-md">
-                                                <div className="flex gap-1.5">
-                                                    <div className="w-3 h-3 rounded-full bg-red-500/90" />
-                                                    <div className="w-3 h-3 rounded-full bg-yellow-500/90" />
-                                                    <div className="w-3 h-3 rounded-full bg-green-500/90" />
-                                                </div>
-                                                <div className="flex-1 flex justify-center">
-                                                    <Input
-                                                        disabled
-                                                        type="text"
-                                                        value="https://ohits.fun"
-                                                        readOnly
-                                                        className="max-w-full mx-2 text-center text-xs font-medium bg-background/50 backdrop-blur-sm border-primary/10 focus-visible:ring-primary/20 focus-visible:ring-offset-0"
-                                                    />
-                                                </div>
-                                            </div>
-
-                                            {/* Content */}
-                                            <div className="relative">
-                                                <img
-                                                    className="w-full"
-                                                    src="/dashboard.png"
-                                                    alt="Muse Dashboard Preview"
-                                                />
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
+                                <Mockup />
                             </motion.div>
                             <div className="absolute inset-0 opacity-30 rotate-180">
                                 <GridIllustration />
@@ -259,77 +289,5 @@ export function HeroSection() {
                 </div>
             </section>
         </>
-    );
-}
-
-export function LogoSlider({ className, cardClassName }: { className?: string, cardClassName?: string }) {
-    return (
-
-        <div className={cn("w-full mx-auto", className)}>
-            <Card className={cn("w-full bg-background/50 backdrop-blur-sm", cardClassName)}>
-                <CardHeader>
-                    <CardTitle>
-                        <h2 className="text-4xl font-bold">Supported Platforms</h2>
-                    </CardTitle>
-                    <CardDescription>
-                        <div className="flex flex-col gap-2">
-                            From SoundCloud to YouTube Music, Pandora, Deezer, and more, Muse integrates with all of your favorite streaming services.
-                            <div className="pl-4 border-l-4 border-purple-500">
-                                <p className="text-sm text-purple-800 dark:text-purple-200">
-                                    Muse cannot guarantee the availability of all services at all times.
-                                </p>
-                            </div>
-                        </div>
-                    </CardDescription>
-                </CardHeader>
-                <CardContent>
-                    <div className="flex flex-col gap-2">
-                        <div className="-mx-6">
-                            <InfiniteSlider
-                                gap={48}
-                                reverse
-                                className="w-full py-8 bg-purple-200/50 dark:bg-purple-950/30 backdrop-blur-sm"
-                            >
-                                <img
-                                    src="/spotify.svg"
-                                    alt="Spotify logo"
-                                    className="h-[80px] w-auto opacity-80 [&>path]:fill-[#1DB954] dark:brightness-0 dark:invert"
-                                />
-                                <img
-                                    src="https://upload.wikimedia.org/wikipedia/commons/9/9d/AppleMusic_2019.svg"
-                                    alt="Apple Music logo"
-                                    className="h-[60px] w-auto opacity-80 dark:brightness-0 dark:invert"
-                                />
-                                <img
-                                    src="/ytmusic.svg"
-                                    alt="YouTube Music logo"
-                                    className='h-[60px] w-auto opacity-80 dark:hidden'
-                                />
-                                <img
-                                    src="/ytmusic-dark.svg"
-                                    alt="YouTube Music logo"
-                                    className='h-[60px] w-auto opacity-80 dark:block hidden'
-                                />
-                                <img
-                                    src="https://upload.wikimedia.org/wikipedia/commons/d/dd/Deezer_logo_2019.svg"
-                                    alt="Deezer logo"
-                                    className="h-[60px] w-auto opacity-80 dark:invert"
-                                />
-                                <img
-                                    src="https://upload.wikimedia.org/wikipedia/commons/5/56/Pandora_Logo_2019.svg"
-                                    alt="Pandora logo"
-                                    className="h-[60px] w-auto opacity-80 dark:invert"
-                                />
-                                <img
-                                    src="/soundcloud.svg"
-                                    alt="SoundCloud logo"
-                                    className="h-[60px] w-auto opacity-80 dark:invert"
-                                />
-                            </InfiniteSlider>
-                        </div>
-                    </div>
-                </CardContent>
-            </Card>
-        </div>
     );
 }

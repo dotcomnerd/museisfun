@@ -1,17 +1,19 @@
 import { AspectRatio } from '@/components/ui/aspect-ratio'
+import { cn } from '@/lib/utils'
+import * as Accordion from '@radix-ui/react-accordion'
 import { AnimatePresence, motion } from 'framer-motion'
-import { BarChart2, ChevronDown, Headphones, ListMusic, Music, Settings } from 'lucide-react'
+import { BarChart2, Headphones, ListMusic, Music, Settings } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { LogoSlider } from './hero'
 import { DemoPlayer } from './player-stub'
 
 export function DesktopFeatures() {
-    const [activeCard, setActiveCard] = useState(1)
+    const [activeCard, setActiveCard] = useState('item-1')
     const [progress, setProgress] = useState(0)
     const [shouldPlay,] = useState(false)
     const featureData = [
         {
-            id: 1,
+            id: 'item-1',
             title: 'Upload Music',
             description: 'Never lose your favorite songs from YouTube and SoundCloud. ',
             icon: <Music />,
@@ -19,7 +21,7 @@ export function DesktopFeatures() {
             duration: 5000
         },
         {
-            id: 2,
+            id: 'item-2',
             title: 'Create Playlists',
             description: 'Arrange your music into playlists and share your collections with friends.',
             icon: <ListMusic />,
@@ -27,7 +29,7 @@ export function DesktopFeatures() {
             duration: 5000
         },
         {
-            id: 3,
+            id: 'item-3',
             title: 'Manage Your Music',
             description: 'Favorite, order, and edit your music collection to your heart\'s content.',
             icon: <Settings />,
@@ -35,7 +37,7 @@ export function DesktopFeatures() {
             duration: 5000
         },
         {
-            id: 4,
+            id: 'item-4',
             title: 'Track Stats',
             description: `Monitor your listening habits with detailed statistics and insights.`,
             imageSource: '/dashboard.png',
@@ -43,7 +45,7 @@ export function DesktopFeatures() {
             duration: 5000
         },
         {
-            id: 5,
+            id: 'item-5',
             title: 'Free Playback For All',
             description: 'No more free tier limits and stupid ads - just enjoy your music, your way.',
             icon: <Headphones />,
@@ -53,12 +55,6 @@ export function DesktopFeatures() {
     ]
 
     const currentFeature = featureData.find((f) => f.id === activeCard)
-
-    const handleCardClick = (id: number) => {
-        if (id === activeCard) return
-        setProgress(0)
-        setActiveCard(id)
-    }
 
     useEffect(() => {
         const duration = currentFeature?.duration || 5000
@@ -76,8 +72,9 @@ export function DesktopFeatures() {
                 animationFrame = requestAnimationFrame(animate)
             } else {
                 setActiveCard((prev) => {
-                    const nextCard = prev + 1
-                    return nextCard > featureData.length ? 1 : nextCard
+                    const currentIndex = featureData.findIndex(f => f.id === prev)
+                    const nextIndex = (currentIndex + 1) % featureData.length
+                    return featureData[nextIndex].id
                 })
             }
         }
@@ -106,9 +103,9 @@ export function DesktopFeatures() {
                 <div className="mx-auto max-w-7xl border rounded-2xl p-2 mt-6">
                     <div className="grid grid-cols-[300px_1fr] gap-8 mx-2 my-3">
                         <div className="space-y-4">
-                                <h2 className="text-4xl font-bold">
-                                    Features
-                                </h2>
+                            <h2 className="text-4xl font-bold">
+                                Features
+                            </h2>
                             <div className="flex flex-col gap-2">
                                 <div className="pl-4 border-l-4 border-purple-500">
                                     <p className="text-sm text-purple-800 dark:text-purple-200">
@@ -116,64 +113,61 @@ export function DesktopFeatures() {
                                     </p>
                                 </div>
                             </div>
-                            <div className="flex flex-col gap-2 h-[400px] overflow-y-auto">
+                            <Accordion.Root
+                                type="single"
+                                defaultValue="item-1"
+                                collapsible
+                                value={activeCard}
+                                onValueChange={setActiveCard}
+                                className="flex flex-col gap-2 h-[400px] overflow-y-auto"
+                            >
                                 {featureData.map((feature) => (
-                                    <motion.div
+                                    <Accordion.Item
                                         key={feature.id}
-                                        initial={false}
-                                        animate={activeCard === feature.id ? "expanded" : "collapsed"}
-                                        className={`relative rounded-lg border transition-all duration-300 ease-in-out ${activeCard === feature.id
-                                            ? "ring-1 ring-black/30 dark:ring-white/20"
-                                            : ""
-                                            } overflow-hidden`}
+                                        value={feature.id}
+                                        className={cn(
+                                            "rounded-lg border overflow-hidden",
+                                            activeCard === feature.id && "ring-1 ring-black/30 dark:ring-white/20"
+                                        )}
                                     >
-                                        <button
-                                            onClick={() => handleCardClick(feature.id)}
-                                            className="w-full p-3 text-left focus:outline-none"
-                                        >
-                                            <div className="flex items-center justify-between">
+                                        <Accordion.Header className="flex">
+                                            <Accordion.Trigger className="flex flex-1 items-center justify-between p-3 text-left">
                                                 <div className="flex items-center gap-3">
-                                                    <div className={`rounded-lg p-1 transition-colors ${activeCard === feature.id
-                                                        ? "bg-primary text-primary-foreground"
-                                                        : "bg-accent text-primary"
-                                                        }`}>
+                                                    <div className={cn(
+                                                        "rounded-lg p-1 transition-colors",
+                                                        activeCard === feature.id
+                                                            ? "bg-primary text-primary-foreground"
+                                                            : "bg-accent text-primary"
+                                                    )}>
                                                         {feature.icon}
                                                     </div>
                                                     <h3 className="text-sm font-medium">{feature.title}</h3>
                                                 </div>
-                                                <motion.div
-                                                    variants={{
-                                                        expanded: { rotate: 180 },
-                                                        collapsed: { rotate: 0 },
-                                                    }}
-                                                    transition={{ duration: 0.3 }}
-                                                >
-                                                    <ChevronDown className="h-4 w-4" />
-                                                </motion.div>
-                                            </div>
-
-                                            {activeCard === feature.id && (
-                                                <motion.p
-                                                    initial={{ opacity: 0, height: 0 }}
-                                                    animate={{ opacity: 1, height: "auto" }}
-                                                    exit={{ opacity: 0, height: 0 }}
-                                                    className="mt-2 text-xs text-muted-foreground"
-                                                >
+                                            </Accordion.Trigger>
+                                        </Accordion.Header>
+                                        <Accordion.Content className="overflow-hidden data-[state=closed]:animate-accordion-up data-[state=open]:animate-accordion-down">
+                                            <motion.div
+                                                initial={{ opacity: 0 }}
+                                                animate={{ opacity: 1 }}
+                                                exit={{ opacity: 0 }}
+                                                className="p-3 pt-0"
+                                            >
+                                                <p className="text-xs text-muted-foreground">
                                                     {feature.description}
-                                                    <div className="mt-3 h-[3px] rounded-full bg-secondary">
-                                                        <motion.div
-                                                            className="h-full rounded-full bg-primary"
-                                                            initial={{ width: "0%" }}
-                                                            animate={{ width: `${progress}%` }}
-                                                            transition={{ duration: 0.3 }}
-                                                        />
-                                                    </div>
-                                                </motion.p>
-                                            )}
-                                        </button>
-                                    </motion.div>
+                                                </p>
+                                                <div className="mt-3 h-[3px] rounded-full bg-secondary">
+                                                    <motion.div
+                                                        className="h-full rounded-full bg-primary"
+                                                        initial={{ width: "0%" }}
+                                                        animate={{ width: `${progress}%` }}
+                                                        transition={{ duration: 0.3 }}
+                                                    />
+                                                </div>
+                                            </motion.div>
+                                        </Accordion.Content>
+                                    </Accordion.Item>
                                 ))}
-                            </div>
+                            </Accordion.Root>
                         </div>
 
                         <div className="relative w-full overflow-hidden rounded-lg border bg-black">

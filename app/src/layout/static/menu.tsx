@@ -1,5 +1,6 @@
-import { Ellipsis, LogOut, LucideIcon } from "lucide-react";
+import { CommandSearch } from "@/components/command-search";
 import { Button } from "@/components/ui/button";
+import { CollapseMenuButton } from "@/components/ui/collapse-menu-btn";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
     Tooltip,
@@ -7,16 +8,15 @@ import {
     TooltipProvider,
     TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { cn } from "@/lib/utils";
-import { getMenuList } from "./menu-list";
-import { Link, useLocation, useNavigate } from "react-router";
-import { CollapseMenuButton } from "@/components/ui/collapse-menu-btn";
-import { toast } from "sonner";
-import { useStore } from "@/hooks/use-store";
 import { useSidebarToggle } from "@/hooks/use-sidebar-toggle";
+import { useStore } from "@/hooks/use-store";
+import { cn } from "@/lib/utils";
 import { useAudioStore } from "@/stores/audioStore";
-import { CommandSearch } from "@/components/command-search";
+import { Ellipsis, LogOut, LucideIcon } from "lucide-react";
 import { useState } from "react";
+import { Link, useLocation, useNavigate } from "react-router";
+import { toast } from "sonner";
+import { getMenuList } from "./menu-list";
 
 interface MenuProps {
     isOpen: boolean | undefined;
@@ -31,10 +31,10 @@ export function Menu({ isOpen }: MenuProps) {
     const [searchOpen, setSearchOpen] = useState(false);
 
     const handleLogout = () => {
-        localStorage.removeItem("authToken");
+        localStorage.removeItem("token");
         // settings.resetSettings();
         toast.success("Logged out successfully");
-        navigate("/");
+        navigate("/login");
     };
 
     return (
@@ -135,14 +135,14 @@ export function Menu({ isOpen }: MenuProps) {
                                 )}
                             </li>
                         ))}
-                        <li className={cn("flex w-full grow items-end", { "pb-20": (sidebar?.isOpen), "pb-10": !sidebar?.isOpen, "pb-0": !currentSong, "pb-0 -translate-y-10": currentSong })}>
+                        <li className="w-full">
                             <TooltipProvider disableHoverableContent>
                                 <Tooltip delayDuration={100}>
                                     <TooltipTrigger asChild>
                                         <Button
                                             onClick={handleLogout}
                                             variant="link"
-                                            className="mt-5 h-10 w-full justify-center"
+                                            className="h-10 w-full justify-start"
                                         >
                                             <span className={cn(isOpen === false ? "" : "mr-4")}>
                                                 <LogOut size={18} />
@@ -158,8 +158,7 @@ export function Menu({ isOpen }: MenuProps) {
                                         </Button>
                                     </TooltipTrigger>
                                     {isOpen === false && (
-                                        <TooltipContent side="right"
-                                        >Sign out</TooltipContent>
+                                        <TooltipContent side="right">Sign out</TooltipContent>
                                     )}
                                 </Tooltip>
                             </TooltipProvider>

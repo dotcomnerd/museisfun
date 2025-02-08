@@ -24,12 +24,13 @@ import {
     TooltipProvider,
     TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { useUser } from '@/hooks/use-user';
+import { cn } from "@/lib/utils";
 import { LayoutGrid, LogOut, MenuIcon, MusicIcon, User } from "lucide-react";
 import { Suspense } from "react";
 import { Link, useNavigate } from "react-router";
+import { toast } from "sonner";
 import { Menu } from "./menu";
-import { cn } from "@/lib/utils";
-
 export function SheetMenu() {
     return (
         <Sheet>
@@ -82,10 +83,17 @@ export function MuseNavbar({ title }: NavbarProps) {
 
 export function UserNav() {
     const navigate = useNavigate();
+    const { data: user } = useUser();
     const me = {
-        name: "John Doe",
-        email: "tom@gmail.com",
-        image: "https://randomuser.me/api/portraits",
+        name: user?.name,
+        email: user?.email,
+        image: user?.pfp,
+    };
+
+    const handleLogout = () => {
+        localStorage.removeItem("token");
+        toast.success("Logged out successfully");
+        navigate("/login");
     };
 
     return (
@@ -143,7 +151,7 @@ export function UserNav() {
                     </DropdownMenuItem>
                 </DropdownMenuGroup>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem className="hover:cursor-pointer" onClick={() => navigate("/login")}>
+                <DropdownMenuItem className="hover:cursor-pointer" onClick={handleLogout}>
                     <LogOut className="mr-3 h-4 w-4 text-muted-foreground" />
                     Sign out
                 </DropdownMenuItem>

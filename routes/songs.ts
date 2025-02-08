@@ -5,13 +5,11 @@ import { convertToObjectId, UrlValidator } from "@/util/urlValidator";
 import { DeleteObjectCommand, PutObjectCommand } from "@aws-sdk/client-s3";
 import { spawn } from "child_process";
 import crypto from "crypto";
+import dotenv from 'dotenv';
 import { Router } from "express";
 import fs from "fs";
-import mongoose from 'mongoose';
-import path from "path";
 import { google } from 'googleapis';
-import dotenv from 'dotenv';
-import axios from 'axios';
+import path from "path";
 
 interface SongMetadata {
     title: string;

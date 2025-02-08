@@ -1,53 +1,17 @@
 import { useTheme } from "@/components/theme-provider";
 import { Breadcrumb, BreadcrumbList } from "@/components/ui/breadcrumb";
+import { Button } from '@/components/ui/button';
+import { Drawer, DrawerClose, DrawerContent, DrawerHeader, DrawerTitle } from '@/components/ui/drawer';
 import { Separator } from "@/components/ui/separator";
-import {
-    SidebarInset,
-    SidebarProvider,
-} from "@/components/ui/sidebar";
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { useSidebarToggle } from "@/hooks/use-sidebar-toggle";
 import { useStore } from "@/hooks/use-store";
 import { cn } from "@/lib/utils";
+import { Heart, Home, ListMusic, Menu, Music, Settings, X } from 'lucide-react';
 import { ReactNode, useEffect, useState } from "react";
-import { Outlet, useNavigate } from "react-router";
-import { MuseSidebar } from "./components/app-sidebar";
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-import { Button } from '@/components/ui/button';
-import { Menu, X, ListMusic, Music, Home, Heart, Settings } from 'lucide-react';
-import { Drawer, DrawerClose, DrawerTitle, DrawerHeader, DrawerContent } from '@/components/ui/drawer';
+import { useNavigate } from "react-router";
 
-export function DashboardLayout() {
-    const { theme } = useTheme();
-    const resolved = window.matchMedia("(prefers-color-scheme: dark)").matches
-        ? "dark"
-        : "light";
-    const resolvedTheme = theme || resolved;
-    const BG_URL =
-        resolvedTheme === "light"
-            ? `https://4kwallpapers.com/images/walls/thumbs_3t/10781.png`
-            : `https://4kwallpapers.com/images/walls/thumbs_3t/19801.jpg`;
-    return (
-        <>
-            <div
-                className={`min-h-screen bg-cover bg-center bg-fixed bg-no-repeat bg-blend-darken text-white`}
-                style={{
-                    backgroundImage:
-                        resolvedTheme === "light"
-                            ? `linear-gradient(rgba(0, 0, 0, 0.3), rgba(0, 0, 0, 0.3)), url('${BG_URL}')`
-                            : `linear-gradient(rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.7)), url('${BG_URL}')`,
-                }}
-            >
-                <SidebarProvider>
-                    <MuseSidebar />
-                    <SidebarInset>
-                        <Outlet />
-                    </SidebarInset>
-                </SidebarProvider>
-            </div>
-        </>
-    );
-}
-export function DashboardPageLayout({
+export function PageLayout({
     children,
     breadcrumbs,
 }: {

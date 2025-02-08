@@ -2,28 +2,18 @@ import { MiniPlayer } from "@/components/mini-player";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { useSidebarToggle } from "@/hooks/use-sidebar-toggle";
 import { useStore } from "@/hooks/use-store";
+import { useUser } from '@/hooks/use-user';
+import { type BreadcrumbSegment } from "@/lib/types";
 import { cn } from "@/lib/utils";
-import { useMemo } from "react";
-import { Outlet, useLocation } from "react-router";
-import { MuseSidebar } from "./components/app-sidebar";
-
-type BreadcrumbSegment = {
-    label: string;
-    path: string;
-    isLast: boolean;
-};
+import { useLayoutEffect, useMemo } from "react";
+import { Outlet, useLocation, useNavigate } from "react-router";
+import { toast } from 'sonner';
+import { MuseSidebar } from "./components/muse-sidebar";
 
 function formatBreadcrumbLabel(segment: string): string {
-    // Handle empty segments
     if (!segment) return "Dashboard";
-
-    // Handle special cases
     if (segment.toLowerCase() === "dashboard") return "Dashboard";
-
-    // Convert kebab/snake case to normal text
     const withoutDashes = segment.replace(/[-_]/g, " ");
-
-    // Capitalize first letter of each word
     return withoutDashes
         .split(" ")
         .map(word => word.charAt(0).toUpperCase() + word.slice(1))
@@ -31,14 +21,8 @@ function formatBreadcrumbLabel(segment: string): string {
 }
 
 function generateBreadcrumbs(pathname: string): BreadcrumbSegment[] {
-    // Remove trailing slash and split the path
     const paths = pathname.replace(/\/$/, "").split("/").filter(Boolean);
-
-    // Always start with dashboard if we're in an authenticated route
-    if (paths[0] !== "dashboard" && pathname !== "/") {
-        paths.unshift("dashboard");
-    }
-
+    if (paths[0] !== "dashboard" && pathname !== "/") paths.unshift("dashboard");
     return paths.map((segment, index) => {
         const path = `/${paths.slice(0, index + 1).join("/")}`;
         return {
@@ -49,13 +33,23 @@ function generateBreadcrumbs(pathname: string): BreadcrumbSegment[] {
     });
 }
 
-export function ContentLayout() {
+export function DashboardLayout() {
     const location = useLocation();
+    const navigate = useNavigate();
+    const { data: user } = useUser();
     const sidebar = useStore(useSidebarToggle, (state) => state);
     const breadcrumbs = useMemo(
         () => generateBreadcrumbs(location.pathname),
         [location.pathname]
     );
+
+    useLayoutEffect(() => {
+        const token = localStorage.getItem("token");
+        if (!token && !["/login", "/register"].includes(location.pathname)) {
+            toast.error("You must be logged in to access this page");
+            navigate("/login");
+        }
+    }, [navigate]);
 
     return (
         <>

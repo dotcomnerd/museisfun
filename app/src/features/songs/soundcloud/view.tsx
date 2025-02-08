@@ -22,8 +22,9 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { DashboardPageLayout } from "@/layout/page-layout";
+import { PageLayout } from "@/layout/page-layout";
 import Fetcher from "@/lib/fetcher";
+import { Song } from "@/lib/types";
 import { cn, formatDuration } from "@/lib/utils";
 import { usePlayerControls } from "@/stores/audioStore";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -32,7 +33,6 @@ import { useState } from "react";
 import { Link } from "react-router";
 import { formatDate } from "../../../lib/utils";
 import { AddSongDialog } from "../add-song-dialog";
-import { Song } from "../dashboard/view";
 
 const api = Fetcher.getInstance();
 
@@ -80,7 +80,7 @@ export function SoundCloudSongsView() {
 
   return (
     <>
-      <DashboardPageLayout
+      <PageLayout
         breadcrumbs={
           <>
             <BreadcrumbItem>
@@ -113,7 +113,9 @@ export function SoundCloudSongsView() {
             onChange={(e) => setSearchTerm(e.target.value)}
             className="max-w-sm backdrop-blur-lg"
           />
-          <AddSongDialog />
+          <AddSongDialog>
+            <Button variant="outline">Add Song</Button>
+          </AddSongDialog>
         </div>
         <div className="rounded-md border-none backdrop-blur-sm">
           <Table>
@@ -210,7 +212,7 @@ export function SoundCloudSongsView() {
             </PaginationContent>
           </Pagination>
         </div>
-      </DashboardPageLayout>
+      </PageLayout>
     </>
   );
 }

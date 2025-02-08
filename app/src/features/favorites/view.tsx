@@ -1,5 +1,5 @@
+import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList } from "@/components/ui/breadcrumb";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import {
     Table,
@@ -14,21 +14,19 @@ import {
     TooltipContent,
     TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { DashboardPageLayout } from "@/layout/page-layout";
+import { useIsMobile } from '@/hooks/use-mobile';
+import { PageLayout } from '@/layout/page-layout';
 import Fetcher from "@/lib/fetcher";
+import { Song } from '@/lib/types';
 import { cn, formatDate, formatDuration } from "@/lib/utils";
-import { usePlayerControls, useAudioStore } from "@/stores/audioStore";
+import { useAudioStore, usePlayerControls } from "@/stores/audioStore";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Heart, Loader2, MoreVertical, Pause, Pencil, Play, Plus, Trash2 } from "lucide-react";
+import { AnimatePresence, motion } from "framer-motion";
+import { Heart, Loader2, Plus } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
-import { motion, AnimatePresence } from "framer-motion";
-import { Song } from '../songs/dashboard/view';
-import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList } from "@/components/ui/breadcrumb";
-import { useIsMobile } from '@/hooks/use-mobile';
-const api = Fetcher.getInstance();
 
-type FavoriteState = "added" | "removed" | "failed";
+const api = Fetcher.getInstance();
 
 export function FavoritesView() {
     const [searchTerm, setSearchTerm] = useState("");
@@ -40,7 +38,7 @@ export function FavoritesView() {
     const { data: favorites, isLoading } = useQuery({
         queryKey: ["favorite-tracks"],
         queryFn: async () => {
-            const { data } = await Fetcher.getInstance().get("/users/media/favorite/song");
+            const { data } = await api.get("/users/media/favorite/song");
             return data as Song[];
         }
     });
@@ -67,7 +65,7 @@ export function FavoritesView() {
     );
 
     return (
-        <DashboardPageLayout breadcrumbs={
+        <PageLayout breadcrumbs={
             <Breadcrumb>
                 <BreadcrumbList>
                     <BreadcrumbItem>
@@ -220,6 +218,6 @@ export function FavoritesView() {
                     </div>
                 )}
             </div>
-        </DashboardPageLayout>
+        </PageLayout>
     );
 }

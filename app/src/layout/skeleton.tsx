@@ -1,7 +1,7 @@
 import { useTheme } from "@/components/theme-provider";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { Outlet } from "react-router";
-import { AppSidebar } from "./components/app-sidebar";
+import { AppSidebar } from "./components/muse-sidebar";
 
 export function DashboardLayout() {
   const { theme } = useTheme();

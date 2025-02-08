@@ -34,10 +34,10 @@ import {
     SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import type { Song } from "@/features/songs/dashboard/view";
 import { useUser } from "@/hooks/use-user";
 import NotFoundPage from "@/layout/static/fourohfour";
 import Fetcher from "@/lib/fetcher";
+import { Playlist, Song } from "@/lib/types";
 import { cn, formatDuration } from "@/lib/utils";
 import { useAudioStore, usePlayerControls } from "@/stores/audioStore";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -61,22 +61,6 @@ import { useNavigate, useParams } from "react-router";
 import { toast } from "sonner";
 
 const api = Fetcher.getInstance();
-
-export interface Playlist {
-    _id: string;
-    name: string;
-    description?: string;
-    coverImage?: string;
-    visibility: "public" | "private" | "friends";
-    createdBy: {
-        _id: string;
-        username: string;
-    };
-    songs: Song[];
-    createdAt: string;
-    updatedAt: string;
-    playCount: number;
-}
 
 export function PlaylistViewNested() {
     const { id } = useParams<{ id: string }>();

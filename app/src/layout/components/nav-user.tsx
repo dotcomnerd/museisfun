@@ -40,7 +40,7 @@ export function NavUser({ name, username, email, pfp, _id }: User) {
 
   const handleLogout = () => {
     localStorage.removeItem("token");
-    navigate("/login");
+    navigate("/login", { replace: true });
   };
 
   return (

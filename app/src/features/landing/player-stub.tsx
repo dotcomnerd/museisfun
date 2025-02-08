@@ -1,11 +1,11 @@
-import { useState, useEffect, useRef } from 'react';
-import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
-import { Pause, Play, SkipBack, SkipForward, Volume2, VolumeX, Repeat, Shuffle } from 'lucide-react';
-import { Song } from '../songs/dashboard/view';
-import { cn } from '@/lib/utils';
-import { useIsMobile } from '@/hooks/use-mobile';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { useIsMobile } from '@/hooks/use-mobile';
+import { Song } from '@/lib/types';
+import { cn } from '@/lib/utils';
+import { motion } from 'framer-motion';
+import { Pause, Play, Repeat, Shuffle, SkipBack, SkipForward, Volume2, VolumeX } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
 
 export function DemoPlayer({ className, shouldPlay }: { className?: string, shouldPlay: boolean }) {
   const [currentSong, setCurrentSong] = useState<Partial<Song> | null>(null);

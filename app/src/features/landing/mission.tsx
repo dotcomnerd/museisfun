@@ -1,11 +1,11 @@
-import { motion } from "framer-motion";
 import Particles from "@/components/ui/particles";
+import { motion } from "framer-motion";
 import { Check } from 'lucide-react';
 
 export function Mission() {
   return (
-    <div className="relative flex flex-col items-center justify-center w-full">
-      <div className="relative flex flex-col items-center justify-center w-full max-w-6xl mx-auto px-4">
+    <section className="w-full">
+        <div className="relative flex flex-col items-center justify-center w-full max-w-6xl mx-auto">
         <div className="relative flex flex-col items-center justify-center py-12 lg:py-20 px-6 rounded-2xl lg:rounded-3xl bg-background/20 text-center border border-border overflow-hidden w-full">
           <Particles
             refresh
@@ -40,7 +40,7 @@ export function Mission() {
           </div>
 
           <div className="relative z-10">
-            <h2 className="text-3xl md:text-5xl lg:text-5xl font-bold !leading-snug mb-6">Music, <span className="font-bold text-primary">as it should be.</span></h2>
+              <h2 className="text-3xl md:text-5xl lg:text-5xl font-bold !leading-snug mb-6">Always free music, <br /> <span className="font-bold text-primary">as it should be.</span></h2>
             <div className="flex flex-col items-center space-y-4 max-w-2xl mx-auto">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full text-left">
                 <div className="flex items-center gap-3">
@@ -54,27 +54,28 @@ export function Mission() {
                   <div className="rounded-lg p-2 bg-primary/10 text-primary">
                     <Check className="h-5 w-5" />
                   </div>
-                  <p className="text-foreground/80">Fast and super easy</p>
+                    <p className="text-foreground/80">Open source, forever</p>
                 </div>
 
                 <div className="flex items-center gap-3">
                   <div className="rounded-lg p-2 bg-primary/10 text-primary">
                     <Check className="h-5 w-5" />
                   </div>
-                  <p className="text-foreground/80">No tracking or analytics</p>
+                    <p className="text-foreground/80">No tracking, ever</p>
                 </div>
 
                 <div className="flex items-center gap-3">
                   <div className="rounded-lg p-2 bg-primary/10 text-primary">
                     <Check className="h-5 w-5" />
                   </div>
-                  <p className="text-foreground/80">100% self-hostable</p>
+                    <p className="text-foreground/80">No ads, ever</p>
                 </div>
               </div>
             </div>
           </div>
-        </div>
+          </div>
+
       </div>
-    </div>
+    </section>
   );
 }

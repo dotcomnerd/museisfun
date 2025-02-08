@@ -1,11 +1,13 @@
 import { Badge } from "@/components/ui/badge";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { GridIllustration } from '@/components/ui/grid-bg';
+import { Separator } from "@/components/ui/separator";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useUser } from "@/hooks/use-user";
 import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
 import { ArrowRight } from "lucide-react";
+import { AiFillGithub } from 'react-icons/ai';
 import { PiSoundcloudLogoFill } from "react-icons/pi";
 import { Link } from "react-router";
 import { Mockup } from './mockup';
@@ -68,17 +70,10 @@ export function HeroSection() {
                                 }}
                                 className="flex flex-wrap xl:justify-start justify-center gap-2 mb-4"
                             >
-                                <Badge variant="outline" className="text-xs py-1 px-2 hover:bg-primary/10 transition-colors cursor-default">
-                                    <PiSoundcloudLogoFill className="w-3 h-3 text-primary mr-1" />
-                                    <span>Soundcloud Support</span>
-                                </Badge>
-                                <Badge variant="outline" className="text-xs py-1 px-2 hover:bg-primary/10 transition-colors cursor-default">
-                                    <span className="mr-1">🔓</span>
-                                    <span>Open Source</span>
-                                </Badge>
-                                <Badge variant="outline" className="text-xs py-1 px-2 hover:bg-primary/10 transition-colors cursor-default">
-                                    <span className="mr-1">⚡</span>
-                                    <span>Self-hostable</span>
+                                <Badge variant="outline" className="text-sm font-medium tracking-tight py-1 px-2 hover:bg-primary/10 transition-colors cursor-default" role='link'>
+                                    <span className="mr-1">💸</span>
+                                    <span>Donate to keep Muse free for everyone</span>
+                                    <span className="ml-1">💸</span>
                                 </Badge>
                             </motion.div>
 
@@ -101,8 +96,7 @@ export function HeroSection() {
                                     for free.
                                 </h1>
                                 <p className="text-muted-foreground text-sm sm:text-lg max-w-xl xl:mx-0 mx-auto">
-                                    Enjoy music the way it always should've been—offline, ad-free, and always free to use.
-                                    Host it yourself or use our cloud version, the choice is yours.
+                                    Meet the next generation music streaming platform, built to stream your personal music library from anywhere.
                                 </p>
                             </motion.div>
 
@@ -114,25 +108,35 @@ export function HeroSection() {
                                     delay: 0.4,
                                     ease: [0.23, 1, 0.32, 1]
                                 }}
-                                className="flex flex-wrap xl:justify-start justify-center gap-3 text-xs sm:text-sm"
+                                className="flex flex-wrap xl:justify-start justify-center gap-3 text-xs sm:text-sm max-w-xs mr-auto"
                             >
                                 <div className="flex items-center gap-1.5 text-muted-foreground">
-                                    <svg className="w-3 h-3 sm:w-4 sm:h-4 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <PiSoundcloudLogoFill className="size-4 text-primary mr-1" />
+                                    <span>Soundcloud Support</span>
+                                </div>
+                                <div className="flex items-center gap-1.5 text-muted-foreground">
+                                    <svg className="size-4 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                                     </svg>
                                     <span>No Ads</span>
                                 </div>
                                 <div className="flex items-center gap-1.5 text-muted-foreground">
-                                    <svg className="w-3 h-3 sm:w-4 sm:h-4 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                                    </svg>
-                                    <span>Privacy First</span>
+                                    <AiFillGithub className="size-5 text-primary mr-1" />
+                                    <span>Open Source</span>
                                 </div>
                                 <div className="flex items-center gap-1.5 text-muted-foreground">
-                                    <svg className="w-3 h-3 sm:w-4 sm:h-4 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                                    <svg className="size-4 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                                     </svg>
-                                    <span>Lightning Fast</span>
+                                    <span>Self-hostable</span>
+                                </div>
+                                <Separator className="my-2" />
+                                <div className="flex items-center gap-1.5 text-muted-foreground">
+                                    <span>Made by
+                                        <a href="https://github.com/nyumat" target="_blank" className="text-primary hover:underline font-light ml-1">
+                                            <b>@nyumat</b>
+                                        </a>
+                                    </span>
                                 </div>
                             </motion.div>
 
@@ -168,7 +172,6 @@ export function HeroSection() {
                                     </Link>
                                 </Button>
                             </motion.div>
-
                             <motion.div
                                 initial={{ opacity: 0, y: 20 }}
                                 animate={{ opacity: 1, y: 0 }}
@@ -179,48 +182,54 @@ export function HeroSection() {
                                 }}
                                 className="hidden xl:block mt-12"
                             >
-                                <div className="rounded-lg border border-border/50 backdrop-blur-sm bg-background/50 w-[400px]">
+                                <div className="rounded-lg border border-border/50 backdrop-blur-sm bg-background/50 w-[600px]">
                                     <div className="p-3 space-y-2.5 text-sm font-light">
                                         <div className="flex items-center justify-between border-b border-border/50 pb-2.5">
                                             <span className="font-medium">Features</span>
-                                            <div className="flex items-center gap-8">
+                                            <div className="flex items-center gap-12">
                                                 <span className="font-medium text-primary">Muse</span>
-                                                <span className="font-medium text-muted-foreground">Others</span>
+                                                <span className="font-medium text-muted-foreground">YouTube</span>
+                                                <span className="font-medium text-muted-foreground">Spotify</span>
                                             </div>
                                         </div>
                                         <div className="flex items-center justify-between">
                                             <span className="text-muted-foreground">Price</span>
-                                            <div className="flex items-center gap-8">
-                                                <span className="text-emerald-500">Free</span>
-                                                <span className="text-red-500">$9.99/mo</span>
+                                            <div className="flex items-center gap-12">
+                                                <span className="text-emerald-500 w-12 text-center">Free</span>
+                                                <span className="text-red-500 w-16 text-center">$11.99/mo</span>
+                                                <span className="text-red-500 w-16 text-center">$9.99/mo</span>
                                             </div>
                                         </div>
                                         <div className="flex items-center justify-between">
                                             <span className="text-muted-foreground">Offline Mode</span>
-                                            <div className="flex items-center gap-8">
-                                                <span className="text-emerald-500">✓</span>
-                                                <span className="text-red-500">Premium</span>
+                                            <div className="flex items-center gap-12">
+                                                <span className="text-emerald-500 w-12 text-center">✓</span>
+                                                <span className="text-red-500 w-16 text-center">Premium</span>
+                                                <span className="text-red-500 w-16 text-center">Premium</span>
                                             </div>
                                         </div>
                                         <div className="flex items-center justify-between">
                                             <span className="text-muted-foreground">Ad-free</span>
-                                            <div className="flex items-center gap-8">
-                                                <span className="text-emerald-500">✓</span>
-                                                <span className="text-red-500">Premium</span>
+                                            <div className="flex items-center gap-12">
+                                                <span className="text-emerald-500 w-12 text-center">✓</span>
+                                                <span className="text-red-500 w-16 text-center">Premium</span>
+                                                <span className="text-red-500 w-16 text-center">Premium</span>
                                             </div>
                                         </div>
                                         <div className="flex items-center justify-between">
                                             <span className="text-muted-foreground">Custom Uploads</span>
-                                            <div className="flex items-center gap-8">
-                                                <span className="text-emerald-500">✓</span>
-                                                <span className="text-red-500">✗</span>
+                                            <div className="flex items-center gap-12">
+                                                <span className="text-emerald-500 w-12 text-center">✓</span>
+                                                <span className="text-red-500 w-16 text-center">✗</span>
+                                                <span className="text-emerald-500 w-16 text-center">✓</span>
                                             </div>
                                         </div>
                                         <div className="flex items-center justify-between border-t border-border/50 pt-2.5">
                                             <span className="text-muted-foreground">Self-hostable</span>
-                                            <div className="flex items-center gap-8">
-                                                <span className="text-emerald-500">✓</span>
-                                                <span className="text-red-500">✗</span>
+                                            <div className="flex items-center gap-12">
+                                                <span className="text-emerald-500 w-12 text-center">✓</span>
+                                                <span className="text-red-500 w-16 text-center">✗</span>
+                                                <span className="text-red-500 w-16 text-center">✗</span>
                                             </div>
                                         </div>
                                     </div>
@@ -228,7 +237,7 @@ export function HeroSection() {
                             </motion.div>
                         </div>
 
-                        <div className="w-full xl:w-[55%]">
+                        <div className="w-full xl:w-[45%]">
                             <motion.div
                                 initial={{ opacity: 0, y: 20 }}
                                 animate={{ opacity: 1, y: 0 }}

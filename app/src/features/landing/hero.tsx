@@ -1,16 +1,16 @@
 import { Badge } from "@/components/ui/badge";
 import { Button, buttonVariants } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { GridIllustration } from '@/components/ui/grid-bg';
+import { InfiniteSlider } from "@/components/ui/inf-slider";
+import { Input } from '@/components/ui/input';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useUser } from "@/hooks/use-user";
 import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
 import { ArrowRight } from "lucide-react";
 import { PiSoundcloudLogoFill } from "react-icons/pi";
 import { Link } from "react-router";
-import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
-import { GridIllustration } from '@/components/ui/grid-bg';
-import { InfiniteSlider } from "@/components/ui/inf-slider";
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
-import { Input } from '@/components/ui/input';
 
 export function HeroSection() {
     const { data: user } = useUser();
@@ -37,7 +37,7 @@ export function HeroSection() {
                                     y: "-10vh",
                                     x: Math.random() * 100 + "vw",
                                     opacity: 1,
-                                    rotate: 360
+                                    rotate: Math.random() * 360
                                 }}
                                 transition={{
                                     duration: Math.random() * 10 + 15,

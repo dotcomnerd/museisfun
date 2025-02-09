@@ -1,13 +1,16 @@
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { Input } from "@/components/ui/input";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import Fetcher from '@/lib/fetcher';
 import { Playlist, Song } from '@/lib/types';
 import { cn } from "@/lib/utils";
 import { useAudioStore } from "@/stores/audioStore";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { motion } from "framer-motion";
-import { MoreVertical, Pause, Pencil, Play, Plus, Trash2 } from "lucide-react";
+import { Filter, Heart, MoreVertical, Pause, Pencil, Play, Plus, Search, Share2, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 
@@ -26,6 +29,9 @@ export function MobileSongsList({
 }) {
   const [sortBy, setSortBy] = useState<'title' | 'date' | 'duration'>('title');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [showFilters, setShowFilters] = useState(false);
+  const [favorites, setFavorites] = useState<string[]>([]);
   const { isPlaying, isBuffering } = useAudioStore();
   const [showPlaylistDrawer, setShowPlaylistDrawer] = useState(false);
   const [selectedSongId, setSelectedSongId] = useState<string | null>(null);
@@ -108,41 +114,60 @@ export function MobileSongsList({
     });
   };
 
-  const sortedSongs = handleSort(songs);
+  const handleShare = async (song: Song) => {
+    try {
+      await navigator.share({
+        title: song.title,
+        text: `Check out ${song.title} by ${song.uploader} on Muse`,
+        url: window.location.href
+      });
+    } catch (err) {
+      toast.error("Failed to share song");
+    }
+  };
+
+  const toggleFavorite = (songId: string) => {
+    setFavorites(prev =>
+      prev.includes(songId)
+        ? prev.filter(id => id !== songId)
+        : [...prev, songId]
+    );
+    toast.success("Updated favorites");
+  };
+
+  const filteredSongs = songs.filter(song =>
+    song.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    song.uploader.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  const sortedSongs = handleSort(filteredSongs);
 
   return (
     <div className="flex flex-col">
-      <div className="rounded-lg z-10 bg-primary/20 backdrop-blur-sm px-4 py-3 flex items-center justify-between">
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="text-white/70 hover:text-white"
-            >
-              Sort By
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent className="bg-black/90 backdrop-blur-sm border-none">
-            <DropdownMenuItem onClick={() => setSortBy('title')} className="text-white/70">
-              Title {sortBy === 'title' && '✓'}
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => setSortBy('date')} className="text-white/70">
-              Date Added {sortBy === 'date' && '✓'}
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => setSortBy('duration')} className="text-white/70">
-              Duration {sortBy === 'duration' && '✓'}
-            </DropdownMenuItem>
-            <DropdownMenuSeparator className="bg-white/10" />
-            <DropdownMenuItem onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')} className="text-white/70">
-              {sortOrder === 'asc' ? 'Ascending ↑' : 'Descending ↓'}
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+      <div className="space-y-2 p-3 bg-background/40 backdrop-blur-sm rounded-xl">
+        <div className="flex items-center gap-2">
+          <div className="relative flex-1">
+            <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Search songs..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-8 bg-background/60"
+            />
+          </div>
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={() => setShowFilters(true)}
+            className="shrink-0"
+          >
+            <Filter className="h-4 w-4" />
+          </Button>
+        </div>
       </div>
 
       {/* Songs List */}
-      <div className="flex-1">
+      <ScrollArea className="flex-1">
         {sortedSongs?.map((song, index) => (
           <motion.div
             key={song._id}
@@ -150,7 +175,7 @@ export function MobileSongsList({
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: index * 0.05 }}
             className={cn(
-              "px-2 py-2 flex items-center gap-2 hover:bg-primary/5 transition-colors",
+              "px-2 py-2 flex items-center gap-2 active:bg-primary/10 transition-colors",
               index !== songs.length - 1 && "border-b border-primary/10"
             )}
             onClick={() => onPlay(song._id)}
@@ -160,10 +185,10 @@ export function MobileSongsList({
               <img
                 src={song.thumbnail}
                 alt={song.title}
-                className="w-10 h-10 rounded object-cover"
+                className="w-12 h-12 rounded-lg object-cover"
               />
               {currentSong?._id === song._id && (
-                <div className="absolute inset-0 bg-black/60 flex items-center justify-center rounded">
+                <div className="absolute inset-0 bg-black/60 flex items-center justify-center rounded-lg">
                   {isBuffering ? (
                     <motion.div
                       animate={{ rotate: 360 }}
@@ -181,7 +206,7 @@ export function MobileSongsList({
 
             {/* Song Info */}
             <div className="flex-1 min-w-0">
-              <div className="text-xs truncate">
+              <div className="text-sm font-medium truncate">
                 {song.title}
               </div>
               <div className="flex items-center gap-1 text-xs text-muted-foreground">
@@ -191,16 +216,34 @@ export function MobileSongsList({
               </div>
             </div>
 
-            {/* Actions */}
+            {/* Quick Actions */}
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8"
+              onClick={(e) => {
+                e.stopPropagation();
+                toggleFavorite(song._id);
+              }}
+            >
+              <Heart
+                className={cn(
+                  "h-4 w-4",
+                  favorites.includes(song._id) ? "fill-red-500 text-red-500" : "text-muted-foreground"
+                )}
+              />
+            </Button>
+
+            {/* Actions Menu */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-6 w-6"
+                  className="h-8 w-8"
                   onClick={(e) => e.stopPropagation()}
                 >
-                  <MoreVertical className="h-3.5 w-3.5 text-muted-foreground" />
+                  <MoreVertical className="h-4 w-4 text-muted-foreground" />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-48" onClick={(e) => e.stopPropagation()}>
@@ -211,6 +254,13 @@ export function MobileSongsList({
                 }}>
                   <Plus className="h-3.5 w-3.5 mr-2" />
                   Add to Playlist
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={(e) => {
+                  e.stopPropagation();
+                  handleShare(song);
+                }}>
+                  <Share2 className="h-3.5 w-3.5 mr-2" />
+                  Share Song
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={(e) => e.stopPropagation()}>
                   <Pencil className="h-3.5 w-3.5 mr-2" />
@@ -231,8 +281,57 @@ export function MobileSongsList({
             </DropdownMenu>
           </motion.div>
         ))}
-      </div>
+      </ScrollArea>
 
+      {/* Filter Sheet */}
+      <Sheet open={showFilters} onOpenChange={setShowFilters}>
+        <SheetContent side="bottom" className="h-[50vh]">
+          <SheetHeader>
+            <SheetTitle>Sort & Filter</SheetTitle>
+            <SheetDescription>
+              Customize how your songs are displayed
+            </SheetDescription>
+          </SheetHeader>
+          <div className="py-4 space-y-4">
+            <div className="space-y-2">
+              <div className="font-medium text-sm">Sort By</div>
+              <div className="grid grid-cols-3 gap-2">
+                {['title', 'date', 'duration'].map((option) => (
+                  <Button
+                    key={option}
+                    variant={sortBy === option ? "default" : "outline"}
+                    onClick={() => setSortBy(option as typeof sortBy)}
+                    className="w-full capitalize"
+                  >
+                    {option}
+                  </Button>
+                ))}
+              </div>
+            </div>
+            <div className="space-y-2">
+              <div className="font-medium text-sm">Order</div>
+              <div className="grid grid-cols-2 gap-2">
+                <Button
+                  variant={sortOrder === 'asc' ? "default" : "outline"}
+                  onClick={() => setSortOrder('asc')}
+                  className="w-full"
+                >
+                  Ascending
+                </Button>
+                <Button
+                  variant={sortOrder === 'desc' ? "default" : "outline"}
+                  onClick={() => setSortOrder('desc')}
+                  className="w-full"
+                >
+                  Descending
+                </Button>
+              </div>
+            </div>
+          </div>
+        </SheetContent>
+      </Sheet>
+
+      {/* Playlist Dialog */}
       <Dialog open={showPlaylistDrawer} onOpenChange={setShowPlaylistDrawer}>
         <DialogContent className="bg-black/90 backdrop-blur-lg border-purple-500/50 rounded-lg sm:max-w-[425px]">
           <DialogHeader>
@@ -248,7 +347,7 @@ export function MobileSongsList({
                 <div
                   key={playlist._id}
                   className={cn(
-                    "flex items-center gap-4 p-2 hover:bg-white/5 rounded-md cursor-pointer transition-colors",
+                    "flex items-center gap-4 p-2 active:bg-white/10 rounded-md transition-colors",
                     songExists && "bg-purple-500/10"
                   )}
                   onClick={() => {
@@ -274,7 +373,7 @@ export function MobileSongsList({
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="h-6 w-6 hover:text-red-400"
+                        className="h-6 w-6"
                       >
                         <Trash2 className="h-3.5 w-3.5" />
                       </Button>

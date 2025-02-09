@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import Fetcher from '@/lib/fetcher';
-import { Playlist, Song } from '@/lib/types';
+import { Playlist, Song } from "muse-shared";
 import { cn } from "@/lib/utils";
 import { useAudioStore } from "@/stores/audioStore";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";

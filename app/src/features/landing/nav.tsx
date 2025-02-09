@@ -1,171 +1,141 @@
 import { ModeToggle } from "@/components/mode-toggle";
-import { Button } from "@/components/ui/button";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
-    NavigationMenu,
-    NavigationMenuItem,
-    NavigationMenuLink,
-    NavigationMenuList,
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuLabel,
+    DropdownMenuSeparator,
+    DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+    NavigationMenu, NavigationMenuLink,
+    NavigationMenuList, navigationMenuTriggerStyle
 } from "@/components/ui/navigation-menu";
-import { Separator } from "@/components/ui/separator";
-import {
-    Sheet,
-    SheetContent,
-    SheetFooter,
-    SheetHeader,
-    SheetTitle,
-    SheetTrigger,
-} from "@/components/ui/sheet";
 import { useUser } from "@/hooks/use-user";
 import { cn } from "@/lib/utils";
-import { Github, Menu } from "lucide-react";
-import React from "react";
-import { Link } from "react-router";
+import { useQueryClient } from "@tanstack/react-query";
+import { LogOut, Settings, User } from "lucide-react";
+import { ComponentPropsWithoutRef, ReactNode, forwardRef } from "react";
+import { Link, useNavigate } from "react-router";
+import { toast } from "sonner";
 
-interface RouteProps {
+const NavItem = ({
+    href,
+    children,
+}: {
     href: string;
-    label: string;
-}
+    children: ReactNode;
+}) => (
+    <NavigationMenuLink asChild className={navigationMenuTriggerStyle()}>
+        <Link to={href}>{children}</Link>
+    </NavigationMenuLink>
+);
+
+const ListItem = forwardRef<
+    HTMLAnchorElement,
+    ComponentPropsWithoutRef<"a"> & { title: string; href: string }
+>(({ className, title, children, href, ...props }, ref) => (
+    <li>
+        <NavigationMenuLink asChild>
+            <Link
+                to={href}
+                className={cn(
+                    "block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-primary/10 hover:text-foreground focus:bg-primary/10 focus:text-foreground",
+                    className
+                )}
+                {...props}
+            >
+                <div className="text-sm font-medium leading-none">{title}</div>
+                <p className="line-clamp-2 text-sm leading-snug text-foreground/80">
+                    {children}
+                </p>
+            </Link>
+        </NavigationMenuLink>
+    </li>
+));
+ListItem.displayName = "ListItem";
 
 export const Navbar = () => {
-    const { data: user } = useUser();
-    const [isOpen, setIsOpen] = React.useState(false);
-    const routeList: RouteProps[] = [
-        {
-            href: "https://museisfun.fly.dev",
-            label: "API Docs"
-        },
-        {
-            href: "https://www.buymeacoffee.com/nyumat",
-            label: "Donate",
-        },
-        {
-            href: "#faq",
-            label: "FAQ",
-        },
-        {
-            href: "/login",
-            label: "Login",
-        },
-        {
-            href: "/register",
-            label: "Register",
-        },
-        {
-            href: "/dashboard",
-            label: "Enter Dashboard",
-        },
-    ];
+    const { data: user, isLoading, isError } = useUser();
+    const navigate = useNavigate();
+    const queryClient = useQueryClient();
+
+    const handleLogout = async () => {
+        queryClient.removeQueries({ queryKey: ['use-user'] });
+        localStorage.removeItem("token");
+        toast.success("Logged out successfully");
+        navigate("/");
+    };
+
+    if (isError) {
+        return null;
+    }
+
     return (
-        <header className="shadow-inner bg-opacity-5 w-[90%] md:w-[70%] lg:w-[75%] lg:max-w-screen-xl top-5 mx-auto sticky border border-secondary z-40 rounded-2xl flex justify-between items-center p-2 backdrop-blur-sm max-h-12">
-            <Link to="/" title="Muse Logo">
-                <div className="flex aspect-auto size-20 items-center justify-center rounded-lg hover:bg-sidebar-primary-hover transition-colors">
-                    <div className="text-left text-sm leading-tight">
-                        <img
-                            src="/logo.svg"
-                            alt="logo"
-                            className="dark:hidden w-full h-full object-contain"
-                        />
-                        <img
-                            src="/logo-color.svg"
-                            alt="muse logo"
-                            className="hidden dark:block w-full h-full object-contain"
-                        />
-                    </div>
-                </div>
-            </Link>
-            {/* <!-- Mobile --> */}
-            <div className="flex items-center lg:hidden">
-                <Sheet open={isOpen} onOpenChange={setIsOpen}>
-                    <SheetTrigger asChild>
-                        <Menu
-                            onClick={() => setIsOpen(!isOpen)}
-                            className="cursor-pointer lg:hidden"
-                        />
-                    </SheetTrigger>
-
-                    <SheetContent
-                        side="left"
-                        className="flex flex-col justify-between rounded-tr-2xl rounded-br-2xl bg-card border-secondary"
-                    >
-                        <div>
-                            <SheetHeader className="mb-4 ml-4">
-                                <SheetTitle className="flex items-center">
-                                    <Link to="/" className="flex items-center">
-                                        <img src="/logo.svg" alt="logo" className="dark:hidden w-1/2" />
-                                        <img
-                                            src="/logo-color.svg"
-                                            alt="muse logo"
-                                            className="hidden dark:block w-1/2"
-                                        />
-                                    </Link>
-                                </SheetTitle>
-                            </SheetHeader>
-
-                            <div className="flex flex-col gap-2">
-                                {routeList.map(({ href, label }) => {
-                                    if (label === "Donate") return null;
-                                    if (label === "FAQ") return null;
-                                    if (!user && label === "Enter Dashboard") return null;
-                                    if (user && (label === "Login" || label === "Register"))
-                                        return null;
-                                    return (
-                                        <Button
-                                            key={href}
-                                            onClick={() => setIsOpen(false)}
-                                            asChild
-                                            variant="ghost"
-                                            className={cn("justify-start text-base")}
-                                        >
-                                            <Link to={href}>{label}</Link>
-                                        </Button>
-                                    );
-                                })}
-                            </div>
+        <header className="fixed left-0 right-0 top-0 z-50 p-4 transition-all duration-300 ease-in-out backdrop-blur-md bg-background/80">
+            <div className="mx-auto max-w-6xl">
+                <nav className="rounded-2xl border border-border bg-background/20 px-6 transition-all duration-300 ease-in-out">
+                    <div className="flex h-12 items-center justify-between">
+                        <div className="flex items-center">
+                            <Link to="/" className="flex flex-shrink-0 items-center">
+                                <div className="text-2xl font-bold">Muse</div>
+                            </Link>
+                            <nav className="ml-4 hidden md:block">
+                                <NavigationMenu>
+                                    <NavigationMenuList className="text-foreground/80">
+                                        {!isLoading && user && (
+                                            <>
+                                                <NavItem href="/dashboard">Dashboard</NavItem>
+                                                <NavItem href="/dashboard/songs">Library</NavItem>
+                                                <NavItem href="/dashboard/playlists">Playlists</NavItem>
+                                            </>
+                                        )}
+                                        <NavItem href="/about">About</NavItem>
+                                        {!isLoading && !user && (
+                                            <>
+                                                <NavItem href="/login">Login</NavItem>
+                                                <NavItem href="/register">Register</NavItem>
+                                            </>
+                                        )}
+                                    </NavigationMenuList>
+                                </NavigationMenu>
+                            </nav>
                         </div>
-
-                        <SheetFooter className="flex-col sm:flex-col justify-start items-start">
-                            <Separator className="mb-2" />
-                            <ModeToggle />
-                        </SheetFooter>
-                    </SheetContent>
-                </Sheet>
-            </div>
-
-            {/* <!-- Desktop --> */}
-            <NavigationMenu className="hidden lg:block mx-auto">
-                <NavigationMenuList>
-                    <NavigationMenuItem>
-                        {routeList.map(({ href, label }) => {
-                            if (label === "Donate") return null;
-                            if (label === "FAQ") return null;
-                            if (!user && label === "Enter Dashboard") return null;
-                            if (user && (label === "Login" || label === "Register"))
-                                return null;
-
-                            return (
-                                <NavigationMenuLink key={href} asChild>
-                                    <Link to={href} className="text-base px-2">
-                                        {label}
-                                    </Link>
-                                </NavigationMenuLink>
-                            );
-                        })}
-                    </NavigationMenuItem>
-                </NavigationMenuList>
-            </NavigationMenu>
-
-            <div className="hidden lg:flex gap-2">
-                <ModeToggle />
-
-                <Button asChild size="sm" variant="ghost" aria-label="View on GitHub">
-                    <Link
-                        aria-label="View on GitHub"
-                        to="https://github.com/nyumat/muse"
-                        target="_blank"
-                    >
-                        <Github className="size-5" />
-                    </Link>
-                </Button>
+                        <div className="flex items-center space-x-4">
+                            <div className="[&>button]:border-0 [&>button]:bg-transparent [&>button]:shadow-none">
+                                <ModeToggle />
+                            </div>
+                            {!isLoading && user && (
+                                <DropdownMenu>
+                                    <DropdownMenuTrigger className="focus:outline-none">
+                                        <Avatar className="h-8 w-8">
+                                            <AvatarFallback>{user.name?.[0]}</AvatarFallback>
+                                            <AvatarImage src={user.pfp} />
+                                        </Avatar>
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuContent align="end" className="w-56">
+                                        <DropdownMenuLabel>@{user.username} on Muse</DropdownMenuLabel>
+                                        <DropdownMenuSeparator />
+                                        <DropdownMenuItem onClick={() => navigate("/dashboard/profile")}>
+                                            <User className="mr-2 h-4 w-4" />
+                                            Profile
+                                        </DropdownMenuItem>
+                                        <DropdownMenuItem onClick={() => navigate("/dashboard/settings")}>
+                                            <Settings className="mr-2 h-4 w-4" />
+                                            Settings
+                                        </DropdownMenuItem>
+                                        <DropdownMenuSeparator />
+                                        <DropdownMenuItem onClick={handleLogout}>
+                                            <LogOut className="mr-2 h-4 w-4" />
+                                            Logout
+                                        </DropdownMenuItem>
+                                    </DropdownMenuContent>
+                                </DropdownMenu>
+                            )}
+                        </div>
+                    </div>
+                </nav>
             </div>
         </header>
     );

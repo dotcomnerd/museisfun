@@ -4,12 +4,12 @@ import { TableCell, TableRow } from "@/components/ui/table";
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { useIsMobile } from '@/hooks/use-mobile';
 import Fetcher from "@/lib/fetcher";
-import { Playlist, Song } from '@/lib/types';
 import { cn } from "@/lib/utils";
 import { useAudioStore } from "@/stores/audioStore";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { AnimatePresence, motion } from 'framer-motion';
 import { Heart, Pencil, Plus, Trash2 } from "lucide-react";
+import { Playlist, Song } from 'muse-shared';
 import React, { useCallback, useState } from "react";
 import { toast } from 'sonner';
 

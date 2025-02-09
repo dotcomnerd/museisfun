@@ -14,11 +14,11 @@ import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { AddSongDialog } from '@/features/songs/add-song-dialog';
 import { PageLayout } from '@/layout/page-layout';
-import { Song, type SortKey } from 'muse-shared';
 import { cn } from "@/lib/utils";
 import { useAudioStore, usePlayerControls } from "@/stores/audioStore";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ChevronDown, ChevronLeft, ChevronRight, ChevronUp, Plus } from "lucide-react";
+import { Song, type SortKey } from 'muse-shared';
 import React, { useCallback, useMemo, useState } from "react";
 
 export function SongsView() {

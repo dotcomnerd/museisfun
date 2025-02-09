@@ -368,4 +368,86 @@ export const playPlaylistRequestSchema = z.object({
     }),
 });
 
+export const trackTypeSchema = z.object({
+    title: z.string(),
+    thumbnail: z.string(),
+    stream_url: z.string(),
+    uploader: z.string(),
+    _id: z.string()
+});
+
+export type TrackType = z.infer<typeof trackTypeSchema>;
+
 export type PlayPlaylistRequest = z.infer<typeof playPlaylistRequestSchema>;
+
+export const sortKeySchema = z.enum(['title', 'duration', 'uploader', 'upload_date']);
+export type SortKey = z.infer<typeof sortKeySchema>;
+
+export const favoriteStateSchema = z.enum(["added", "removed", "failed"]);
+export type FavoriteState = z.infer<typeof favoriteStateSchema>;
+
+export const extendedTrackSchema = z.object({
+    isFavorited: z.boolean().optional()
+}).and(z.lazy(() => trackTypeSchema));
+
+export type ExtendedTrack = z.infer<typeof extendedTrackSchema>;
+
+export const recentlyDownloadedSchema = z.object({
+    title: z.string(),
+    thumbnail: z.string(),
+    stream_url: z.string(),
+    uploader: z.string(),
+    _id: z.string()
+});
+
+export type RecentlyDownloaded = z.infer<typeof recentlyDownloadedSchema>;
+
+export const songSchema = extendedTrackSchema.and(z.object({
+    _id: z.string(),
+    title: z.string(),
+    duration: z.number(),
+    mediaUrl: z.string(),
+    r2Key: z.string(),
+    createdBy: z.string(),
+    upload_date: z.string(),
+    view_count: z.number(),
+    thumbnail: z.string(),
+    isFavorited: z.boolean().optional(),
+    tags: z.array(z.string()),
+    stream_url: z.string(),
+    original_url: z.string().optional(),
+    extractor: z.string(),
+    duration_string: z.string().optional(),
+    ytdlp_id: z.string().optional(),
+    uploader: z.string(),
+    createdAt: z.date(),
+    updatedAt: z.date()
+}));
+
+export type Song = z.infer<typeof songSchema>;
+
+export const playlistSchema = z.object({
+    _id: z.string(),
+    name: z.string(),
+    description: z.string().optional(),
+    coverImage: z.string().optional(),
+    visibility: z.enum(["public", "private", "friends"]),
+    createdBy: z.object({
+        _id: z.string(),
+        username: z.string()
+    }),
+    songs: z.array(songSchema),
+    createdAt: z.string(),
+    updatedAt: z.string(),
+    playCount: z.number()
+});
+
+export type Playlist = z.infer<typeof playlistSchema>;
+
+export const breadcrumbSegmentSchema = z.object({
+    label: z.string(),
+    path: z.string(),
+    isLast: z.boolean()
+});
+
+export type BreadcrumbSegment = z.infer<typeof breadcrumbSegmentSchema>;

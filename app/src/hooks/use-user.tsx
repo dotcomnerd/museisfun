@@ -40,8 +40,15 @@ export const useUser = (): UseQueryResult<User, Error> => {
             if (error instanceof AxiosError && error.response?.status === 401) {
                 return false;
             }
-            // Retry other errors up to 3 times
-            return failureCount < 3;
+            // Retry other errors up to 2 times
+            return failureCount < 2;
         },
+        staleTime: 0,
+        gcTime: 0,
+        refetchOnWindowFocus: false,
+        refetchOnMount: false,
+        refetchOnReconnect: false,
+        refetchInterval: false,
+        refetchIntervalInBackground: false,
     });
 };

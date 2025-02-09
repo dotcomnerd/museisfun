@@ -3,6 +3,7 @@ import { Button, buttonVariants } from "@/components/ui/button";
 import { GridIllustration } from '@/components/ui/grid-bg';
 import { Separator } from "@/components/ui/separator";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { useIsMobile } from '@/hooks/use-mobile';
 import { useUser } from "@/hooks/use-user";
 import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
@@ -21,9 +22,10 @@ import { Mockup } from './mockup';
 
 export function HeroSection() {
     const { data: user } = useUser();
+    const isMobile = useIsMobile();
     return (
         <>
-            <section className="bg-background relative overflow-hidden md:pt-24">
+            <section className="bg-background relative overflow-hidden md:pt-24 lg:pt-20 2xl:pt-32">
                 <div className="absolute inset-0 opacity-30">
                     {[...Array(20)].map((_, i) => {
                         const colors = [
@@ -70,7 +72,7 @@ export function HeroSection() {
                                 }}
                                 className="flex flex-wrap xl:justify-start justify-center gap-2 mb-4"
                             >
-                                <Badge variant="outline" className="text-sm font-medium tracking-tight py-1 px-2 hover:bg-primary/10 transition-colors cursor-default" role='link'>
+                                <Badge variant="outline" className="text-xs sm:text-sm font-medium tracking-tight py-1 px-2 hover:bg-primary/10 transition-colors cursor-default mt-12 md:mt-8">
                                     <span className="mr-1">💸</span>
                                     <span>Donate to keep Muse free for everyone</span>
                                     <span className="ml-1">💸</span>
@@ -87,16 +89,37 @@ export function HeroSection() {
                                 }}
                                 className="space-y-4"
                             >
-                                <h1 className="text-3xl sm:text-4xl lg:text-5xl font-semibold leading-tight">
-                                    Download and stream<br />
-                                    <span className="text-transparent bg-gradient-to-r from-[#D247BF] via-primary to-[#47D2D2] bg-clip-text animate-gradient">
-                                        songs you love
-                                    </span>
-                                    <br />
-                                    for free.
-                                </h1>
-                                <p className="text-muted-foreground text-sm sm:text-lg max-w-xl xl:mx-0 mx-auto">
-                                    Meet the next generation music streaming platform, built to stream your personal music library from anywhere.
+                                {isMobile ? (
+                                    <h1 className="text-2xl font-semibold tracking-tight leading-tight">
+                                        Stream music freely <br />
+                                        <span className="text-transparent bg-gradient-to-r from-[#D247BF] to-primary bg-clip-text animate-gradient">
+                                            {" "}without any of the fees
+                                        </span>
+                                    </h1>
+                                ) : (
+                                    <h1 className="text-4xl lg:text-5xl font-semibold tracking-tight leading-tight">
+                                        Download and stream{" "}
+                                            <br />
+                                            <span className="text-transparent bg-gradient-to-r from-[#D247BF] to-primary bg-clip-text animate-gradient">
+                                                songs you love
+                                            </span>
+                                            {" "}for free.
+                                        </h1>
+                                )}
+
+                                <p className={cn(
+                                    "text-muted-foreground max-w-xl xl:mx-0 mx-auto text-sm lg:text-lg 2xl:text-xl",
+                                    isMobile ? "max-w-xs" : "max-w-xl"
+                                )}>
+                                    {isMobile ? (
+                                        <>
+                                            The only open-source streaming platform - allowing you to upload your own music and stream it for free.
+                                        </>
+                                    ) : (
+                                        <>
+                                            Meet the next generation music streaming platform, built to stream your personal music library from anywhere.
+                                        </>
+                                    )}
                                 </p>
                             </motion.div>
 
@@ -108,7 +131,7 @@ export function HeroSection() {
                                     delay: 0.4,
                                     ease: [0.23, 1, 0.32, 1]
                                 }}
-                                className="flex flex-wrap xl:justify-start justify-center gap-3 text-xs sm:text-sm max-w-xs mr-auto"
+                                className="flex flex-wrap justify-center xl:justify-start gap-3 text-xs sm:text-sm max-w-xs mx-auto xl:ml-0"
                             >
                                 <div className="flex items-center gap-1.5 text-muted-foreground">
                                     <PiSoundcloudLogoFill className="size-4 text-primary mr-1" />
@@ -154,7 +177,7 @@ export function HeroSection() {
                                     to={user ? "/dashboard" : "/register"}
                                     className={cn(
                                         buttonVariants({ variant: "default" }),
-                                        "w-full sm:w-auto font-bold group/arrow relative overflow-hidden"
+                                        "w-full sm:w-auto font-normal group/arrow relative overflow-hidden"
                                     )}
                                 >
                                     <span className="relative z-10">Get Started Free</span>
@@ -165,7 +188,7 @@ export function HeroSection() {
                                 <Button
                                     asChild
                                     variant="secondary"
-                                    className="w-full sm:w-auto font-bold group/github"
+                                    className="w-full sm:w-auto font-normal group/github"
                                 >
                                     <Link to="https://github.com/nyumat/muse" target="_blank">
                                         <span className="group-hover/github:text-primary transition-colors">View Source</span>
@@ -187,9 +210,9 @@ export function HeroSection() {
                                         <div className="flex items-center justify-between border-b border-border/50 pb-2.5">
                                             <span className="font-medium">Features</span>
                                             <div className="flex items-center gap-12">
-                                                <span className="font-medium text-primary">Muse</span>
-                                                <span className="font-medium text-muted-foreground">YouTube</span>
-                                                <span className="font-medium text-muted-foreground">Spotify</span>
+                                                <span className="font-medium text-primary w-12 text-center">Muse</span>
+                                                <span className="font-medium text-muted-foreground w-16 text-center">YouTube</span>
+                                                <span className="font-medium text-muted-foreground w-16 text-center">Spotify</span>
                                             </div>
                                         </div>
                                         <div className="flex items-center justify-between">
@@ -246,41 +269,41 @@ export function HeroSection() {
                                     delay: 0.8,
                                     ease: [0.23, 1, 0.32, 1]
                                 }}
-                                className="relative mt-8 z-10"
+                                className="relative md:mt-8 z-10"
                             >
                                 <div className="lg:hidden w-full max-w-3xl mx-auto">
                                     <div className="overflow-x-auto -mx-4 px-4">
-                                        <Table>
+                                        <Table className="border rounded-lg overflow-hidden shadow-sm">
                                             <TableHeader>
-                                                <TableRow>
-                                                    <TableHead className="w-1/4">Features</TableHead>
-                                                    <TableHead className="w-1/4">Muse</TableHead>
-                                                    <TableHead className="w-1/4">YouTube Music</TableHead>
-                                                    <TableHead className="w-1/4">SoundCloud</TableHead>
+                                                <TableRow className="bg-primary/5">
+                                                    <TableHead className="w-1/4 font-semibold"></TableHead>
+                                                    <TableHead className="w-1/4 text-primary font-semibold">Muse</TableHead>
+                                                    <TableHead className="w-1/4 font-semibold">Spotify</TableHead>
+                                                    <TableHead className="w-1/4 font-semibold">Apple M.</TableHead>
                                                 </TableRow>
                                             </TableHeader>
                                             <TableBody>
-                                                <TableRow>
-                                                    <TableCell>Price</TableCell>
-                                                    <TableCell className="text-emerald-500">Free</TableCell>
+                                                <TableRow className="hover:bg-muted/50 transition-colors">
+                                                    <TableCell className="font-medium">Price</TableCell>
+                                                    <TableCell className="text-emerald-500 font-medium">Free</TableCell>
                                                     <TableCell className="text-red-500">$9.99/mo</TableCell>
-                                                    <TableCell className="text-red-500">$9.99/mo</TableCell>
+                                                    <TableCell className="text-red-500">$10.99/mo</TableCell>
                                                 </TableRow>
-                                                <TableRow>
-                                                    <TableCell>Offline Mode</TableCell>
-                                                    <TableCell className="text-emerald-500">✓</TableCell>
-                                                    <TableCell className="text-red-500">Premium Only</TableCell>
-                                                    <TableCell className="text-red-500">Premium Only</TableCell>
-                                                </TableRow>
-                                                <TableRow>
-                                                    <TableCell>Ad-free</TableCell>
-                                                    <TableCell className="text-emerald-500">✓</TableCell>
+                                                <TableRow className="hover:bg-muted/50 transition-colors">
+                                                    <TableCell className="font-medium">Offline Mode</TableCell>
+                                                    <TableCell className="text-emerald-500 font-medium">✓</TableCell>
                                                     <TableCell className="text-red-500">Premium Only</TableCell>
                                                     <TableCell className="text-red-500">Premium Only</TableCell>
                                                 </TableRow>
-                                                <TableRow>
-                                                    <TableCell>Self-hostable</TableCell>
-                                                    <TableCell className="text-emerald-500">✓</TableCell>
+                                                <TableRow className="hover:bg-muted/50 transition-colors">
+                                                    <TableCell className="font-medium">Ad-free</TableCell>
+                                                    <TableCell className="text-emerald-500 font-medium">✓</TableCell>
+                                                    <TableCell className="text-red-500">Premium Only</TableCell>
+                                                    <TableCell className="text-red-500">Premium Only</TableCell>
+                                                </TableRow>
+                                                <TableRow className="hover:bg-muted/50 transition-colors">
+                                                    <TableCell className="font-medium">Self-hostable</TableCell>
+                                                    <TableCell className="text-emerald-500 font-medium">✓</TableCell>
                                                     <TableCell className="text-red-500">✗</TableCell>
                                                     <TableCell className="text-red-500">✗</TableCell>
                                                 </TableRow>

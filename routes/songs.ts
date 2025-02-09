@@ -39,7 +39,7 @@ const API_KEY = process.env.YOUTUBE_API_KEY;
 async function downloadSong(url: string): Promise<DownloadResult> {
     const metadata = await new Promise<SongMetadata>((resolve, reject) => {
         let jsonData = "";
-        const ytDlpInfo = spawn("yt-dlp", ["--dump-json", url]);
+        const ytDlpInfo = spawn("yt-dlp", ["--dump-json", url, "--cookies", "cookies.txt"]);
 
             ytDlpInfo.stdout.on("data", (data) => {
                 jsonData += data.toString();
@@ -98,6 +98,8 @@ async function downloadSong(url: string): Promise<DownloadResult> {
             "-o",
             filePath,
             url,
+            "--cookies",
+            "cookies.txt",
         ]);
 
         ytDlp.stderr.on("data", (data) => {

@@ -30,6 +30,28 @@ interface DownloadResult {
     metadata: SongMetadata;
 }
 
+// TODO: These types are dirty, come back to this at some point.
+async function aggregateSongsWithFavorites(songs: any[], userId: string) {
+    const favoriteSongs = await User.findById(userId).select("favoriteSongs");
+    const favoriteSongsIds = favoriteSongs?.favoriteSongs || [];
+
+    const songsWithFavorites = songs.map(song => ({
+        ...song.toObject(),
+        isFavorited: favoriteSongsIds.includes(song._id)
+    }));
+
+    for (const song of songsWithFavorites) {
+        if (song.r2Key && !song.stream_url) {
+            song.stream_url = await getPresignedUrl({ key: song.r2Key, bucket: BUCKET_NAME, expiresIn: 60 * 60 * 24 });
+        } else if (!song.r2Key) {
+            // Remove songs that don't have a key
+            await Song.deleteOne({ _id: song._id });
+        }
+    }
+
+    return songsWithFavorites;
+}
+
 const router = Router();
 const __dirname = path.resolve();
 const youtube = google.youtube('v3');
@@ -254,22 +276,7 @@ router.get("/api/songs", async (req, res) => {
     }
     try {
         const songs = await Song.find({ createdBy: req.auth._id });
-        const favoriteSongs = await User.findById(req.auth._id).select("favoriteSongs");
-        const favoriteSongsIds = favoriteSongs?.favoriteSongs || [];
-
-        const songsWithFavorites = songs.map(song => ({
-            ...song.toObject(),
-            isFavorited: favoriteSongsIds.includes(song._id)
-        }));
-
-        for (const song of songsWithFavorites) {
-            if (song.r2Key && !song.stream_url) {
-                song.stream_url = await getPresignedUrl({ key: song.r2Key, bucket: BUCKET_NAME, expiresIn: 60 * 60 * 24 });
-            } else if (!song.r2Key) {
-                // Remove songs that don't have a key
-                await Song.deleteOne({ _id: song._id });
-            }
-        }
+        const songsWithFavorites = await aggregateSongsWithFavorites(songs, req.auth._id);
         res.json(songsWithFavorites);
     } catch (error) {
         console.error("Error fetching songs:", error);
@@ -308,7 +315,6 @@ router.delete("/api/songs/:id", async (req, res) => {
 export const extractors = [
     "youtube",
     "soundcloud",
-    "lastfm"
 ]
 
 router.get("/api/songs/:type", async (req, res) => {
@@ -319,18 +325,13 @@ router.get("/api/songs/:type", async (req, res) => {
             return res.status(400).json({ error: `Invalid extractor type: ${type}` });
         }
 
-        const songs = await Song.find({ extractor: type, createdBy: req.auth?._id });
-
-        for (const song of songs) {
-            if (song.r2Key && !song.stream_url) {
-                song.stream_url = await getPresignedUrl({ key: song.r2Key, bucket: BUCKET_NAME, expiresIn: 60 * 60 * 24 });
-            } else if (!song.r2Key) {
-                // Remove songs that don't have a key
-                await Song.deleteOne({ _id: song._id });
-            }
+        if (!req.auth?._id) {
+            return res.status(401).json({ error: "Unauthorized" });
         }
 
-        res.json(songs);
+        const songs = await Song.find({ extractor: type, createdBy: req.auth?._id });
+        const songsWithFavorites = await aggregateSongsWithFavorites(songs, req.auth?._id);
+        res.json(songsWithFavorites);
 
     } catch (error) {
         console.error("Error fetching songs:", error);

@@ -8,8 +8,7 @@ import { useUser } from "@/hooks/use-user";
 import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
 import { ArrowRight } from "lucide-react";
-import { AiFillGithub } from 'react-icons/ai';
-import { PiSoundcloudLogoFill } from "react-icons/pi";
+import { PiGithubLogo, PiSoundcloudLogo, PiYoutubeLogo } from 'react-icons/pi';
 import { Link } from "react-router";
 import { Mockup } from './mockup';
 
@@ -25,7 +24,7 @@ export function HeroSection() {
     const isMobile = useIsMobile();
     return (
         <>
-            <section className="bg-background relative overflow-hidden md:pt-24 lg:pt-20 2xl:pt-32">
+            <section className="bg-background relative overflow-hidden md:pt-24 lg:pt-20 2xl:pt-24">
                 <div className="absolute inset-0 opacity-30">
                     {[...Array(20)].map((_, i) => {
                         const colors = [
@@ -102,12 +101,12 @@ export function HeroSection() {
                                 ) : (
                                     <h1 className="text-4xl lg:text-5xl font-semibold tracking-tight leading-tight">
                                         Download and stream{" "}
-                                            <br />
-                                            <span className="text-transparent bg-gradient-to-r from-[#D247BF] to-primary bg-clip-text animate-gradient">
-                                                songs you love
-                                            </span>
-                                            {" "}for free.
-                                        </h1>
+                                        <br />
+                                        <span className="text-transparent bg-gradient-to-r from-[#D247BF] to-primary bg-clip-text animate-gradient">
+                                            songs you love
+                                        </span>
+                                        {" "}for free.
+                                    </h1>
                                 )}
 
                                 <p className={cn(
@@ -116,11 +115,11 @@ export function HeroSection() {
                                 )}>
                                     {isMobile ? (
                                         <>
-                                            The only open-source streaming platform - allowing you to upload your own music and stream it for free.
+                                            Muse is an open source music streaming repository for <i className='underline'><b>ALL</b></i> your personal needs.
                                         </>
                                     ) : (
                                         <>
-                                            Meet the next generation music streaming platform, built to stream your personal music library from anywhere.
+                                            Wow, you're finally home. <br />Welcome to music streaming that's built for you, by you.
                                         </>
                                     )}
                                 </p>
@@ -136,8 +135,18 @@ export function HeroSection() {
                                 }}
                                 className="flex flex-wrap justify-center xl:justify-start gap-3 text-xs sm:text-sm max-w-xs mx-auto xl:ml-0"
                             >
+                                <div className='flex items-center gap-1.5 text-muted-foreground'>
+                                    <PiYoutubeLogo className="size-4 text-red-500 mr-1" />
+                                    <span>YouTube Support</span>
+                                </div>
                                 <div className="flex items-center gap-1.5 text-muted-foreground">
-                                    <PiSoundcloudLogoFill className="size-4 text-primary mr-1" />
+                                    <svg className="size-4 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                    </svg>
+                                    <span>No Tracking</span>
+                                </div>
+                                <div className="flex items-center gap-1.5 text-muted-foreground">
+                                    <PiSoundcloudLogo className="size-4 text-orange-500 mr-1" />
                                     <span>Soundcloud Support</span>
                                 </div>
                                 <div className="flex items-center gap-1.5 text-muted-foreground">
@@ -147,57 +156,76 @@ export function HeroSection() {
                                     <span>No Ads</span>
                                 </div>
                                 <div className="flex items-center gap-1.5 text-muted-foreground">
-                                    <AiFillGithub className="size-5 text-primary mr-1" />
+                                    <PiGithubLogo className="size-4 text-white mr-1" />
                                     <span>Open Source</span>
                                 </div>
                                 <div className="flex items-center gap-1.5 text-muted-foreground">
                                     <svg className="size-4 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                                     </svg>
-                                    <span>Self-hostable</span>
+                                    <span>Host Your Own</span>
                                 </div>
                                 <Separator className="my-2" />
-                                <div className="flex items-center gap-1.5 text-muted-foreground z-10">
-                                    <span>Made by
-                                        <Link to="https://github.com/nyumat" target="_blank" className="text-primary hover:underline font-light ml-1">
-                                            <b>@nyumat</b>
-                                        </Link>
-                                    </span>
+                                <div className="hidden sm:flex items-center justify-center gap-1.5 text-muted-foreground z-10">
+                                    <span className="inline-flex items-center">Made by<Link to="https://github.com/nyumat" target="_blank" className="text-primary hover:underline font-light ml-1"><b>@nyumat</b></Link></span>
+                                    <span className="text-xl ml-4">·</span>
+                                    <span className="text-xl">·</span>
+                                    <span className="text-xl mr-4">·</span>
+                                    <Link to="/about" className="text-primary hover:underline font-light ml-1 inline-flex items-center">
+                                        <span className="inline-flex items-center"><span className="dark:text-muted-foreground">Learn more</span>
+                                            <ArrowRight className="size-4 sm:size-5 ml-1 group-hover/arrow:translate-x-1 transition-transform relative z-10" /></span>
+                                    </Link>
                                 </div>
                             </motion.div>
 
-                            <motion.div
-                                initial={{ opacity: 0, y: 20 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                transition={{
-                                    duration: 0.7,
-                                    delay: 0.6,
-                                    ease: [0.23, 1, 0.32, 1]
-                                }}
-                                className="flex flex-col sm:flex-row xl:justify-start justify-center gap-3 pt-4 relative z-20"
-                            >
-                                <Link
-                                    to={user ? "/dashboard" : "/register"}
-                                    className={cn(
-                                        buttonVariants({ variant: "default" }),
-                                        "w-full sm:w-auto font-normal group/arrow relative overflow-hidden"
-                                    )}
+                            <div className="flex flex-col xl:items-start items-center gap-3">
+                                <motion.div
+                                    initial={{ opacity: 0, y: 20 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    transition={{
+                                        duration: 0.7,
+                                        delay: 0.6,
+                                        ease: [0.23, 1, 0.32, 1]
+                                    }}
+                                    className="flex flex-col sm:flex-row xl:justify-start justify-center gap-3 pt-0 relative z-20 w-full"
                                 >
-                                    <span className="relative z-10">Get Started Free</span>
-                                    <ArrowRight className="size-4 sm:size-5 ml-2 group-hover/arrow:translate-x-1 transition-transform relative z-10" />
-                                    <div className="absolute inset-0 bg-gradient-to-r from-primary via-[#D247BF] to-primary opacity-0 group-hover/arrow:opacity-100 transition-opacity" />
-                                </Link>
-
-                                <Button
-                                    asChild
-                                    variant="secondary"
-                                    className="w-full sm:w-auto font-normal group/github"
-                                >
-                                    <Link to="https://github.com/nyumat/muse" target="_blank">
-                                        <span className="group-hover/github:text-primary transition-colors">View Source</span>
+                                    <Link
+                                        to={user ? "/dashboard" : "/register"}
+                                        className={cn(
+                                            buttonVariants({ variant: "default" }),
+                                            "w-full sm:w-auto font-normal group/arrow relative overflow-hidden"
+                                        )}
+                                    >
+                                        <span className="relative z-10">Get Started Free</span>
+                                        <ArrowRight className="size-4 sm:size-5 ml-2 group-hover/arrow:translate-x-1 transition-transform relative z-10" />
+                                        <div className="absolute inset-0 bg-gradient-to-r from-primary via-[#D247BF] to-primary opacity-0 group-hover/arrow:opacity-100 transition-opacity" />
                                     </Link>
-                                </Button>
-                            </motion.div>
+
+                                    <Button
+                                        asChild
+                                        variant="secondary"
+                                        className="w-full sm:w-auto font-normal group/github"
+                                    >
+                                        <Link to="https://github.com/nyumat/muse" target="_blank">
+                                            <span className="group-hover/github:text-primary transition-colors">View Source</span>
+                                        </Link>
+                                    </Button>
+                                </motion.div>
+                                <motion.div
+                                    initial={{ opacity: 0, y: 20 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    transition={{
+                                        duration: 0.7,
+                                        delay: 0.8,
+                                        ease: [0.23, 1, 0.32, 1]
+                                    }}
+                                    className="flex flex-col sm:flex-row xl:justify-start justify-center gap-3 pt-0 relative z-20 w-full"
+                                >
+                                    <Button asChild variant="link" className="w-full sm:w-auto xl:hidden z-50">
+                                        <Link to="/about">Learn more</Link>
+                                    </Button>
+                                </motion.div>
+                            </div>
                             <motion.div
                                 initial={{ opacity: 0, y: 20 }}
                                 animate={{ opacity: 1, y: 0 }}
@@ -227,7 +255,7 @@ export function HeroSection() {
                                             </div>
                                         </div>
                                         <div className="flex items-center justify-between">
-                                            <span className="text-muted-foreground">Offline Mode</span>
+                                            <span className="text-muted-foreground">Downloads</span>
                                             <div className="flex items-center gap-12">
                                                 <span className="text-emerald-500 w-12 text-center">✓</span>
                                                 <span className="text-red-500 w-16 text-center">Premium</span>
@@ -243,7 +271,7 @@ export function HeroSection() {
                                             </div>
                                         </div>
                                         <div className="flex items-center justify-between">
-                                            <span className="text-muted-foreground">Custom Uploads</span>
+                                            <span className="text-muted-foreground">Usage Analytics</span>
                                             <div className="flex items-center gap-12">
                                                 <span className="text-emerald-500 w-12 text-center">✓</span>
                                                 <span className="text-red-500 w-16 text-center">✗</span>
@@ -293,7 +321,7 @@ export function HeroSection() {
                                                     <TableCell className="text-red-500">$10.99/mo</TableCell>
                                                 </TableRow>
                                                 <TableRow className="hover:bg-muted/50 transition-colors">
-                                                    <TableCell className="font-medium">Offline Mode</TableCell>
+                                                    <TableCell className="font-medium">Downloads</TableCell>
                                                     <TableCell className="text-emerald-500 font-medium">✓</TableCell>
                                                     <TableCell className="text-red-500">Premium Only</TableCell>
                                                     <TableCell className="text-red-500">Premium Only</TableCell>

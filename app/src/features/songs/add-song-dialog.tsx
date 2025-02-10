@@ -21,7 +21,6 @@ import { z } from "zod";
 
 const api = Fetcher.getInstance();
 
-// Validation schema
 const addSongSchema = z.object({
   url: z
     .string()

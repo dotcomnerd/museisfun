@@ -13,34 +13,41 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { type HelpSection, type LegalDocument } from "@/lib/types";
 import { FileText, HelpCircle, ShieldCheck } from "lucide-react";
-import React, { useState } from "react";
-
-// Define types for help sections
-type HelpItem = {
-  q: string;
-  a: string;
-};
-
-type HelpSection = {
-  title: string;
-  items: HelpItem[];
-};
-
-// Define types for legal documents
-type LegalDocument = {
-  name: string;
-  icon: React.ElementType;
-  content: string;
-};
+import { useState } from "react";
 
 export function HelpView() {
   const [activeDialog, setActiveDialog] = useState<string | null>(null);
-
   const helpSections: HelpSection[] = [
     {
       title: "Getting Started",
       items: [
+        {
+          q: "What keyboard shortcuts are available?",
+          a: (
+            <div className="flex flex-col gap-2">
+              <div className="flex items-center">
+                <span>Toggle sidebar:</span>
+                <kbd className="-me-1 ms-3 inline-flex h-5 max-h-full items-center rounded border border-border bg-background px-1 font-[inherit] text-[0.625rem] font-medium text-muted-foreground/70">
+                  ⌘ + U
+                </kbd>
+              </div>
+              <div className="flex items-center">
+              <span>Toggle mini player:</span>
+              <kbd className="-me-1 ms-3 inline-flex h-5 max-h-full items-center rounded border border-border bg-background px-1 font-[inherit] text-[0.625rem] font-medium text-muted-foreground/70">
+                ⌘ + K
+              </kbd>
+            </div>
+            <div className="flex items-center">
+              <span>Open quick search:</span>
+              <kbd className="-me-1 ms-3 inline-flex h-5 max-h-full items-center rounded border border-border bg-background px-1 font-[inherit] text-[0.625rem] font-medium text-muted-foreground/70">
+                ⌘ + <span className="text-xl ml-1 -translate-y-1">.</span>
+              </kbd>
+            </div>
+          </div>
+          ),
+        },
         {
           q: "How do I download music from YouTube and SoundCloud?",
           a: "Simply paste the URL of the track. Our app handles the conversion and saves it directly to your account. Currently, supported platforms include YouTube and SoundCloud.",

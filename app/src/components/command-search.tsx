@@ -1,6 +1,3 @@
-import * as React from "react";
-import { useCallback, useState } from "react";
-import { useDebounce } from "@/hooks/use-debounce";
 import {
   CommandDialog,
   CommandEmpty,
@@ -9,8 +6,10 @@ import {
   CommandItem,
   CommandList,
 } from "@/components/ui/command";
+import { useDebounce } from "@/hooks/use-debounce";
 import Fetcher from '@/lib/fetcher';
-import { DialogDescription, DialogTitle } from '@/components/ui/dialog';
+import * as React from "react";
+import { useCallback, useState } from "react";
 import { LoadingSpinner } from './ui/video-components';
 
 interface YouTubeVideo {
@@ -38,7 +37,7 @@ export function CommandSearch({ trigger, open: controlledOpen, onOpenChange }: C
 
   React.useEffect(() => {
     const down = (e: KeyboardEvent) => {
-      if (e.key === "k" && (e.metaKey || e.ctrlKey)) {
+      if (e.key === "." && (e.metaKey || e.ctrlKey)) {
         e.preventDefault();
         setOpen(!open);
       }

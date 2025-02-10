@@ -20,7 +20,7 @@ export const authMiddleware = (
         return;
     }
 
-    const authHeader = req.headers.authorization;
+    const authHeader = req.headers?.authorization;
 
     if (!authHeader || !authHeader.startsWith("Bearer ")) {
         res.status(401).json({ error: "Authorization token missing or invalid." });

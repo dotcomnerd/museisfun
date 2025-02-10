@@ -57,7 +57,7 @@ import {
     Users,
 } from "lucide-react";
 import { useState } from "react";
-import { useNavigate, useParams } from "react-router";
+import { Navigate, useNavigate, useParams } from "react-router";
 import { toast } from "sonner";
 
 const api = Fetcher.getInstance();
@@ -70,6 +70,7 @@ export function PlaylistViewNested() {
     const { playSong } = usePlayerControls();
     const { currentSong, isPlaying } = useAudioStore();
     const dragControls = useDragControls();
+
 
     const [isEditMode, setIsEditMode] = useState(false);
     const [showDeleteAlert, setShowDeleteAlert] = useState(false);
@@ -86,6 +87,16 @@ export function PlaylistViewNested() {
         },
         retry: false,
     });
+
+    if (!currentUser) {
+        toast.error("You must be signed in to view this playlist");
+        return <Navigate to={`/login?redirect=/dashboard/playlists/${id}`} />;
+    }
+
+    if (currentUser && playlist?.visibility === "private" && currentUser._id !== playlist.createdBy._id) {
+        toast.error("This is a private playlist. You must be the owner to view it.");
+        return <Navigate to={`/dashboard/playlists`} />;
+    }
 
     const { data: availableSongs } = useQuery<Song[]>({
         queryKey: ["songs"],

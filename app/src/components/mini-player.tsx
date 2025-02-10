@@ -1,4 +1,6 @@
 import { Button } from "@/components/ui/button";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { Progress } from "@/components/ui/progress";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Sheet,
@@ -6,9 +8,8 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
-import { Progress } from "@/components/ui/progress";
 import { Slider } from "@/components/ui/slider";
-import { Song } from "@/features/songs/dashboard/view";
+import { useIsMobile } from '@/hooks/use-mobile';
 import { cn, formatTime } from "@/lib/utils";
 import { useAudioStore } from "@/stores/audioStore";
 import { AnimatePresence, motion } from "framer-motion";
@@ -25,97 +26,228 @@ import {
   Volume2,
   VolumeX,
 } from "lucide-react";
+import { Song } from 'muse-shared';
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { CgMiniPlayer } from "react-icons/cg";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { toast } from "sonner";
-import { useIsMobile } from '@/hooks/use-mobile';
 
-export const ProgressBar = ({
-    mini = false,
-    collapsed = false,
-    duration,
-    currentTime,
-    bufferedTime,
-    seek
-  }: {
-    mini?: boolean,
-    collapsed?: boolean,
-    duration: number,
-    currentTime: number,
-    bufferedTime: number,
-    seek: (position: number) => void
-  }) => {
-    const progressRef = useRef<HTMLDivElement>(null);
-    const [hoverTime, setHoverTime] = useState<number | null>(null);
-    const [isDragging, setIsDragging] = useState(false);
-    const headerRef = useRef<HTMLDivElement>(null);
-    const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
-      if (!progressRef.current) return;
-      const rect = progressRef.current.getBoundingClientRect();
-      const position = Math.min(Math.max((e.clientX - rect.left) / rect.width, 0), 1);
-      setHoverTime(position * duration);
-    };
+const ProgressBar = ({
+  mini = false,
+  collapsed = false,
+  duration,
+  currentTime,
+  bufferedTime,
+  seek
+}: {
+  mini?: boolean,
+  collapsed?: boolean,
+  duration: number,
+  currentTime: number,
+  bufferedTime: number,
+  seek: (position: number) => void
+}) => {
+  const progressRef = useRef<HTMLDivElement>(null);
+  const [hoverTime, setHoverTime] = useState<number | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
+  const headerRef = useRef<HTMLDivElement>(null);
 
-    const handleMouseLeave = () => {
-      if (!isDragging) {
-        setHoverTime(null);
-      }
-    };
+  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (!progressRef.current) return;
+    const rect = progressRef.current.getBoundingClientRect();
+    const position = Math.min(Math.max((e.clientX - rect.left) / rect.width, 0), 1);
+    setHoverTime(position * duration);
+  };
 
-    const handleClick = (e: React.MouseEvent<HTMLDivElement>) => {
-      if (!progressRef.current) return;
-      const rect = progressRef.current.getBoundingClientRect();
-      const position = Math.min(Math.max((e.clientX - rect.left) / rect.width, 0), 1);
-      seek(position * duration);
-    };
+  const handleMouseLeave = () => {
+    if (!isDragging) {
+      setHoverTime(null);
+    }
+  };
 
-    return (
-      <div className="w-full relative">
-        <div className="flex justify-between text-xs text-muted-foreground mb-1">
-          <span>{formatTime(currentTime)}</span>
-          <span>{formatTime(duration)}</span>
-        </div>
-        <div
-          ref={progressRef}
-          className="w-full cursor-pointer relative group"
-          onClick={handleClick}
-          onMouseMove={handleMouseMove}
-          onMouseLeave={handleMouseLeave}
-          onMouseDown={() => setIsDragging(true)}
-          onMouseUp={() => setIsDragging(false)}
+  const handleClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (!progressRef.current) return;
+    const rect = progressRef.current.getBoundingClientRect();
+    const position = Math.min(Math.max((e.clientX - rect.left) / rect.width, 0), 1);
+    seek(position * duration);
+  };
+
+  return (
+    <div className="w-full relative">
+      <div className="flex justify-between text-xs text-muted-foreground mb-1">
+        <span>{formatTime(currentTime)}</span>
+        <span>{formatTime(duration)}</span>
+      </div>
+      <div
+        ref={progressRef}
+        className="w-full cursor-pointer relative group"
+        onClick={handleClick}
+        onMouseMove={handleMouseMove}
+        onMouseLeave={handleMouseLeave}
+        onMouseDown={() => setIsDragging(true)}
+        onMouseUp={() => setIsDragging(false)}
+      >
+        <Progress
+          value={(currentTime / duration) * 100}
+          max={100}
+          className={cn(
+            "relative transition-all duration-200",
+            mini || collapsed ? "h-1.5" : "h-3"
+          )}
         >
-          <Progress
-            value={(currentTime / duration) * 100}
-            max={100}
+          <div
+            className="absolute h-full bg-muted-foreground/30 rounded-full"
+            style={{ width: `${(bufferedTime / duration) * 100}%` }}
+          />
+          <div
+            className="absolute h-full bg-primary/50 rounded-full"
+            style={{ width: `${(currentTime / duration) * 100}%` }}
+          />
+          <div
             className={cn(
-              "relative transition-all duration-200",
-              mini || collapsed ? "h-1.5" : "h-3"
+              "absolute top-1/2 -translate-y-1/2 w-4 h-4 bg-primary rounded-full transition-all duration-200",
+              "opacity-0 group-hover:opacity-100"
             )}
-          >
-            <div
-              className="absolute h-full bg-muted-foreground/30 rounded-full"
-              style={{width: `${(bufferedTime / duration) * 100}%`}}
-            />
-            <div
-              className="absolute h-full bg-primary/50 rounded-full"
-              style={{width: `${(currentTime / duration) * 100}%`}}
-            />
-            <div
-              className={cn(
-                "absolute top-1/2 -translate-y-1/2 w-4 h-4 bg-primary rounded-full transition-all duration-200",
-                "opacity-0 group-hover:opacity-100"
-              )}
-              style={{
-                left: `${(currentTime / duration) * 100}%`,
-                transform: 'translate(-50%, -50%)'
-              }}
-            />
-          </Progress>
-        </div>
+            style={{
+              left: `${(currentTime / duration) * 100}%`,
+              transform: 'translate(-50%, -50%)'
+            }}
+          />
+        </Progress>
+      </div>
+    </div>
+  );
+};
+
+
+interface ControlButtonsProps {
+  mini?: boolean;
+  isPlaying: boolean;
+  playPause: () => void;
+  previousSong: () => void;
+  nextSong: () => void;
+  canPlayPrevious: boolean;
+  canPlayNext: boolean;
+  setExpanded?: (expanded: boolean) => void;
+  setShowQueue?: (show: boolean) => void;
+  setCollapsed?: (collapsed: boolean) => void;
+  showQueue?: boolean;
+}
+
+const ControlButtons = ({
+  mini = false,
+  isPlaying,
+  playPause,
+  previousSong,
+  nextSong,
+  canPlayPrevious,
+  canPlayNext,
+  setExpanded,
+  setShowQueue,
+  setCollapsed,
+  showQueue
+}: ControlButtonsProps) => {
+  const isMobile = useIsMobile();
+
+  if (!mini) {
+    return (
+      <div className="flex items-center gap-6 justify-center">
+        <Button
+          size="icon"
+          variant="ghost"
+          onClick={previousSong}
+          disabled={!canPlayPrevious}
+        >
+          <SkipBack className="w-5 h-5" />
+        </Button>
+
+        <Button
+          size="icon"
+          className="rounded-full bg-primary hover:bg-primary/90 h-10 w-10"
+          onClick={playPause}
+        >
+          {isPlaying ? (
+            <Pause className="text-primary-foreground w-5 h-5" />
+          ) : (
+            <Play className="text-primary-foreground ml-0.5 w-5 h-5" />
+          )}
+        </Button>
+
+        <Button
+          size="icon"
+          variant="ghost"
+          onClick={nextSong}
+          disabled={!canPlayNext}
+        >
+          <SkipForward className="w-5 h-5" />
+        </Button>
       </div>
     );
-  };
+  }
+
+  if (isMobile) {
+    return (
+      <div className="flex items-center gap-0 justify-between w-full space-x-1">
+        <Button
+          size="icon"
+          variant="link"
+          onClick={() => setExpanded?.(true)}
+        >
+          <ChevronUp className="w-4 h-4" />
+        </Button>
+        <Button
+          size="default"
+          variant="link"
+          className="rounded-full bg-primary hover:bg-primary/90 h-8 w-8"
+          onClick={playPause}
+        >
+          {isPlaying ? (
+            <Pause className="text-primary-foreground w-4 h-4" />
+          ) : (
+            <Play className="text-primary-foreground ml-0.5 w-4 h-4" />
+          )}
+        </Button>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button size="sm" variant="link">
+              <MoreVertical className="w-4 h-4" />
+            </Button>
+          </DropdownMenuTrigger>
+
+          <DropdownMenuContent side="top">
+            <DropdownMenuItem
+              onClick={previousSong}
+              disabled={!canPlayPrevious}
+            >
+              <SkipBack className="w-4 h-4 mr-2" />
+              Previous
+            </DropdownMenuItem>
+
+            <DropdownMenuItem
+              onClick={nextSong}
+              disabled={!canPlayNext}
+            >
+              <SkipForward className="w-4 h-4 mr-2" />
+              Next
+            </DropdownMenuItem>
+
+            <DropdownMenuItem
+              onClick={() => setShowQueue?.(!showQueue)}
+            >
+              <ListMusic className="w-4 h-4 mr-2" />
+              Queue
+            </DropdownMenuItem>
+
+            <DropdownMenuItem
+              onClick={() => setCollapsed?.(true)}
+            >
+              <ChevronDown className="w-4 h-4 mr-2" />
+              Collapse
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
+    );
+  }
+}
 
 export function MiniPlayer() {
   const [showQueue, setShowQueue] = useState(false);
@@ -212,44 +344,44 @@ export function MiniPlayer() {
         index: number;
         currentSongId: string;
       }) =>
-        (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: index * 0.05 }}
-            onClick={() => playQueueItem(index)}
-            className={cn(
-              "flex items-center justify-between py-2 px-4 rounded-lg transition-colors cursor-pointer",
-              song._id === currentSongId && "bg-primary/10",
-              song._id !== currentSongId && "hover:bg-muted"
-            )}
-          >
-            <div className="flex items-center gap-4">
-              <img
-                src={song.thumbnail}
-                alt={song.title}
-                className="w-10 h-10 rounded-lg object-cover"
-              />
-              <div>
-                <h3 className="font-medium">{song.title}</h3>
-                <p className="text-sm text-muted-foreground">{song.uploader}</p>
-              </div>
+      (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: index * 0.05 }}
+          onClick={() => playQueueItem(index)}
+          className={cn(
+            "flex items-center justify-between py-2 px-4 rounded-lg transition-colors cursor-pointer",
+            song._id === currentSongId && "bg-primary/10",
+            song._id !== currentSongId && "hover:bg-muted"
+          )}
+        >
+          <div className="flex items-center gap-4">
+            <img
+              src={song.thumbnail}
+              alt={song.title}
+              className="w-10 h-10 rounded-lg object-cover"
+            />
+            <div>
+              <h3 className="font-medium">{song.title}</h3>
+              <p className="text-sm text-muted-foreground">{song.uploader}</p>
             </div>
-            {song._id === currentSongId && isPlaying && (
-              <div className="flex gap-1">
-                {[...Array(3)].map((_, i) => (
-                  <div
-                    key={i}
-                    className="w-1 h-3 bg-primary rounded-full animate-sound-wave"
-                    style={{
-                      animationDelay: `${i * 0.2}s`
-                    }}
-                  />
-                ))}
-              </div>
-            )}
-          </motion.div>
-        ),
+          </div>
+          {song._id === currentSongId && isPlaying && (
+            <div className="flex gap-1">
+              {[...Array(3)].map((_, i) => (
+                <div
+                  key={i}
+                  className="w-1 h-3 bg-primary rounded-full animate-sound-wave"
+                  style={{
+                    animationDelay: `${i * 0.2}s`
+                  }}
+                />
+              ))}
+            </div>
+          )}
+        </motion.div>
+      ),
     [isPlaying, playQueueItem]
   );
 
@@ -301,7 +433,7 @@ export function MiniPlayer() {
             >
               <ChevronUp className="w-4 h-4" />
             </Button>
-             <Button
+            <Button
               size="default"
               variant="link"
               className="rounded-full bg-primary hover:bg-primary/90 h-8 w-8"
@@ -559,35 +691,35 @@ export function MiniPlayer() {
               <div className="flex items-center gap-2">
                 {!isMobile && (
                   <>
-                  <Button
-                    size="icon"
-                    variant="ghost"
-                    className="md:hidden"
-                    onClick={() => setShowQueue(true)}
-                  >
-                    <ListMusic className="w-5 h-5" />
-                  </Button>
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      className="md:hidden"
+                      onClick={() => setShowQueue(true)}
+                    >
+                      <ListMusic className="w-5 h-5" />
+                    </Button>
 
-                  <Button
-                    size="icon"
-                    variant="ghost"
-                    onClick={() => {
-                      if (window.innerWidth < 768) {
-                        setIsMobileExpanded(true);
-                      } else {
-                        setExpanded(true);
-                      }
-                    }}
-                  >
-                    <ChevronUp className="w-5 h-5" />
-                  </Button>
-                  <Button
-                    size="icon"
-                    variant="ghost"
-                    onClick={() => setCollapsed(true)}
-                  >
-                    <Minimize2 className="w-5 h-5" />
-                  </Button>
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      onClick={() => {
+                        if (window.innerWidth < 768) {
+                          setIsMobileExpanded(true);
+                        } else {
+                          setExpanded(true);
+                        }
+                      }}
+                    >
+                      <ChevronUp className="w-5 h-5" />
+                    </Button>
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      onClick={() => setCollapsed(true)}
+                    >
+                      <Minimize2 className="w-5 h-5" />
+                    </Button>
                   </>
                 )}
               </div>
@@ -597,7 +729,7 @@ export function MiniPlayer() {
 
         {/* Desktop Expanded View */}
 
-          <AnimatePresence mode="wait">
+        <AnimatePresence mode="wait">
           {expanded && (
             <motion.div
               initial={{ opacity: 0 }}
@@ -774,8 +906,6 @@ export function MiniPlayer() {
             </motion.div>
           )}
         </AnimatePresence>
-
-        {/* Queue Sheet */}
         <Sheet open={showQueue} onOpenChange={setShowQueue}>
           <SheetContent side="bottom" className="h-[80vh]">
             <SheetHeader className="px-6">
@@ -800,7 +930,6 @@ export function MiniPlayer() {
   );
 }
 
-// Components
 const EmptyState = () => (
   <motion.div
     initial={{ opacity: 0 }}
@@ -947,6 +1076,15 @@ interface MobileExpandedViewProps {
   setShowQueue: (show: boolean) => void;
   setIsMobileExpanded: (expanded: boolean) => void;
   headerRef: React.RefObject<HTMLDivElement>;
+  duration: number;
+  currentTime: number;
+  bufferedTime: number;
+  seek: (position: number) => void;
+  playPause: () => void;
+  previousSong: () => void;
+  nextSong: () => void;
+  canPlayPrevious: boolean;
+  canPlayNext: boolean;
 }
 
 const MobileExpandedView = ({
@@ -956,7 +1094,16 @@ const MobileExpandedView = ({
   setVolume,
   setShowQueue,
   setIsMobileExpanded,
-  headerRef
+  headerRef,
+  duration,
+  currentTime,
+  bufferedTime,
+  seek,
+  playPause,
+  previousSong,
+  nextSong,
+  canPlayPrevious,
+  canPlayNext
 }: MobileExpandedViewProps) => (
   <motion.div
     initial={{ opacity: 0, y: "100%" }}
@@ -1011,7 +1158,7 @@ const MobileExpandedView = ({
 
         <div className="w-full max-w-sm space-y-8">
           <div className="flex justify-center gap-8">
-            <ControlButtons />
+            <ControlButtons isPlaying={isPlaying} playPause={playPause} previousSong={previousSong} nextSong={nextSong} canPlayPrevious={canPlayPrevious} canPlayNext={canPlayNext} />
           </div>
 
           <div className="flex items-center gap-6 px-2">
@@ -1048,6 +1195,16 @@ interface DesktopExpandedViewProps {
   setExpanded: (expanded: boolean) => void;
   setShowQueue: (show: boolean) => void;
   setCollapsed: (collapsed: boolean) => void;
+  duration: number;
+  currentTime: number;
+  bufferedTime: number;
+  seek: (position: number) => void;
+  playPause: () => void;
+  previousSong: () => void;
+  nextSong: () => void;
+  canPlayPrevious: boolean;
+  canPlayNext: boolean;
+  isPlaying: boolean;
 }
 
 const DesktopExpandedView = ({
@@ -1056,7 +1213,17 @@ const DesktopExpandedView = ({
   setVolume,
   setExpanded,
   setShowQueue,
-  setCollapsed
+  setCollapsed,
+  duration,
+  currentTime,
+  bufferedTime,
+  seek,
+  playPause,
+  previousSong,
+  nextSong,
+  canPlayPrevious,
+  canPlayNext,
+  isPlaying
 }: DesktopExpandedViewProps) => (
   <motion.div
     initial={{ opacity: 0 }}
@@ -1111,7 +1278,7 @@ const DesktopExpandedView = ({
       <ProgressBar duration={duration} currentTime={currentTime} bufferedTime={bufferedTime} seek={seek} />
 
       <div className="space-y-6 w-full flex flex-col items-center">
-        <ControlButtons />
+        <ControlButtons isPlaying={isPlaying} playPause={playPause} previousSong={previousSong} nextSong={nextSong} canPlayPrevious={canPlayPrevious} canPlayNext={canPlayNext} />
 
         <div className="flex items-center gap-4">
           <Button

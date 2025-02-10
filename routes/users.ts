@@ -3,14 +3,14 @@ import { authMiddleware } from "@/lib/middleware";
 import Playlist from "@/models/playlist";
 import Song from "@/models/song";
 import { Request, Response, Router } from "express";
+import mongoose from 'mongoose';
 import User from "../models/user";
-import mongoose, { mongo } from 'mongoose';
 
 const router = Router();
 
 const internetConnection: boolean = false;
 const usersCache = new Map();
-const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+const CACHE_DURATION = 5 * 60 * 1000;
 
 const getUsers = async (req: Request, res: Response) => {
     try {
@@ -67,19 +67,34 @@ const getUser = async (req: Request, res: Response) => {
 
         const maybeUser = await User
             .findOne({ username })
-            .select("-password")
-            .populate("songs");
+            .select("-password");
 
-        if (!maybeUser) {
-            return res.status(404).json({ message: "User not found" });
-        }
+        console.log(maybeUser);
+        if (!maybeUser) return res.status(404).json({ message: "User not found" });
+        const songs = await Song.find({ createdBy: maybeUser._id })
+            .limit(10)
+            .select("title duration thumbnail uploader listeningTime createdAt updatedAt");
+
+        const userResponse = {
+            ...maybeUser.toObject(),
+            songs: songs.map(song => ({
+                _id: song._id,
+                title: song.title,
+                duration: song.duration,
+                thumbnail: song.thumbnail,
+                uploader: song.uploader,
+                listeningTime: song.listeningTime,
+                createdAt: song.createdAt,
+                updatedAt: song.updatedAt
+            }))
+        };
 
         usersCache.set(cacheKey, {
-            user: maybeUser,
+            user: userResponse,
             timestamp: now
         });
 
-        return res.json(maybeUser);
+        return res.json(userResponse);
     } catch (error) {
         console.error(error);
         res.status(500).json({ message: "Internal server error", error });
@@ -184,16 +199,31 @@ async function markSongAsFavorite(songId: mongoose.Types.ObjectId, userId: strin
     const song = await Song.findById(songId);
     const user = await User.findById(userId);
 
-    if (!user || !song) throw new Error("Entities not found.")
+    if (!user || !song) throw new Error("Entities not found.");
 
+    // Check if the song is already favorited
     if (user.favoriteSongs.includes(songId)) {
         user.favoriteSongs = user.favoriteSongs.filter((id) => id.toHexString() !== songId.toHexString());
-        await user.save()
+        await user.save();
         return "removed";
     }
 
-    user.favoriteSongs.push(songId);
-    await user.save()
+    // If the user is not the creator of the song, create a copy
+    if (song?.createdBy?.toString() !== userId) {
+        const songCopy = new Song({
+            ...song.toObject(),
+            _id: new mongoose.Types.ObjectId(),
+            createdBy: userId,
+            originalSongId: song._id,
+            isCopy: true
+        });
+        await songCopy.save();
+        user.favoriteSongs.push(songCopy._id);
+    } else {
+        user.favoriteSongs.push(songId);
+    }
+
+    await user.save();
     return "added";
 }
 

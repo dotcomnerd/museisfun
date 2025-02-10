@@ -29,7 +29,7 @@ router.post(
     upload.single("coverImage"),
     async (req: Request, res: Response) => {
         try {
-            const { name, description } = req.body;
+            const { name, description, visibility } = req.body;
             const user = req.auth;
             let coverUrl = null;
 
@@ -60,6 +60,7 @@ router.post(
                 name,
                 description,
                 createdBy: user._id,
+                visibility,
                 coverImage: coverUrl,
                 songs: [],
             });
@@ -82,10 +83,29 @@ router.get(
             if (!user) return res.status(401).json({ error: "Unauthorized" });
 
             const playlists = await Playlist.find({
-                $or: [{ createdBy: user._id }, { isPublic: true }],
+                $or: [
+                    { createdBy: user._id },
+                    { visibility: "public" }
+                ],
             })
                 .populate("createdBy")
-                .populate("songs");
+                .populate({
+                    path: "songs",
+                    select: "title r2Key stream_url duration uploader thumbnail duration_string"
+                    // Ugh, mongoose, why do you make me do this?
+                }) as unknown as (PlaylistModel & { songs: SongModel[] })[];
+
+            for (const playlist of playlists) {
+                for (const song of playlist.songs) {
+                    if (song.r2Key && !song.stream_url) {
+                        song.stream_url = await getPresignedUrl({
+                            key: song.r2Key,
+                            bucket: BUCKET_NAME,
+                            expiresIn: 60 * 60 * 24
+                        });
+                    }
+                }
+            }
 
             res.json(playlists);
         } catch (error) {
@@ -96,39 +116,50 @@ router.get(
 );
 
 router.get(
-    "/playlists/:id",
+    "/playlists/:idOrSlug",
     authMiddleware,
     async (req: Request, res: Response) => {
         try {
-            const { id } = req.params;
-            const user = req.auth;
-            if (!user) return res.status(401).json({ error: "Unauthorized" });
+            const { idOrSlug } = req.params;
+            let playlist;
 
-            const playlist = await Playlist.findById(id)
-                .populate<{
-                    createdBy: UserModel;
-                }>({
-                    path: 'createdBy',
-                    select: 'username _id',
-                })
-                .populate<{ songs: SongModel[] }>('songs');
-
+            if (idOrSlug.match(/^[0-9a-fA-F]{24}$/)) {
+                playlist = await Playlist.findById(idOrSlug);
+            }
 
             if (!playlist) {
-                return res.status(404).json({ error: "Playlist not found" });
+                const decodedSlug = decodeURIComponent(idOrSlug);
+                playlist = await Playlist.findOne({ name: decodedSlug });
             }
 
-            for (const song of playlist.songs) {
-                if (song.r2Key && !song.stream_url) {
-                    song.stream_url = await getPresignedUrl({
-                        key: song.r2Key,
-                        bucket: BUCKET_NAME,
-                        expiresIn: 60 * 60 * 24
-                    });
+            if (!playlist) return res.status(404).json({ error: "Playlist not found" });
+
+            playlist = await playlist.populate<{ createdBy: UserModel }>({
+                path: 'createdBy',
+                select: 'username _id pfp',
+            });
+            playlist = await playlist.populate<{ songs: SongModel[] }>('songs');
+
+            const user = req.auth;
+            const isCreator = user && user._id.toString() === playlist.createdBy._id.toString();
+
+            // Allow access if:
+            // 1. User is the creator
+            // 2. Playlist is public
+            if (isCreator || playlist.visibility === "public") {
+                for (const song of playlist.songs) {
+                    if (song.r2Key && !song.stream_url) {
+                        song.stream_url = await getPresignedUrl({
+                            key: song.r2Key,
+                            bucket: BUCKET_NAME,
+                            expiresIn: 60 * 60 * 24
+                        });
+                    }
                 }
+                return res.json(playlist);
             }
 
-            res.json(playlist);
+            return res.status(403).json({ error: "Access denied" });
         } catch (error) {
             console.error(error);
             res.status(500).json({ error: "Failed to fetch playlist" });
@@ -151,7 +182,7 @@ router.put(
                 return res.status(404).json({ error: "Playlist not found" });
             }
 
-            if (playlist.createdBy.toString() !== user._id.toString()) {
+            if (playlist.createdBy._id.toString() !== user._id.toString()) {
                 return res.status(403).json({ error: "Access denied" });
             }
 
@@ -218,7 +249,7 @@ router.post(
                 return res.status(404).json({ error: "Playlist not found" });
             }
 
-            if (playlist.createdBy.toString() !== user._id.toString()) {
+            if (playlist.createdBy._id.toString() !== user._id.toString()) {
                 return res.status(403).json({ error: "Access denied" });
             }
 
@@ -253,7 +284,7 @@ router.delete(
                 return res.status(404).json({ error: "Playlist not found" });
             }
 
-            if (playlist.createdBy.toString() !== user._id.toString()) {
+            if (playlist.createdBy._id.toString() !== user._id.toString()) {
                 return res.status(403).json({ error: "Access denied" });
             }
 
@@ -288,7 +319,7 @@ router.delete(
                 return res.status(404).json({ error: "Playlist not found" });
             }
 
-            if (playlist.createdBy.toString() !== user._id.toString()) {
+            if (playlist.createdBy._id.toString() !== user._id.toString()) {
                 return res.status(403).json({ error: "Access denied" });
             }
 

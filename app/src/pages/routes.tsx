@@ -11,6 +11,7 @@ import { DashboardHome } from '@/pages/home-page';
 import { LandingPage } from '@/pages/landing-page';
 import { PlaylistsPage } from '@/pages/playlist-page';
 import { ProfilePage } from '@/pages/profile-page';
+import { PublicPlaylistPage } from '@/pages/public-playlist-page';
 import { PublicProfilePage } from '@/pages/public-profile-page';
 import { SettingsPage } from '@/pages/settings-page';
 import { SinglePlaylistPage } from '@/pages/single-playlist-page';
@@ -24,6 +25,13 @@ export function MuseRouting() {
       <Route index element={<LandingPage />} />
       {/* About Page */}
       <Route path="about" element={<AboutPage />} />
+
+      {/* TODO: Add compliance page(s) (terms, privacy, etc.) */}
+
+      {/* Public Playlist Page */}
+      <Route path="playlists/:idOrSlug" element={<PublicPlaylistPage />} />
+      {/* Public Profile Page */}
+      <Route path="profile/:username" element={<PublicProfilePage />} />
       {/* Auth Layout */}
       <Route element={<AuthLayout />}>
         {/* Login Card */}
@@ -44,7 +52,6 @@ export function MuseRouting() {
         {/* Profile Routes */}
         <>
           <Route path="profile" element={<ProfilePage />} />
-          <Route path="profile/:username" element={<PublicProfilePage />} />
         </>
         {/* Playlists Routes */}
         <>

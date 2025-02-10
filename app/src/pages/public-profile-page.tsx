@@ -1,48 +1,31 @@
-import { BreadcrumbItem, BreadcrumbLink, BreadcrumbPage, BreadcrumbSeparator } from '@/components/ui/breadcrumb';
-import { ProfileViewNested, UserProfile } from '@/features/profile/nested';
-import { PageLayout } from '@/layout/page-layout';
-import Fetcher from '@/lib/fetcher';
+import { getUserProfile } from '@/api/requests';
+import { Navbar } from '@/features/landing/nav';
+import { ProfileViewNested } from '@/features/profile/nested';
 import { useQuery } from '@tanstack/react-query';
-import { Link, useParams } from 'react-router';
-
+import { Navigate, useLocation, useParams } from 'react-router';
+import { toast } from 'sonner';
 
 export function PublicProfilePage() {
-  const api = Fetcher.getInstance();
   const { username } = useParams<{ username: string }>();
+  const { state } = useLocation();
+  const previousPath = state?.previous;
+
+  if (!username) {
+    toast.error("Username is required");
+    return <Navigate to="/" />;
+  }
+
   const { data: user, isLoading } = useQuery({
     queryKey: ["user-profile", username],
-    queryFn: async () => {
-      const { data } = await api.get<UserProfile>(`/users/${username}`);
-      return data;
-    },
+    queryFn: () => getUserProfile(username)
   });
+
   return (
     <>
-      <PageLayout
-        breadcrumbs={
-          <>
-            <BreadcrumbItem>
-              <BreadcrumbLink asChild>
-                <Link to="/dashboard">Dashboard</Link>
-              </BreadcrumbLink>
-            </BreadcrumbItem>
-            <BreadcrumbSeparator />
-            <BreadcrumbItem>
-              <BreadcrumbLink asChild>
-                <Link to="/dashboard/profile">Profile</Link>
-              </BreadcrumbLink>
-            </BreadcrumbItem>
-            <BreadcrumbSeparator />
-            <BreadcrumbItem>
-              <BreadcrumbPage>
-                {isLoading ? "Loading..." : `${user?.username}`}
-              </BreadcrumbPage>
-            </BreadcrumbItem>
-          </>
-        }
-      >
-        <ProfileViewNested userData={user} isLoading={isLoading} />
-      </PageLayout>
+      <Navbar />
+      <div className="mt-16 flex flex-col h-full max-w-6xl mx-auto px-4 py-8">
+        <ProfileViewNested userData={user} isLoading={isLoading} previousPath={previousPath} />
+      </div>
     </>
   );
 }

@@ -49,11 +49,28 @@ app.get('/', (_: Request, res: Response) => {
 
 
 const colorfulLogger = (req: Request, res: Response, next: Function) => {
-    console.log(
-        chalk.blue(`[${formatDateToPST(new Date())}]`),
-        chalk.green(req.method),
-        chalk.yellow(req.url)
-    );
+    const startTime = Date.now();
+    const oldEnd = res.end;
+    // @ts-expect-error - ts doesn't like me overriding res.end
+    res.end = function(chunk?: any, encoding?: BufferEncoding, cb?: () => void) {
+        const responseTime = Date.now() - startTime;
+        const statusCode = res.statusCode;
+
+        const statusColor = statusCode >= 500 ? chalk.red
+                         : statusCode >= 400 ? chalk.yellow
+                         : statusCode >= 300 ? chalk.cyan
+                         : chalk.green;
+
+        console.log(
+            chalk.blue(`[${formatDateToPST(new Date())}]`),
+            chalk.green(req.method.padEnd(7)),
+            chalk.yellow(req.url),
+            statusColor(`${statusCode}`),
+            chalk.magenta(`${responseTime}ms`)
+        );
+
+        return oldEnd.call(res, chunk, encoding as BufferEncoding, cb);
+    };
     next();
 };
 

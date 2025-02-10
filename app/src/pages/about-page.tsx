@@ -11,12 +11,12 @@ import { Link } from "react-router";
 
 const projects = [
     {
-        title: "NextJudge",
-        description: "A competitive coding platform for students to practice coding problems and compete with each other.",
-        image: "https://freedesign.fyi/demo.png",
-        productImage: "https://freedesign.fyi/demo.png",
-        product: "https://nextjudge.vercel.app",
-        github: "https://github.com/nextjudge/nextjudge",
+        title: "Seleneo",
+        description: "A free design tool for showcasing your products, creating digital assets, and more.",
+        image: "/seleneo.png",
+        productImage: "https://freedesign.fyi/studio-demo.webp",
+        product: "https://freedesign.fyi",
+        github: "https://github.com/dotcomnerd/seleneo",
     },
     {
         title: "NyumatFlix",
@@ -27,7 +27,7 @@ const projects = [
         github: "https://github.com/nyumat/nyumatflix",
     },
     {
-        title: "Seleneo",
+        title: "Incivent",
         description: "A real-time incident tracking map for communities around the world to report and view incidents.",
         image: "https://dont-commit-crimes.vercel.app/og-image.png",
         product: "https://dont-commit-crimes.vercel.app",
@@ -48,7 +48,7 @@ function ProjectShowcase() {
     const [selectedProject, setSelectedProject] = useState<(typeof projects)[0] | null>(null);
 
     return (
-        <section className="mt-16 mb-8">
+        <section className="mt-16 mb-8 mx-6 md:mx-0">
             <h2 className="text-2xl font-normal tracking-tighter mb-6">Other Projects by <Link className="text-primary hover:underline" to="https://github.com/nyumat">Nyumat</Link></h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {projects.map((project, index) => (
@@ -126,37 +126,41 @@ function ProjectShowcase() {
 export function AboutPage() {
     const isMobile = useIsMobile();
     return (
-        <div className="min-h-screen bg-background">
+        <div className="min-h-screen bg-background overflow-x-hidden">
             <Navbar />
             <main className={cn("container mx-auto px-4 py-10 md:py-16 md:px-6 lg:px-8 my-6", isMobile && "px-0")}>
-                <article className="prose prose-gray dark:prose-invert mx-auto max-w-3xl">
-                    <div className="relative h-[400px] w-full mb-12 rounded-xl overflow-hidden">
+                <article className="mx-auto max-w-3xl">
+                    <div className="relative h-[400px] w-full mb-12 rounded-xl overflow-hidden -mt-32 dark:mt-0 -px-8">
                         <img
                             src={isMobile ? "/preview-mobile.png" : "/preview.png"}
                             alt="Muse Interface"
-                            className="object-cover w-full h-full"
+                            className="object-cover w-full h-full hidden dark:block"
                         />
                         <div className="absolute inset-0 bg-gradient-to-t from-background via-background/50 to-transparent" />
                         <div className="absolute bottom-8 left-8 right-8">
-                            <h1 className="text-4xl md:text-5xl font-bold tracking-tight text-white mb-4">
-                                Your Music, Your Way
+                            <h1 className="text-xl md:text-3xl font-bold tracking-tight dark:text-white mb-4">
+                                The end to your monthly music subscription(s)
                             </h1>
-                            <p className="text-lg text-white/80">
-                                Break free from the constraints of traditional streaming
+                            <p className="dark:text-lg dark:text-white/80 text-md text-muted-foreground">
+                                Break free from the constraints of traditional streaming services.
                             </p>
                         </div>
                     </div>
 
-                    <div className="space-y-12">
+                    <div className="space-y-12 max-w-screen-xl mx-auto mx-6 md:mx-4">
                         <section>
-                            <p className="text-lg leading-relaxed">
-                                Remember when music felt personal? When you could craft the perfect playlist without hitting skip limits or dealing with forced shuffles? Muse brings that freedom back. We've built a platform that puts you in control of your music journey, whether you're diving into YouTube's endless music catalog or exploring SoundCloud's independent artists.
+                            <p className="text-lg leading-relaxed -mt-4">
+                                Remember when music felt personal? When you could craft the perfect playlist without hitting skip limits or dealing with forced shuffles?
+                                <br />
+                                <span className="font-bold block my-4">Muse brings that freedom back.</span>
+                                I built this platform to put you back in control of your music library. <br/> <br/> Literally, just create an account, and you can
+                                build a collection of your favorite tracks from YouTube and SoundCloud.
                             </p>
                         </section>
 
                         <section>
                             <h2 className="text-3xl font-bold tracking-tight mb-6">
-                                What Sets Muse Apart
+                                What we have so far
                             </h2>
                             <div className="grid md:grid-cols-2 gap-8">
                                 <div className="space-y-3">
@@ -165,15 +169,21 @@ export function AboutPage() {
                                 </div>
                                 <div className="space-y-3">
                                     <h3 className="text-xl font-semibold">Smart Organization</h3>
-                                    <p>Create collections that tell your story. Tag, sort, and arrange your music your way.</p>
+                                    <p>Create collections that tell your story. Rename, sort, and arrange your music your way.</p>
                                 </div>
                                 <div className="space-y-3">
                                     <h3 className="text-xl font-semibold">Cloud Sync</h3>
-                                    <p>Your library follows you everywhere. Pick up right where you left off on any device.</p>
+                                    <p>Your Muse library follows you everywhere. <br/>Add tracks offline, then pick up right where you left off on any device.</p>
                                 </div>
                                 <div className="space-y-3">
                                     <h3 className="text-xl font-semibold">Zero Cost</h3>
-                                    <p>All features, no fees. Music shouldn't come with a subscription.</p>
+                                    <p>All features, no fees. Music shouldn't come with a subscription. In fact, it shouldn't cost anything  - in my opinion.</p>
+                                </div>
+
+                                <div className="space-y-3">
+                                    <h3 className="text-xl font-semibold">...and more!</h3>
+                                    <p>I'm always adding new features and improving the platform. I bet that every time you come back, there'll
+                                         be something new.</p>
                                 </div>
                             </div>
                         </section>
@@ -183,20 +193,20 @@ export function AboutPage() {
                                 The Road Ahead
                             </h2>
                             <p className="text-lg leading-relaxed mb-6">
-                                We're building more than just a player - we're creating a new way to experience music. Our upcoming features will transform how you discover, share, and enjoy your favorite tracks:
+                                In my vision, the features I have planned will transform how we discover, share, and enjoy our favorite tracks:
                             </p>
                             <ul className="space-y-4 list-none pl-0">
                                 <li className="flex items-center gap-3">
                                     <div className="h-2 w-2 rounded-full bg-primary"></div>
-                                    <span>Create collaborative playlists with friends in real-time</span>
+                                    <span>Collaborative playlists with friends in real-time</span>
                                 </li>
                                 <li className="flex items-center gap-3">
                                     <div className="h-2 w-2 rounded-full bg-primary"></div>
-                                    <span>Take your music offline with our upcoming mobile apps</span>
+                                    <span>Offline mode with progressive web app (PWA) support</span>
                                 </li>
                                 <li className="flex items-center gap-3">
                                     <div className="h-2 w-2 rounded-full bg-primary"></div>
-                                    <span>Connect with like-minded music lovers through enhanced social features</span>
+                                    <span>Social features to connect with like-minded music lovers</span>
                                 </li>
                             </ul>
                         </section>

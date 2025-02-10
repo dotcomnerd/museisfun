@@ -72,9 +72,12 @@ export function HeroSection() {
                                 }}
                                 className="flex flex-wrap xl:justify-start justify-center gap-2 mb-4"
                             >
-                                <Badge variant="outline" className="text-xs sm:text-sm font-medium tracking-tight py-1 px-2 hover:bg-primary/10 transition-colors cursor-default mt-12 md:mt-8">
+                                <Badge variant="outline" className="text-xs sm:text-sm font-medium tracking-tight py-1 px-2 hover:bg-primary/10 transition-colors cursor-default mt-12 md:mt-8 group/badge z-50">
                                     <span className="mr-1">💸</span>
-                                    <span>Donate to keep Muse free for everyone</span>
+                                    <span
+                                        className="group-hover/badge:text-primary transition-colors group-hover/badge:underline decoration-white/20 hover:decoration-white/40 group-hover/badge:cursor-pointer"
+                                        onClick={() => window.open("https://buymeacoffee.com/nyumat", "_blank")}
+                                    >Donate to keep Muse free for everyone</span>
                                     <span className="ml-1">💸</span>
                                 </Badge>
                             </motion.div>
@@ -154,11 +157,11 @@ export function HeroSection() {
                                     <span>Self-hostable</span>
                                 </div>
                                 <Separator className="my-2" />
-                                <div className="flex items-center gap-1.5 text-muted-foreground">
+                                <div className="flex items-center gap-1.5 text-muted-foreground z-10">
                                     <span>Made by
-                                        <a href="https://github.com/nyumat" target="_blank" className="text-primary hover:underline font-light ml-1">
+                                        <Link to="https://github.com/nyumat" target="_blank" className="text-primary hover:underline font-light ml-1">
                                             <b>@nyumat</b>
-                                        </a>
+                                        </Link>
                                     </span>
                                 </div>
                             </motion.div>

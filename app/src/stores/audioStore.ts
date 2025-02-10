@@ -1,7 +1,6 @@
-import { Playlist } from "@/features/playlists/nested";
-import { type Song } from "@/features/songs/dashboard/view";
 import Fetcher from "@/lib/fetcher";
 import { useQuery } from "@tanstack/react-query";
+import { type Playlist, type Song } from "muse-shared";
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
@@ -604,10 +603,10 @@ export function usePlayerControls() {
     });
 
     const store = useAudioStore();
-    const playSong = async (songId: string, playlistId?: string) => {
+    const playSong = async (songId: string, playlistId?: string, isPublic?: boolean) => {
         try {
             if (playlistId) {
-                const { data: playlist } = await api.get<Playlist>(`/api/playlists/${playlistId}`);
+                const { data: playlist } = await api.get<Playlist>(`/api/playlists/${playlistId}${isPublic ? "?viz=public" : ""}`);
                 const songIndex = playlist.songs.findIndex(song => song._id === songId);
 
                 if (songIndex !== -1) {

@@ -4,14 +4,14 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Input } from "@/components/ui/input";
 import Fetcher from "@/lib/fetcher";
 import { useUserStore } from "@/stores/userStore";
-import { z } from "zod";
-import { useState } from "react";
-import { Link, Outlet, useNavigate } from "react-router";
-import { toast } from "sonner";
-import { ChevronLeft, Loader2, Music2 } from "lucide-react";
-import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { AxiosError } from "axios";
+import { ChevronLeft, Loader2, Music2 } from "lucide-react";
+import { useState } from "react";
+import { useForm } from "react-hook-form";
+import { Link, Outlet, useNavigate } from "react-router";
+import { toast } from "sonner";
+import { z } from "zod";
 
 const usernameSchema = z.string().min(3, "Username must be at least 3 characters");
 const passwordSchema = z.string();

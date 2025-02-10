@@ -434,12 +434,19 @@ export const playlistSchema = z.object({
     visibility: z.enum(["public", "private", "friends"]),
     createdBy: z.object({
         _id: z.string(),
-        username: z.string()
+        username: z.string(),
+        pfp: z.string().optional()
     }),
     songs: z.array(songSchema),
     createdAt: z.string(),
     updatedAt: z.string(),
-    playCount: z.number()
+    playCount: z.number(),
+    collaborators: z.array(z.string()).optional(),
+    pendingRequests: z.array(z.object({
+        user: z.string(),
+        requestedAt: z.string(),
+        status: z.enum(["pending", "approved", "rejected"])
+    })).optional()
 });
 
 export type Playlist = z.infer<typeof playlistSchema>;

@@ -1,67 +1,18 @@
+import { getUserWithId, updateUser } from '@/api/requests';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Song } from "@/features/songs/dashboard/view";
-import Fetcher from "@/lib/fetcher";
+import { ApiResponse, type UpdateUserInput, updateUserSchema, UserWithId } from "@/lib/types";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { AxiosError } from "axios";
 import { Eye, Loader2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
-import { useNavigate } from "react-router";
+import { useLocation, useNavigate } from "react-router";
 import { toast } from "sonner";
-import { z } from "zod";
-
-const api = Fetcher.getInstance();
-
-const updateUserSchema = z
-    .object({
-        username: z.string().min(3).max(20).optional(),
-        email: z.string().email().optional(),
-        name: z.string().optional(),
-        bio: z.string().optional(),
-        password: z.string().optional(),
-        pfp: z.instanceof(FileList).optional(),
-    })
-    .refine(
-        (data) => {
-            if (data.username !== undefined && data.username.length === 0)
-                return false;
-            if (data.email !== undefined && data.email.length === 0) return false;
-            return true;
-        },
-        {
-            message: "Required fields cannot be empty if provided",
-        }
-    );
-
-type UpdateUserInput = z.infer<typeof updateUserSchema>;
-
-interface ApiResponse<T> {
-    data: T;
-    error?: string;
-}
-
-interface UserWithId {
-    _id: string;
-    username: string;
-    email: string;
-    name: string;
-    bio: string;
-    pfp: string;
-    songs: Song[];
-    createdAt: string;
-    updatedAt: string;
-}
-
-interface PutProfileResponse {
-    updatedUser: UserWithId;
-    newToken: string;
-}
 
 export function ProfileView() {
     const [isEditing, setIsEditing] = useState(false);
@@ -69,33 +20,11 @@ export function ProfileView() {
     const [currentPfp, setCurrentPfp] = useState<string | null>(null);
     const queryClient = useQueryClient();
     const navigate = useNavigate();
+    const location = useLocation();
 
     const { data: user, isLoading } = useQuery<UserWithId>({
         queryKey: ["user"],
-        queryFn: async () => {
-            try {
-                const { data } = await api.get<UserWithId>("/auth/details", {
-                    headers: {
-                        Authorization: `Bearer ${localStorage.getItem("token")}`,
-                    },
-                });
-                return data;
-            } catch (err) {
-                if (err instanceof AxiosError) {
-                    toast.error(
-                        err.response?.data?.error || "Failed to fetch user details"
-                    );
-
-                    if (err.response?.status === 401) {
-                        localStorage.removeItem("token");
-                        navigate("/login");
-                    }
-                } else {
-                    toast.error("An unexpected error occurred");
-                }
-                throw err;
-            }
-        },
+        queryFn: getUserWithId
     });
 
     const {
@@ -134,40 +63,7 @@ export function ProfileView() {
         Error,
         UpdateUserInput
     >({
-        mutationFn: async (data: UpdateUserInput) => {
-            const formData = new FormData();
-
-            Object.entries(data).forEach(([key, value]) => {
-                if (value !== undefined && value !== null) {
-                    if (key === "pfp" && value instanceof FileList && value.length > 0) {
-                        formData.append("pfp", value[0]);
-                    } else if (key !== "pfp") {
-                        formData.append(key, value as string);
-                    }
-                }
-            });
-
-            try {
-                const { data: responseData } = await api.put<PutProfileResponse>(
-                    "/auth/update",
-                    formData,
-                    {
-                        headers: {
-                            "Content-Type": "multipart/form-data",
-                        },
-                    }
-                );
-
-                localStorage.setItem("token", responseData.newToken);
-
-                return { data: responseData.updatedUser };
-            } catch (err) {
-                if (err instanceof AxiosError) {
-                    throw new Error(err.response?.data?.error || "Update failed");
-                }
-                throw err;
-            }
-        },
+        mutationFn: updateUser,
         onSuccess: (response) => {
             queryClient.invalidateQueries({ queryKey: ["user"] });
             queryClient.invalidateQueries({ queryKey: ["use-user"] });
@@ -276,7 +172,7 @@ export function ProfileView() {
                     <div className="relative">
 
                     <div className="absolute right-0 bottom-0">
-                        <Button onClick={() => navigate(`/dashboard/profile/${user?.username}`)}>
+                            <Button onClick={() => navigate(`/profile/${user?.username}`, { state: { previous: location.pathname } })}>
                             <Eye xlinkTitle="View Profile" /> View as Public
                         </Button>
                     </div>

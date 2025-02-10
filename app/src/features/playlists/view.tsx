@@ -5,10 +5,10 @@ import Fetcher from "@/lib/fetcher";
 import { usePlayerControls } from "@/stores/audioStore";
 import { useQuery } from "@tanstack/react-query";
 import { Globe, Loader2, Lock, Play, Users } from "lucide-react";
+import { Playlist } from "muse-shared";
 import { useState } from "react";
 import { useNavigate } from "react-router";
 import { CreatePlaylistDialog } from "./create-dialog";
-import { Playlist } from "./nested";
 
 const api = Fetcher.getInstance();
 

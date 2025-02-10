@@ -4,6 +4,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSepara
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { useUser } from "@/hooks/use-user";
 import Fetcher from '@/lib/fetcher';
 import { cn } from "@/lib/utils";
 import { useAudioStore } from "@/stores/audioStore";
@@ -20,12 +21,14 @@ export function MobileSongsList({
   songs,
   onPlay,
   onDelete,
-  currentSong
+  currentSong,
+  playlistId
 }: {
   songs: Song[];
-  onPlay: (id: string) => void;
-  onDelete: (id: string) => void
+    onPlay: (id: string, playlistId?: string) => void;
+    onDelete: (id: string) => void;
   currentSong: Song | null;
+    playlistId?: string;
 }) {
   const [sortBy, setSortBy] = useState<'title' | 'date' | 'duration'>('title');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
@@ -36,6 +39,7 @@ export function MobileSongsList({
   const [showPlaylistDrawer, setShowPlaylistDrawer] = useState(false);
   const [selectedSongId, setSelectedSongId] = useState<string | null>(null);
   const queryClient = useQueryClient();
+  const { data: currentUser } = useUser();
 
   const { data: playlists } = useQuery<Playlist[]>({
     queryKey: ["playlists"],
@@ -135,6 +139,10 @@ export function MobileSongsList({
     toast.success("Updated favorites");
   };
 
+  const canEditSong = (song: Song) => {
+    return currentUser?._id === song.createdBy;
+  };
+
   const filteredSongs = songs.filter(song =>
     song.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
     song.uploader.toLowerCase().includes(searchQuery.toLowerCase())
@@ -166,7 +174,6 @@ export function MobileSongsList({
         </div>
       </div>
 
-      {/* Songs List */}
       <ScrollArea className="flex-1">
         {sortedSongs?.map((song, index) => (
           <motion.div
@@ -178,9 +185,8 @@ export function MobileSongsList({
               "px-2 py-2 flex items-center gap-2 active:bg-primary/10 transition-colors",
               index !== songs.length - 1 && "border-b border-primary/10"
             )}
-            onClick={() => onPlay(song._id)}
+            onClick={() => onPlay(song._id, playlistId)}
           >
-            {/* Thumbnail */}
             <div className="relative flex-shrink-0">
               <img
                 src={song.thumbnail}
@@ -204,7 +210,6 @@ export function MobileSongsList({
               )}
             </div>
 
-            {/* Song Info */}
             <div className="flex-1 min-w-0">
               <div className="text-sm font-medium truncate">
                 {song.title}
@@ -216,7 +221,6 @@ export function MobileSongsList({
               </div>
             </div>
 
-            {/* Quick Actions */}
             <Button
               variant="ghost"
               size="icon"
@@ -234,7 +238,6 @@ export function MobileSongsList({
               />
             </Button>
 
-            {/* Actions Menu */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button
@@ -262,28 +265,31 @@ export function MobileSongsList({
                   <Share2 className="h-3.5 w-3.5 mr-2" />
                   Share Song
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={(e) => e.stopPropagation()}>
-                  <Pencil className="h-3.5 w-3.5 mr-2" />
-                  Edit Details
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem
-                  className="text-destructive focus:text-destructive"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onDelete(song._id);
-                  }}
-                >
-                  <Trash2 className="h-3.5 w-3.5 mr-2" />
-                  Delete Song
-                </DropdownMenuItem>
+                {canEditSong(song) && (
+                  <>
+                    <DropdownMenuItem onClick={(e) => e.stopPropagation()}>
+                      <Pencil className="h-3.5 w-3.5 mr-2" />
+                      Edit Details
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem
+                      className="text-destructive focus:text-destructive"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onDelete(song._id);
+                      }}
+                    >
+                      <Trash2 className="h-3.5 w-3.5 mr-2" />
+                      Delete Song
+                    </DropdownMenuItem>
+                  </>
+                )}
               </DropdownMenuContent>
             </DropdownMenu>
           </motion.div>
         ))}
       </ScrollArea>
 
-      {/* Filter Sheet */}
       <Sheet open={showFilters} onOpenChange={setShowFilters}>
         <SheetContent side="bottom" className="h-[50vh]">
           <SheetHeader>
@@ -331,7 +337,6 @@ export function MobileSongsList({
         </SheetContent>
       </Sheet>
 
-      {/* Playlist Dialog */}
       <Dialog open={showPlaylistDrawer} onOpenChange={setShowPlaylistDrawer}>
         <DialogContent className="bg-black/90 backdrop-blur-lg border-purple-500/50 rounded-lg sm:max-w-[425px]">
           <DialogHeader>

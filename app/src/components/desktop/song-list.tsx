@@ -3,6 +3,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { TableCell, TableRow } from "@/components/ui/table";
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { useUser } from "@/hooks/use-user";
 import Fetcher from "@/lib/fetcher";
 import { cn } from "@/lib/utils";
 import { useAudioStore } from "@/stores/audioStore";
@@ -15,10 +16,11 @@ import { toast } from 'sonner';
 
 const api = Fetcher.getInstance();
 
-export function DesktopSongsList({ songs, onPlay, onDelete }: {
+export function DesktopSongsList({ songs, onPlay, onDelete, playlistId }: {
   songs: Song[];
-  onPlay: (id: string) => void;
+  onPlay: (id: string, playlistId?: string) => void;
   onDelete: (id: string) => void;
+  playlistId?: string;
 }) {
   const queryClient = useQueryClient();
   const { currentSong, isPlaying, isBuffering } = useAudioStore();
@@ -26,6 +28,11 @@ export function DesktopSongsList({ songs, onPlay, onDelete }: {
   const [isEditing, setIsEditing] = useState(false);
   const [showPlaylistDrawer, setShowPlaylistDrawer] = useState(false);
   const [selectedSongId, setSelectedSongId] = useState<string | null>(null);
+  const { data: currentUser } = useUser();
+
+  const canEditSong = (song: Song) => {
+    return currentUser?._id === song.createdBy;
+  };
 
   const { data: playlists } = useQuery<Playlist[]>({
     queryKey: ["playlists"],
@@ -157,13 +164,19 @@ export function DesktopSongsList({ songs, onPlay, onDelete }: {
 
   const handleDelete = useCallback((songId: string, e: React.MouseEvent) => {
     e.stopPropagation();
-    onDelete(songId);
-  }, [onDelete]);
+    const song = songs.find(s => s._id === songId);
+    if (song && canEditSong(song)) {
+      onDelete(songId);
+    }
+  }, [onDelete, songs, canEditSong]);
 
   const handleEditClick = useCallback((songId: string, field: string, e: React.MouseEvent) => {
     e.stopPropagation();
-    setEditingField({ id: songId, field });
-  }, []);
+    const song = songs.find(s => s._id === songId);
+    if (song && canEditSong(song)) {
+      setEditingField({ id: songId, field });
+    }
+  }, [songs, canEditSong]);
 
   const isMobile = useIsMobile();
 
@@ -176,7 +189,7 @@ export function DesktopSongsList({ songs, onPlay, onDelete }: {
             "border-b-0 h-10 cursor-pointer group transition-none",
             { "bg-secondary/30": song._id === currentSong?._id }
           )}
-          onClick={() => onPlay(song._id)}
+          onClick={() => onPlay(song._id, playlistId)}
         >
           <TableCell className="py-1">
             <div className="flex items-center gap-2">
@@ -249,14 +262,16 @@ export function DesktopSongsList({ songs, onPlay, onDelete }: {
                   ) : (
                     <div className="flex items-center gap-2">
                       <span>{song.title}</span>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity p-1 translate-y-[-1px]"
-                        onClick={(e) => handleEditClick(song._id, 'title', e)}
-                      >
-                        <Pencil className="h-3.5 w-3.5 text-muted-foreground" />
-                      </Button>
+                        {canEditSong(song) && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity p-1 translate-y-[-1px]"
+                            onClick={(e) => handleEditClick(song._id, 'title', e)}
+                          >
+                            <Pencil className="h-3.5 w-3.5 text-muted-foreground" />
+                          </Button>
+                        )}
                     </div>
                   )}
                 </div>
@@ -316,21 +331,23 @@ export function DesktopSongsList({ songs, onPlay, onDelete }: {
                   Add to Playlist
                 </TooltipContent>
               </Tooltip>
-              <Tooltip delayDuration={500} disableHoverableContent={isMobile}>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-7 w-7 hover:text-destructive"
-                    onClick={(e) => handleDelete(song._id, e)}
-                  >
-                    <Trash2 className="h-3.5 w-3.5" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  Delete Song
-                </TooltipContent>
-              </Tooltip>
+              {canEditSong(song) && (
+                <Tooltip delayDuration={500} disableHoverableContent={isMobile}>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-7 w-7 hover:text-destructive"
+                      onClick={(e) => handleDelete(song._id, e)}
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    Delete Song
+                  </TooltipContent>
+                </Tooltip>
+              )}
             </div>
           </TableCell>
         </TableRow>

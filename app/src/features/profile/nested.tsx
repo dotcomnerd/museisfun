@@ -1,10 +1,10 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { Song } from "@/features/songs/dashboard/view";
 import { useUser } from "@/hooks/use-user";
-import { Loader2, Music, Pencil } from "lucide-react";
+import { ArrowLeft, Loader2, Music, Pencil } from "lucide-react";
+import { type Song } from "muse-shared";
 import { useNavigate, useParams } from "react-router";
 
 export interface UserProfile {
@@ -22,11 +22,13 @@ export interface UserProfile {
 interface ProfileViewNestedProps {
   userData: UserProfile | undefined;
   isLoading: boolean;
+  previousPath: string | undefined;
 }
 
 export function ProfileViewNested({
   userData,
   isLoading,
+  previousPath,
 }: ProfileViewNestedProps) {
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
@@ -55,9 +57,18 @@ export function ProfileViewNested({
 
   return (
     <div className="space-y-6">
+      {previousPath && (
+        <Button
+          variant="ghost"
+          onClick={() => navigate(previousPath)}
+          className="flex items-center gap-2"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          Go Back
+        </Button>
+      )}
       <Card className="bg-black/10 backdrop-blur-md border-none shadow-sm shadow-purple-500/50 border-t-2 border-t-purple-500">
         <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle>{userData.name}'s Profile</CardTitle>
           {isOwnProfile && (
             <Button
               variant="link"

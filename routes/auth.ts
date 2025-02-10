@@ -83,12 +83,12 @@ router.post("/login", async (req: Request, res: Response) => {
   }
 });
 
-router.get("/checkAuth", authMiddleware, (req, res) => {
+router.get("/checkAuth", authMiddleware, (req: Request, res: Response) => {
   const user = req.auth;
   res.status(200).json({ message: "Authorized access", user });
 });
 
-router.get("/user", authMiddleware, async (req, res) => {
+router.get("/user", authMiddleware, async (req: Request, res: Response) => {
   const user = req.auth;
 
   if (!user) {
@@ -98,7 +98,7 @@ router.get("/user", authMiddleware, async (req, res) => {
   res.status(200).json(user);
 });
 
-router.get("/details", authMiddleware, async (req, res) => {
+router.get("/details", authMiddleware, async (req: Request, res: Response) => {
   const user = req.auth;
 
   if (!user) {
@@ -138,7 +138,7 @@ router.put(
   "/update",
   authMiddleware,
   upload.single("pfp") as unknown as RequestHandler,
-  async (req, res) => {
+  async (req: Request, res: Response) => {
     const user = req.auth;
     let pfpUrl: string | null = null;
     if (!user) {

@@ -1,8 +1,6 @@
-"use client";
-
-import * as React from "react";
-import { AnimatePresence, MotionConfig, motion } from "framer-motion";
 import { cn } from "@/lib/utils";
+import { AnimatePresence, MotionConfig, motion } from "framer-motion";
+import { createContext, useContext, useEffect, useId, useRef, useState } from "react";
 
 const TRANSITION = {
   type: "spring",
@@ -23,17 +21,17 @@ interface FloatingActionPanelContextType {
   mode: "actions" | "note";
 }
 
-const FloatingActionPanelContext = React.createContext<
+const FloatingActionPanelContext = createContext<
   FloatingActionPanelContextType | undefined
 >(undefined);
 
 function useFloatingActionPanelLogic() {
-  const uniqueId = React.useId();
-  const [isOpen, setIsOpen] = React.useState(false);
-  const [triggerRect, setTriggerRect] = React.useState<DOMRect | null>(null);
-  const [title, setTitle] = React.useState("");
-  const [note, setNote] = React.useState("");
-  const [mode, setMode] = React.useState<"actions" | "note">("actions");
+  const uniqueId = useId();
+  const [isOpen, setIsOpen] = useState(false);
+  const [triggerRect, setTriggerRect] = useState<DOMRect | null>(null);
+  const [title, setTitle] = useState("");
+  const [note, setNote] = useState("");
+  const [mode, setMode] = useState<"actions" | "note">("actions");
 
   const openPanel = (rect: DOMRect, newMode: "actions" | "note") => {
     setTriggerRect(rect);
@@ -94,8 +92,8 @@ export function FloatingActionPanelTrigger({
   title,
   mode,
 }: FloatingActionPanelTriggerProps) {
-  const { openPanel, uniqueId, setTitle } = React.useContext(FloatingActionPanelContext)!;
-  const triggerRef = React.useRef<HTMLButtonElement>(null);
+  const { openPanel, uniqueId, setTitle } = useContext(FloatingActionPanelContext)!;
+  const triggerRef = useRef<HTMLButtonElement>(null);
 
   const handleClick = () => {
     if (triggerRef.current) {
@@ -131,10 +129,10 @@ export function FloatingActionPanelContent({
   className,
 }: FloatingActionPanelContentProps) {
   const { isOpen, closePanel, uniqueId, triggerRect, title, mode } =
-    React.useContext(FloatingActionPanelContext)!;
-  const contentRef = React.useRef<HTMLDivElement>(null);
+    useContext(FloatingActionPanelContext)!;
+  const contentRef = useRef<HTMLDivElement>(null);
 
-  React.useEffect(() => {
+  useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (
         contentRef.current &&
@@ -147,7 +145,7 @@ export function FloatingActionPanelContent({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [closePanel]);
 
-  React.useEffect(() => {
+  useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") closePanel();
     };
@@ -227,7 +225,7 @@ export function FloatingActionPanelForm({
   onSubmit,
   className,
 }: FloatingActionPanelFormProps) {
-  const { note, closePanel } = React.useContext(FloatingActionPanelContext)!;
+  const { note, closePanel } = useContext(FloatingActionPanelContext)!;
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -254,7 +252,7 @@ export function FloatingActionPanelTextarea({
   className,
   id,
 }: FloatingActionPanelTextareaProps) {
-  const { note, setNote } = React.useContext(FloatingActionPanelContext)!;
+  const { note, setNote } = useContext(FloatingActionPanelContext)!;
 
   return (
     <textarea

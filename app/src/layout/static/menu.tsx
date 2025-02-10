@@ -29,7 +29,6 @@ export function Menu({ isOpen }: MenuProps) {
     const sidebar = useStore(useSidebarToggle, (state) => state);
     const { currentSong } = useAudioStore();
     const [searchOpen, setSearchOpen] = useState(false);
-
     const handleLogout = () => {
         localStorage.removeItem("token");
         // settings.resetSettings();
@@ -73,7 +72,8 @@ export function Menu({ isOpen }: MenuProps) {
                                                     <Tooltip delayDuration={100}>
                                                         <TooltipTrigger asChild>
                                                             <Button
-                                                                variant={active ? "link" : "ghost"}
+                                                                variant={active ? "link" : "unstyled"}
+                                                                title={label}
                                                                 className="mb-1 h-10 w-full justify-start"
                                                                 onClick={href === "#" ? () => setSearchOpen(true) : undefined}
                                                                 asChild={href !== "#"}

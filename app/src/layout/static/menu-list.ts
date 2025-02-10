@@ -3,12 +3,12 @@ import {
     HeartIcon,
     HelpCircle,
     LucideIcon,
+    Search,
     Settings2Icon,
     Shield,
-    Volume2,
     User,
     UserCog,
-    Search,
+    Volume2,
 } from "lucide-react";
 import { IconType } from "react-icons/lib";
 import { PiHouse, PiList, PiMusicNote, PiPlaylist, PiSoundcloudLogo, PiYoutubeLogoLight } from "react-icons/pi";
@@ -34,6 +34,8 @@ type Group = {
 };
 
 export function getMenuList(pathname: string): Group[] {
+    const hasSongType = pathname.includes("/dashboard/songs/");
+    const type = hasSongType ? pathname.split("/")[3] : null;
     return [
         {
             groupLabel: "",
@@ -67,19 +69,19 @@ export function getMenuList(pathname: string): Group[] {
                             href: "/dashboard/songs",
                             label: "All Songs",
                             icon: PiList,
-                            active: pathname === "/dashboard/songs" && !pathname.includes("/youtube") && !pathname.includes("/soundcloud"),
+                            active: pathname === "/dashboard/songs"
                         },
                         {
                             href: "/dashboard/songs/youtube",
                             label: "YouTube",
                             icon: PiYoutubeLogoLight,
-                            active: pathname === "/dashboard/songs/youtube",
+                            active: type === "youtube",
                         },
                         {
                             href: "/dashboard/songs/soundcloud",
                             label: "SoundCloud",
                             icon: PiSoundcloudLogo,
-                            active: pathname === "/dashboard/songs/soundcloud",
+                            active: type === "soundcloud",
                         },
                     ],
                 },

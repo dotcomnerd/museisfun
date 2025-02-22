@@ -1,4 +1,4 @@
-
+import { NumberTicker } from '@/components/ui/anim-number';
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from '@/components/ui/breadcrumb';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -25,6 +25,7 @@ export function DashboardHome() {
   const queryClient = useQueryClient();
   const { initializeAudio } = useAudioStore();
   const { playSong } = usePlayerControls();
+
   const { data: museStats, isLoading: museStatsLoading, isError: museStatsError } = useQuery<UserStatisticsResponse>({
     queryKey: ["muse-stats"],
     queryFn: async () => {
@@ -62,8 +63,7 @@ export function DashboardHome() {
   });
 
   const getMessage = () => {
-    const date = new Date();
-    const hours = date.getHours();
+    const hours = new Date().getHours();
     if (hours < 12) return "Good Morning";
     if (hours < 18) return "Good Afternoon";
     if (hours < 21) return "Good Evening";
@@ -72,29 +72,19 @@ export function DashboardHome() {
 
   const mutation = useMutation({
     mutationFn: async (playlistId: string) => {
-      if (!mostPlayedPlaylists) return;
-      const playlist = mostPlayedPlaylists?.find((playlist: any) => playlist._id === playlistId) as Playlist;
-      if (playlist) {
-        await initializeAudio(playlist.songs, 0, playlist);
-      } else {
-        throw new Error("Playlist not found");
-      }
+      const playlist = mostPlayedPlaylists?.find((p: any) => p._id === playlistId) as Playlist;
+      if (!playlist) throw new Error("Playlist not found");
+      await initializeAudio(playlist.songs, 0, playlist);
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["most-played-playlists"] });
-    },
-    onError: (error) => {
-      console.error("Error initializing playlist:", error);
-    }
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["most-played-playlists"] }),
+    onError: (error) => console.error("Error initializing playlist:", error)
   });
 
   const containerVariants = {
     hidden: { opacity: 0 },
     visible: {
       opacity: 1,
-      transition: {
-        staggerChildren: 0.1
-      }
+      transition: { staggerChildren: 0.1 }
     }
   };
 
@@ -114,8 +104,8 @@ export function DashboardHome() {
   if (!sidebar) return null;
   return (
     <>
-      <div className="flex flex-col min-h-screen bg-gradient-to-b from-background to-background/95">
-        <header className="sticky top-0 z-10 h-14 md:h-16 border-b border-border/50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+      <div className="flex flex-col min-h-screen bg-gradient-to-b from-background/40 to-background/20">
+        <header className="sticky top-0 z-10 h-14 md:h-16 border-b border-border/40 bg-background/60 backdrop-blur supports-[backdrop-filter]:bg-background/40">
           <div className="container h-full flex items-center justify-between px-4">
             <div className="flex items-center gap-2">
               <div className="flex items-center -space-x-2">
@@ -164,26 +154,30 @@ export function DashboardHome() {
                 {
                   label: 'Downloads',
                   value: museStats?.totalDownloads,
-                  icon: <Download className="w-5 h-5 text-primary" />
+                  icon: <Download className="w-5 h-5 text-primary" />,
+                  unit: ""
                 },
                 {
                   label: '# of Playlists',
                   value: museStats?.totalPlaylists,
-                  icon: <ListMusic className="w-5 h-5 text-primary" />
+                  icon: <ListMusic className="w-5 h-5 text-primary" />,
+                  unit: ""
                 },
                 {
                   label: 'Storage Used',
-                  value: `${museStats?.storageUsed} MB`,
-                  icon: <HardDrive className="w-5 h-5 text-primary" />
+                  value: museStats?.storageUsed,
+                  icon: <HardDrive className="w-5 h-5 text-primary" />,
+                  unit: "MB"
                 },
                 {
                   label: 'Listening Time',
-                  value: `${museStats?.totalListeningTime}h`,
-                  icon: <Clock className="w-5 h-5 text-primary" />
+                  value: museStats?.totalListeningTime,
+                  icon: <Clock className="w-5 h-5 text-primary" />,
+                  unit: "h"
                 }
               ].map((stat, idx) => (
                 <motion.div key={idx} variants={itemVariants}>
-                  <Card className="bg-card/50 hover:bg-card/70 transition-colors duration-200 border-border/50 backdrop-blur-sm">
+                  <Card className="bg-background/30 hover:bg-background/40 transition-all duration-300 border-border/30 backdrop-blur-sm hover:shadow-lg">
                     <CardContent className="p-4">
                       <div className="flex items-center justify-between">
                         <div className="rounded-lg bg-primary/10 p-2">
@@ -196,17 +190,34 @@ export function DashboardHome() {
                       <div className="mt-3">
                         {museStats && (
                           <p className="text-2xl md:text-3xl font-bold text-foreground">
-                            {stat.value}
+                            <motion.span
+                              initial={{ opacity: 0, x: 5 }}
+                              animate={{ opacity: 1, x: 0 }}
+                              transition={{ duration: 0.5, delay: typeof stat.value === 'number' ? 0.7 : 0 }}
+                            >
+                              {typeof stat.value === 'number' ? (
+                                <NumberTicker value={stat.value} />
+                              ) : (
+                                stat.value
+                              )}
+                            </motion.span>
+                            {stat.unit && (
+                              <motion.span
+                                initial={{ opacity: 0, x: 5 }}
+                                animate={{ opacity: 1, x: 0 }}
+                                transition={{ duration: 0.5, delay: typeof stat.value === 'number' ? 1.2 : 0.5 }}
+                              >
+                                {" "}{stat.unit}
+                              </motion.span>
+                            )}
                           </p>
                         )}
-
                         {museStatsLoading && (
                           <div className="flex items-center space-x-2">
                             <Loader2 className="h-4 w-4 animate-spin" />
                             <span className="text-muted-foreground">Loading...</span>
                           </div>
                         )}
-
                         {museStatsError && (
                           <div className="flex items-center space-x-2">
                             <AlertCircle className="h-4 w-4 text-red-500" />
@@ -222,7 +233,7 @@ export function DashboardHome() {
             </motion.div>
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
               <motion.div variants={itemVariants}>
-                <Card className="bg-card/50 border-border/50 backdrop-blur-sm">
+                <Card className="bg-background/30 hover:bg-background/40 transition-all duration-300 border-border/30 backdrop-blur-sm">
                   <CardHeader className="space-y-1">
                     <CardTitle className="text-xl">Recent Downloads</CardTitle>
                     <CardDescription>Your latest tracks</CardDescription>
@@ -239,7 +250,7 @@ export function DashboardHome() {
                         {recentlyDownloaded?.map((track: GetRecentDownloadsResponse[number], index: number) => (
                           <motion.div
                             key={index}
-                            className="flex items-center gap-3 group p-2 rounded-lg hover:bg-accent/20 transition-colors cursor-pointer"
+                            className="flex items-center gap-3 group p-2 rounded-lg hover:bg-accent/10 transition-all duration-300 cursor-pointer"
                             whileHover={{ scale: 1.02 }}
                             transition={{ type: "spring", stiffness: 400, damping: 17 }}
                             onClick={() => initializeAudio([...recentlyDownloaded], index)}
@@ -267,7 +278,7 @@ export function DashboardHome() {
                 </Card>
               </motion.div>
               <motion.div variants={itemVariants}>
-                <Card className="bg-card/50 border-border/50 backdrop-blur-sm">
+                <Card className="bg-background/30 hover:bg-background/40 transition-all duration-300 border-border/30 backdrop-blur-sm">
                   <CardHeader className="flex flex-row items-center justify-between pb-2">
                     <div className="space-y-1">
                       <CardTitle className="flex items-center gap-2 text-xl">
@@ -292,7 +303,7 @@ export function DashboardHome() {
                         {favoriteTracks?.map((track, index) => (
                           <motion.div
                             key={index}
-                            className="group relative flex items-center gap-3 p-2 rounded-lg hover:bg-accent/20 transition-colors cursor-pointer"
+                            className="group relative flex items-center gap-3 p-2 rounded-lg hover:bg-accent/10 transition-all duration-300 cursor-pointer"
                             whileHover={{ scale: 1.02 }}
                             transition={{ type: "spring", stiffness: 400, damping: 17 }}
                             onClick={() => {
@@ -302,7 +313,6 @@ export function DashboardHome() {
                                 initializeAudio([song], index);
                                 playSong(song._id);
                               }
-
                             }}
                           >
                             <div className="relative w-12 h-12 rounded-lg overflow-hidden flex-shrink-0">
@@ -349,7 +359,7 @@ export function DashboardHome() {
               </motion.div>
             </div>
             <motion.div variants={itemVariants}>
-              <Card className="bg-card/50 border-border/50 backdrop-blur-sm">
+              <Card className="bg-background/30 hover:bg-background/40 transition-all duration-300 border-border/30 backdrop-blur-sm">
                 <CardHeader>
                   <CardTitle className="text-xl">Popular Playlists</CardTitle>
                   <CardDescription>Your most played collections</CardDescription>

@@ -13,6 +13,7 @@ if (!uri) {
 
 export const connectToDB = async () => {
     try {
+        console.log("Connecting to MongoDB...");
         await mongoose.connect(uri, { dbName: uri.includes("local") ? "test" : "muse-prod" });
         console.log("Connected to MongoDB");
     } catch (error) {

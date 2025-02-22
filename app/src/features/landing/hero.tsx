@@ -1,5 +1,5 @@
 import { Badge } from "@/components/ui/badge";
-import { Button, buttonVariants } from "@/components/ui/button";
+import { Button } from "@/components/ui/button";
 import { GridIllustration } from '@/components/ui/grid-bg';
 import { Separator } from "@/components/ui/separator";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -168,9 +168,9 @@ export function HeroSection() {
                                 <Separator className="my-2" />
                                 <div className="hidden sm:flex items-center justify-center gap-1.5 text-muted-foreground z-10">
                                     <span className="inline-flex items-center">Made by<Link to="https://github.com/nyumat" target="_blank" className="text-primary hover:underline font-light ml-1"><b>@nyumat</b></Link></span>
-                                    <span className="text-xl ml-4">·</span>
+                                    <span className="text-xl ml-2">·</span>
                                     <span className="text-xl">·</span>
-                                    <span className="text-xl mr-4">·</span>
+                                    <span className="text-xl mr-2">·</span>
                                     <Link to="/about" className="text-primary hover:underline font-light ml-1 inline-flex items-center">
                                         <span className="inline-flex items-center"><span className="dark:text-muted-foreground">Learn more</span>
                                             <ArrowRight className="size-4 sm:size-5 ml-1 group-hover/arrow:translate-x-1 transition-transform relative z-10" /></span>
@@ -192,13 +192,24 @@ export function HeroSection() {
                                     <Link
                                         to={user ? "/dashboard" : "/register"}
                                         className={cn(
-                                            buttonVariants({ variant: "default" }),
-                                            "w-full sm:w-auto font-normal group/arrow relative overflow-hidden"
+                                            "relative h-10 px-4 overflow-hidden",
+                                            "bg-zinc-900 dark:bg-purple-900",
+                                            "transition-all duration-200",
+                                            "group",
+                                            "w-full sm:w-auto font-normal rounded-md",
+                                            "flex items-center justify-center"
                                         )}
                                     >
-                                        <span className="relative z-10">Get Started Free</span>
-                                        <ArrowRight className="size-4 sm:size-5 ml-2 group-hover/arrow:translate-x-1 transition-transform relative z-10" />
-                                        <div className="absolute inset-0 bg-gradient-to-r from-primary via-[#D247BF] to-primary opacity-0 group-hover/arrow:opacity-100 transition-opacity" />
+                                        <div className={cn(
+                                            "absolute inset-0",
+                                            "bg-gradient-to-r from-indigo-400 via-primary to-primary",
+                                            "opacity-40 group-hover:opacity-80",
+                                            "blur transition-opacity duration-500"
+                                        )} />
+                                        <div className="relative flex items-center justify-center gap-2">
+                                            <span className="text-white dark:text-white text-center">Get Started Free</span>
+                                            <ArrowRight className="w-3.5 h-3.5 text-white/90 dark:text-white/90 group-hover:translate-x-1 group-hover:rotate-[360deg] transition-all duration-300 ease-in-out" />
+                                        </div>
                                     </Link>
 
                                     <Button

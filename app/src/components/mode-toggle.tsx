@@ -1,11 +1,20 @@
 import { useTheme } from "@/components/theme-provider";
 import { Button } from "@/components/ui/button";
 import { Moon, Sun } from "lucide-react";
+import { toast } from 'sonner';
 
 export function ModeToggle() {
   const { theme, setTheme } = useTheme();
 
   const toggleTheme = () => {
+    if (!localStorage.getItem("theme-light-support")) {
+      toast.error("😥 — sorry, light mode support is still in development!")
+      localStorage.setItem("theme-light-support", "true");
+      return;
+    } else {
+      return;
+    }
+    // TODO: Add light mode support
     setTheme(theme === "dark" ? "light" : "dark");
   };
 

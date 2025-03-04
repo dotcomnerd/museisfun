@@ -31,7 +31,7 @@ import {
   Music, Plus, Users
 } from "lucide-react";
 import { Playlist, Song } from "muse-shared";
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router";
 import { toast } from "sonner";
 
@@ -44,21 +44,29 @@ export function PublicPlaylistView() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { data: currentUser } = useUser();
-  const { playSong } = usePlayerControls();
+  const { playSong: originalPlaySong } = usePlayerControls();
   const { currentSong, isPlaying } = useAudioStore();
   const [showAddSongDialog, setShowAddSongDialog] = useState(false);
-  const [selectedSongId, setSelectedSongId] = useState<string | null>(null);
+  const [selectedSongId, setSelectedSongId] = useState<string | null>(null)
+  const [isPublic, setIsPublic] = useState(false);
+
 
   const { data: playlist, isLoading } = useQuery<Playlist>({
     queryKey: ["playlists", idOrSlug],
     queryFn: async () => {
       if (!idOrSlug) throw new Error("Playlist ID or slug is required");
       const { data } = await api.get(`/api/playlists/${encodeURIComponent(idOrSlug)}`);
-      console.log(data);
+      setIsPublic(data.visibility === "public");
       return data;
     },
     retry: false,
   });
+
+  const playSong = useCallback((id: string) => {
+    if (playlist) {
+      originalPlaySong(id, playlist._id, true);
+    }
+  }, [playlist, originalPlaySong]);
 
   const { data: userPlaylists } = useQuery<Playlist[]>({
     queryKey: ["user-playlists"],
@@ -71,26 +79,30 @@ export function PublicPlaylistView() {
   });
 
   const { data: availableSongs } = useQuery<Song[]>({
-    queryKey: ["songs"],
+    queryKey: ["songs", playlist?._id],
     queryFn: async () => {
-      const { data } = await api.get("/api/songs");
+      if (!playlist) return [];
+      const { data } = await api.get(`/api/songs/playlist/${playlist._id}`);
       return data;
     },
+    enabled: !!playlist,
   });
 
   const addSongToUserPlaylist = useMutation({
     mutationFn: async ({ playlistId, songId }: { playlistId: string; songId: string }) => {
+      if (!currentUser) toast.error("You must be logged in to add a song to a playlist");
       await api.post(`/api/playlists/${playlistId}/songs`, { songId });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["user-playlists"] });
       setShowAddSongDialog(false);
       toast.success("Song added to your playlist");
-    },
+    }
   });
 
   const addSong = useMutation({
     mutationFn: async (songId: string) => {
+      if (!currentUser) toast.error("You must be logged in to add a song to a playlist");
       await api.post(`/api/playlists/${idOrSlug}/songs`, { songId });
     },
     onSuccess: () => {
@@ -102,6 +114,7 @@ export function PublicPlaylistView() {
 
   const removeSong = useMutation({
     mutationFn: async (songId: string) => {
+      if (!currentUser) toast.error("You must be logged in to remove a song from a playlist");
       await api.delete(`/api/playlists/${idOrSlug}/songs/${songId}`);
     },
     onSuccess: () => {
@@ -214,7 +227,7 @@ export function PublicPlaylistView() {
                         >
                           <div className="flex items-center gap-2">
                             <Avatar className="w-5 h-5">
-                              <AvatarImage src={playlist.createdBy.pfp} className="object-cover rounded-full" />
+                              <AvatarImage src={playlist.createdBy.pfp || "/default-cover.svg"} className="object-cover rounded-full" />
                               <AvatarFallback>{playlist.createdBy.username[0].toUpperCase()}</AvatarFallback>
                             </Avatar>
                             @{playlist.createdBy.username}

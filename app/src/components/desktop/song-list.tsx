@@ -121,6 +121,15 @@ export function DesktopSongsList({ songs, onPlay, onDelete, playlistId }: {
     }
   });
 
+  const handleAddToPlaylist = (song: Song) => {
+    if (!currentUser) {
+      toast.error("You must be logged in to add a song to a playlist");
+      return;
+    }
+    setSelectedSongId(song._id);
+    setShowPlaylistDrawer(true);
+  };
+
   type FavoriteState = "added" | "removed" | "failed";
 
   const favoriteMutation = useMutation<FavoriteState, Error, string>({
@@ -320,8 +329,7 @@ export function DesktopSongsList({ songs, onPlay, onDelete, playlistId }: {
                     className="h-7 w-7 hover:text-primary"
                     onClick={(e) => {
                       e.stopPropagation();
-                      setSelectedSongId(song._id);
-                      setShowPlaylistDrawer(true);
+                      handleAddToPlaylist(song);
                     }}
                   >
                     <Plus className="h-3.5 w-3.5" />

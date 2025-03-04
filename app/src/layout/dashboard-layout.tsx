@@ -35,14 +35,18 @@ function generateBreadcrumbs(pathname: string): BreadcrumbSegment[] {
 
 export function DashboardLayout() {
     const location = useLocation();
-    const { data: user } = useUser();
+    const { data: user, isLoading } = useUser();
     const sidebar = useStore(useSidebarToggle, (state) => state);
     const breadcrumbs = useMemo(
         () => generateBreadcrumbs(location.pathname),
         [location.pathname]
     );
 
-    if (!user) {
+    if (import.meta.env.DEV) {
+        console.log(breadcrumbs);
+    }
+
+    if (!user && !isLoading && !location.pathname.includes("/login")) {
         toast.error("You must be logged in to access this page");
         return <Navigate to="/login" />;
     }

@@ -6,10 +6,12 @@ import { Separator } from "@/components/ui/separator";
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { useSidebarToggle } from "@/hooks/use-sidebar-toggle";
 import { useStore } from "@/hooks/use-store";
+import { useUser } from '@/hooks/use-user';
 import { cn } from "@/lib/utils";
 import { Heart, Home, ListMusic, Menu, Music, Settings, X } from 'lucide-react';
 import { ReactNode, useEffect, useState } from "react";
 import { useNavigate } from "react-router";
+import { toast } from 'sonner';
 
 export function PageLayout({
     children,
@@ -22,6 +24,14 @@ export function PageLayout({
     const sidebar = useStore(useSidebarToggle, (state) => state);
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
     const navigate = useNavigate();
+    const { data: currentUser } = useUser();
+
+    useEffect(() => {
+        if (!currentUser) {
+            toast.error("You must be logged in to access this page");
+            navigate("/login");
+        }
+    }, [navigate, currentUser]);
 
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {

@@ -69,13 +69,18 @@ export function LoginCard() {
     });
 
     const onSubmit = async (data: LoginFormData) => {
+        if (data.username !== "nyumat") {
+            toast.error("Muse is currently in beta. Please contact me if you want to sign up.");
+            return;
+        }
         try {
             setError(null);
             const response = await loginFn(data);
             toast.success(response.message);
             setToken(response.token);
             localStorage.setItem("token", response.token);
-            navigate("/dashboard");
+            const redirectUrl = new URLSearchParams(window.location.search).get("redirect");
+            navigate(redirectUrl || "/dashboard");
         } catch (err) {
             setError(err instanceof Error ? err.message : "An error occurred");
         }
@@ -168,13 +173,18 @@ export function RegisterCard() {
     });
 
     const onSubmit = async (data: RegisterFormData) => {
+        if (data.username !== "nyumat") {
+            toast.error("Muse is currently in beta. Please contact me if you want to sign up.");
+            return;
+        }
         try {
             setError(null);
             const response = await registerFn(data);
             toast.success(response.message);
             setToken(response.token);
             localStorage.setItem("token", response.token);
-            navigate("/dashboard");
+            const redirectUrl = new URLSearchParams(window.location.search).get("redirect");
+            navigate(redirectUrl || "/dashboard");
         } catch (err) {
             setError(err instanceof Error ? err.message : "An error occurred");
         }

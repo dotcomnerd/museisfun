@@ -5,8 +5,8 @@ import { useStore } from "@/hooks/use-store";
 import { useUser } from '@/hooks/use-user';
 import { type BreadcrumbSegment } from "@/lib/types";
 import { cn } from "@/lib/utils";
-import { useLayoutEffect, useMemo } from "react";
-import { Outlet, useLocation, useNavigate } from "react-router";
+import { useMemo } from "react";
+import { Navigate, Outlet, useLocation } from "react-router";
 import { toast } from 'sonner';
 import { MuseSidebar } from "./components/muse-sidebar";
 
@@ -35,7 +35,6 @@ function generateBreadcrumbs(pathname: string): BreadcrumbSegment[] {
 
 export function DashboardLayout() {
     const location = useLocation();
-    const navigate = useNavigate();
     const { data: user } = useUser();
     const sidebar = useStore(useSidebarToggle, (state) => state);
     const breadcrumbs = useMemo(
@@ -43,13 +42,10 @@ export function DashboardLayout() {
         [location.pathname]
     );
 
-    useLayoutEffect(() => {
-        const token = localStorage.getItem("token");
-        if (!token && !["/login", "/register"].includes(location.pathname)) {
-            toast.error("You must be logged in to access this page");
-            navigate("/login");
-        }
-    }, [navigate]);
+    if (!user) {
+        toast.error("You must be logged in to access this page");
+        return <Navigate to="/login" />;
+    }
 
     return (
         <>

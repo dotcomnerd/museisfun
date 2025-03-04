@@ -2,6 +2,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { Song } from '@/lib/types';
+import { BASE_URL } from '@/lib/fetcher';
 import { cn } from '@/lib/utils';
 import { motion } from 'framer-motion';
 import { Pause, Play, Repeat, Shuffle, SkipBack, SkipForward, Volume2, VolumeX } from 'lucide-react';
@@ -18,7 +19,7 @@ export function DemoPlayer({ className, shouldPlay }: { className?: string, shou
   const isMobile = useIsMobile();
 
   useEffect(() => {
-    fetch(`http://143.110.144.214/v2/api/songs/demo/random`, { method: 'GET' })
+    fetch(`${BASE_URL}/api/songs/demo/random`, { method: 'GET' })
       .then(res => res.json())
       .then(song => {
         setCurrentSong({

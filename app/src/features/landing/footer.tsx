@@ -5,17 +5,19 @@ export function Footer() {
         {
             title: "Product",
             links: [
-                { name: "Login", href: "https://ohits.fun/login" },
-                { name: "Register", href: "https://ohits.fun/register" },
-                { name: "API Docs", href: "https://museisfun.fly.dev" },
+                { name: "About", href: "https://museisfun.com/about" },
+                { name: "Login", href: "https://museisfun.com/login" },
+                { name: "Register", href: "https://museisfun.com/register" },
+                { name: "API Docs", href: "https://docs.museisfun.com" },
             ]
         },
         {
-            title: "Social",
+            title: "Support",
             links: [
-                { name: "GitHub Repo", href: "https://github.com/nyumat/muse" },
-                { name: "My GitHub", href: "https://github.com/nyumat" },
-                { name: "My Website", href: "https://tomnyuma.rocks" },
+                { name: "Donate", href: "https://buymeacoffee.com/nyumat" },
+                { name: "GitHub", href: "https://github.com/nyumat" },
+                { name: "Website", href: "https://tomnyuma.rocks" },
+                { name: "Email", href: "mailto:titandq@gmail.com" },
             ]
         }
     ];
@@ -44,8 +46,7 @@ export function Footer() {
                         </Link>
 
                         <p className="mt-4 max-w-sm text-sm text-muted-foreground">
-                            Download and stream the songs and playlists you love for free.
-                            Enjoy music the way it always should've been.
+                            With Muse, enjoy music the way it always should've been.
                         </p>
 
                     </div>

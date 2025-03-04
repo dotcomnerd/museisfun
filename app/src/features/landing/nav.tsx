@@ -84,6 +84,7 @@ export const Navbar = () => {
                             <nav className="ml-4 hidden md:block">
                                 <NavigationMenu>
                                     <NavigationMenuList className="text-foreground/80">
+                                        <NavItem href="/about">About</NavItem>
                                         {!isLoading && user && (
                                             <>
                                                 <NavItem href="/dashboard">Dashboard</NavItem>
@@ -91,13 +92,14 @@ export const Navbar = () => {
                                                 <NavItem href="/dashboard/playlists">Playlists</NavItem>
                                             </>
                                         )}
-                                        <NavItem href="/about">About</NavItem>
                                         {!isLoading && !user && (
                                             <>
                                                 <NavItem href="/login">Login</NavItem>
                                                 <NavItem href="/register">Register</NavItem>
                                             </>
                                         )}
+                                        <NavItem href="https://api.museisfun.com">API</NavItem>
+                                        <NavItem href="https://docs.museisfun.com">Docs</NavItem>
                                     </NavigationMenuList>
                                 </NavigationMenu>
                             </nav>

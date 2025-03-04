@@ -73,10 +73,12 @@ export function HeroSection() {
                             >
                                 <Badge variant="outline" className="text-xs sm:text-sm font-medium tracking-tight py-1 px-2 hover:bg-primary/10 transition-colors cursor-default mt-12 md:mt-8 group/badge z-50">
                                     <span className="mr-1">💸</span>
-                                    <span
+                                    <a
+                                        title="Donate to keep Muse free for everyone"
                                         className="group-hover/badge:text-primary transition-colors group-hover/badge:underline decoration-white/20 hover:decoration-white/40 group-hover/badge:cursor-pointer"
-                                        onClick={() => window.open("https://buymeacoffee.com/nyumat", "_blank")}
-                                    >Donate to keep Muse free for everyone</span>
+                                        href="https://buymeacoffee.com/nyumat"
+                                        target="_blank"
+                                    >Donate to keep Muse free for everyone</a>
                                     <span className="ml-1">💸</span>
                                 </Badge>
                             </motion.div>

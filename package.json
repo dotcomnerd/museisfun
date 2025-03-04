@@ -6,7 +6,8 @@
     "scripts": {
         "dev": "nodemon --watch './**/*.ts' --exec 'tsx --env-file=.env.local' index.ts",
         "prod": "tsx --env-file=.env.production index.ts",
-        "start": "tsx --env-file=.env.local index.ts"
+        "start": "tsx --env-file=.env.local index.ts",
+        "launchdocs": "cp -r docs/* /var/www/docs"
     },
     "keywords": [],
     "author": "",

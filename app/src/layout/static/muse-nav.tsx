@@ -49,7 +49,7 @@ export function SheetMenu() {
                         <Link to="/" className="flex items-center gap-2">
                             <MusicIcon size={24} />
                             <SheetTitle className="text-lg font-bold text-primary">
-                               ohits.fun
+                               museisfun.com
                             </SheetTitle>
                         </Link>
                     </Button>

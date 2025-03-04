@@ -357,7 +357,7 @@ export function MuseSidebar() {
                                 sidebar?.isOpen === false ? "hidden" : "block",
                             )}
                         >
-                            ohits.fun
+                            museisfun.com
                         </h1>
                     </Link>
                 </Button>

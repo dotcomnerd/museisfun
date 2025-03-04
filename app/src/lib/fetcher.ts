@@ -1,8 +1,9 @@
 import axios, { AxiosInstance, AxiosResponse } from "axios";
+import { toast } from 'sonner';
 
-const BASE_URL = import.meta.env.DEV
-    ? "http://localhost:3000/v2"
-    : "https://museisfun.fly.dev/v2";
+export const BASE_URL = import.meta.env.DEV
+    ? "http://localhost:3000"
+    : "https://api.museisfun.com";
 
 class Fetcher {
     private static instance: AxiosInstance;
@@ -33,6 +34,12 @@ class Fetcher {
                 (response: AxiosResponse) => response,
                 (error) => {
                     console.error("Response error:", error);
+                    if (error.response.status === 401) {
+                        localStorage.removeItem("token");
+                        window.location.href = "/login";
+                    } else if (error.response.status === 413) {
+                        toast.error("File is too large");
+                    }
                     return Promise.reject(error);
                 }
             );

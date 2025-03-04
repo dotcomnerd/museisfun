@@ -7,7 +7,8 @@
     "dev": "vite",
     "build": "vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "deploy": "bun run build && cp -r dist/* /var/www/html && echo 'Deployed to /var/www/html'"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.1",
@@ -40,6 +41,7 @@
     "@radix-ui/react-tooltip": "^1.1.4",
     "@react-spring/web": "^9.7.5",
     "@tanstack/react-query": "^5.62.2",
+    "@types/react-helmet": "^6.1.11",
     "@use-gesture/react": "^10.3.1",
     "axios": "^1.7.8",
     "class-variance-authority": "^0.7.1",
@@ -56,6 +58,7 @@
     "react": "^18.3.1",
     "react-day-picker": "^8.10.1",
     "react-dom": "^18.3.1",
+    "react-helmet": "^6.1.0",
     "react-hook-form": "^7.53.2",
     "react-icons": "^5.4.0",
     "react-resizable-panels": "^2.1.7",

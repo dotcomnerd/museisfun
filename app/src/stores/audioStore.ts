@@ -1,3 +1,4 @@
+import { useUser } from '@/hooks/use-user';
 import Fetcher from "@/lib/fetcher";
 import { useQuery } from "@tanstack/react-query";
 import { type Playlist, type Song } from "muse-shared";
@@ -12,7 +13,7 @@ interface PlayerMode {
 
 interface AudioState {
     // Playback state
-    currentSong: Partial<Song> | null;
+    currentSong: (Partial<Song> & { streamUrlParams?: { playlistId: string } }) | null;
     isPlaying: boolean;
     currentTime: number;
     duration: number;
@@ -21,9 +22,9 @@ interface AudioState {
     volume: number;
 
     // Queue state
-    queue: Partial<Song>[];
+    queue: (Partial<Song> & { streamUrlParams?: { playlistId: string } })[];
     queueIndex: number;
-    originalQueue: Partial<Song>[];
+    originalQueue: (Partial<Song> & { streamUrlParams?: { playlistId: string } })[];
     isShuffled: boolean;
     isRepeating: boolean;
     autoPlayOnEnd: boolean;
@@ -177,7 +178,7 @@ export const useAudioStore = create<AudioState>()(
                 }
             };
 
-            const setupAudioElement = (song: Partial<Song>) => {
+            const setupAudioElement = async (song: Partial<Song>) => {
                 if (audioElement) {
                     stopListeningTimer();
                     audioElement.pause();
@@ -349,13 +350,12 @@ export const useAudioStore = create<AudioState>()(
                     }
                 },
 
-                playQueueItem: (index: number) => {
+                playQueueItem: async (index: number) => {
                     const state = get();
                     const song = state.queue[index];
                     if (!song) return;
 
-                    const audio = setupAudioElement(song);
-
+                    const audio = await setupAudioElement(song);
                     if (!audio) return;
 
                     set({
@@ -571,6 +571,9 @@ export const useAudioStore = create<AudioState>()(
                 },
 
                 async updateListeningTime(songId, time) {
+                    // Only do this if the user is logged in, if so, skip
+                    const { data: currentUser } = useUser();
+                    if (!currentUser) return;
                     try {
                         await Fetcher.getInstance().post(`/api/songs/${songId}/listen`, { time });
                     } catch (error) {
@@ -594,43 +597,56 @@ export const useAudioStore = create<AudioState>()(
 
 export function usePlayerControls() {
     const api = Fetcher.getInstance();
-    const { data: allSongs } = useQuery({
+    const { data: allSongs, refetch: fetchAllSongs } = useQuery({
         queryKey: ["songs"],
         queryFn: async () => {
             const res = await api.get<Song[]>("/api/songs");
             return res.data;
         },
+        enabled: false, // Don't fetch automatically
     });
 
     const store = useAudioStore();
     const playSong = async (songId: string, playlistId?: string, isPublic?: boolean) => {
         try {
             if (playlistId) {
-                const { data: playlist } = await api.get<Playlist>(`/api/playlists/${playlistId}${isPublic ? "?viz=public" : ""}`);
-                const songIndex = playlist.songs.findIndex(song => song._id === songId);
-
-                if (songIndex !== -1) {
-                    store.initializeAudio(playlist.songs, songIndex, playlist);
-                    store.play();
-                    return;
+                if (isPublic) {
+                    const { data: songs } = await api.get<Song[]>(`/api/songs/playlist/${playlistId}`);
+                    const songIndex = songs.findIndex(song => song._id === songId);
+                    if (songIndex !== -1) {
+                        store.initializeAudio(songs, songIndex, null);
+                        store.play();
+                        return;
+                    }
+                } else {
+                    const { data: playlist } = await api.get<Playlist>(`/api/playlists/${playlistId}`);
+                    const songIndex = playlist.songs.findIndex(song => song._id === songId);
+                    if (songIndex !== -1) {
+                        store.initializeAudio(playlist.songs, songIndex, playlist);
+                        store.play();
+                        return;
+                    }
                 }
             }
 
-            if (!allSongs) return;
+            // Only fetch all songs if we need them
+            if (!allSongs) {
+                const { data } = await fetchAllSongs();
+                if (!data) return;
+                const songIndex = data.findIndex(song => song._id === songId);
+                if (songIndex === -1) return;
+                store.initializeAudio(data, songIndex, null);
+                store.play();
+                return;
+            }
+
             const songIndex = allSongs.findIndex(song => song._id === songId);
             if (songIndex === -1) return;
-
             store.initializeAudio(allSongs, songIndex, null);
             store.play();
 
         } catch (error) {
             console.error('Error playing song:', error);
-            if (!allSongs) return;
-            const songIndex = allSongs.findIndex(song => song._id === songId);
-            if (songIndex === -1) return;
-
-            store.initializeAudio(allSongs, songIndex, null);
-            store.play();
         }
     };
 

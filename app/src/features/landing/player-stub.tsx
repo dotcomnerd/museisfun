@@ -1,12 +1,14 @@
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useIsMobile } from '@/hooks/use-mobile';
+import Fetcher from '@/lib/fetcher';
 import { Song } from '@/lib/types';
-import { BASE_URL } from '@/lib/fetcher';
 import { cn } from '@/lib/utils';
 import { motion } from 'framer-motion';
 import { Pause, Play, Repeat, Shuffle, SkipBack, SkipForward, Volume2, VolumeX } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
+
+const api = Fetcher.getInstance();
 
 export function DemoPlayer({ className, shouldPlay }: { className?: string, shouldPlay: boolean }) {
   const [currentSong, setCurrentSong] = useState<Partial<Song> | null>(null);
@@ -19,9 +21,10 @@ export function DemoPlayer({ className, shouldPlay }: { className?: string, shou
   const isMobile = useIsMobile();
 
   useEffect(() => {
-    fetch(`${BASE_URL}/api/songs/demo/random`, { method: 'GET' })
-      .then(res => res.json())
-      .then(song => {
+    const fetchRandomSong = async () => {
+      try {
+        const { data: song } = await api.get(`/api/songs/demo/random`);
+
         setCurrentSong({
           _id: song._id,
           title: song.title,
@@ -30,12 +33,17 @@ export function DemoPlayer({ className, shouldPlay }: { className?: string, shou
           stream_url: song.stream_url,
           duration: song.duration
         });
+
         if (audioRef.current) {
           audioRef.current.src = song.stream_url;
           audioRef.current.load();
         }
-      })
-      .catch(console.error);
+      } catch (error) {
+        console.error("Error fetching random song:", error);
+      }
+    };
+
+    fetchRandomSong();
   }, []);
 
   useEffect(() => {

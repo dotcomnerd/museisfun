@@ -1,10 +1,11 @@
 import axios, { AxiosInstance, AxiosResponse } from "axios";
 import { toast } from 'sonner';
 
+export const DEV_BASE_URL = import.meta.env.VITE_DEV_BASE_URL;
+export const PROD_BASE_URL = import.meta.env.VITE_PROD_BASE_URL;
 export const BASE_URL = import.meta.env.DEV
-    ? "http://localhost:3000"
-    : "https://api.museisfun.com";
-
+    ? DEV_BASE_URL
+    : PROD_BASE_URL;
 class Fetcher {
     private static instance: AxiosInstance;
 

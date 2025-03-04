@@ -12,7 +12,6 @@ import { useAudioStore } from "@/stores/audioStore";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { motion } from "framer-motion";
 import { Filter, Heart, MoreVertical, Pause, Pencil, Play, Plus, Search, Share2, Trash2 } from "lucide-react";
-import { Playlist, Song } from "muse-shared";
 import { useState } from "react";
 import { toast } from "sonner";
 
@@ -127,6 +126,7 @@ export function MobileSongsList({
         url: window.location.href
       });
     } catch (err) {
+      console.error(err);
       toast.error("Failed to share song");
     }
   };

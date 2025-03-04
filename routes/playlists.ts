@@ -1,5 +1,5 @@
 import { BUCKET_NAME, COVERS_BUCKET_NAME, getPresignedUrl, R2 } from "@/lib/cloudflare";
-import { authMiddleware } from "@/lib/middleware";
+import { authMiddleware, optionalAuthMiddleware } from "@/lib/middleware";
 import Playlist, { PlaylistModel } from "@/models/playlist";
 import { SongModel } from "@/models/song";
 import { UserModel } from "@/models/user";
@@ -23,6 +23,7 @@ const upload = multer({
     },
 });
 
+// Protected routes - require auth
 router.post(
     "/playlists",
     authMiddleware,
@@ -74,25 +75,31 @@ router.post(
     }
 );
 
+// Optional auth routes - auth if available but not required
 router.get(
     "/playlists",
-    authMiddleware,
+    optionalAuthMiddleware,
     async (req: Request, res: Response) => {
         try {
-            const user = req.auth;
-            if (!user) return res.status(401).json({ error: "Unauthorized" });
+            let query;
+            if (req.auth) {
+                // If authenticated, show user's playlists and public playlists
+                query = {
+                    $or: [
+                        { createdBy: req.auth._id },
+                        { visibility: "public" }
+                    ],
+                };
+            } else {
+                // If not authenticated, only show public playlists
+                query = { visibility: "public" };
+            }
 
-            const playlists = await Playlist.find({
-                $or: [
-                    { createdBy: user._id },
-                    { visibility: "public" }
-                ],
-            })
+            const playlists = await Playlist.find(query)
                 .populate("createdBy")
                 .populate({
                     path: "songs",
                     select: "title r2Key stream_url duration uploader thumbnail duration_string"
-                    // Ugh, mongoose, why do you make me do this?
                 }) as unknown as (PlaylistModel & { songs: SongModel[] })[];
 
             for (const playlist of playlists) {
@@ -117,7 +124,7 @@ router.get(
 
 router.get(
     "/playlists/:idOrSlug",
-    authMiddleware,
+    optionalAuthMiddleware,
     async (req: Request, res: Response) => {
         try {
             const { idOrSlug } = req.params;
@@ -140,26 +147,26 @@ router.get(
             });
             playlist = await playlist.populate<{ songs: SongModel[] }>('songs');
 
-            const user = req.auth;
-            const isCreator = user && user._id.toString() === playlist.createdBy._id.toString();
-
-            // Allow access if:
-            // 1. User is the creator
-            // 2. Playlist is public
-            if (isCreator || playlist.visibility === "public") {
-                for (const song of playlist.songs) {
-                    if (song.r2Key && !song.stream_url) {
-                        song.stream_url = await getPresignedUrl({
-                            key: song.r2Key,
-                            bucket: BUCKET_NAME,
-                            expiresIn: 60 * 60 * 24
-                        });
-                    }
+            if (playlist.visibility !== "public") {
+                if (!req.auth) {
+                    return res.status(403).json({ error: "Access denied" });
                 }
-                return res.json(playlist);
+                const isCreator = req.auth._id.toString() === playlist.createdBy._id.toString();
+                if (!isCreator) {
+                    return res.status(403).json({ error: "Access denied" });
+                }
             }
 
-            return res.status(403).json({ error: "Access denied" });
+            for (const song of playlist.songs) {
+                if (song.r2Key && !song.stream_url) {
+                    song.stream_url = await getPresignedUrl({
+                        key: song.r2Key,
+                        bucket: BUCKET_NAME,
+                        expiresIn: 60 * 60 * 24
+                    });
+                }
+            }
+            return res.json(playlist);
         } catch (error) {
             console.error(error);
             res.status(500).json({ error: "Failed to fetch playlist" });
@@ -167,6 +174,7 @@ router.get(
     }
 );
 
+// Protected routes - require auth
 router.put(
     "/playlists/:id",
     authMiddleware,
@@ -182,7 +190,7 @@ router.put(
                 return res.status(404).json({ error: "Playlist not found" });
             }
 
-            if (playlist.createdBy._id.toString() !== user._id.toString()) {
+            if (playlist.createdBy._id.toString() !== user._id.toString() && playlist.visibility === "private") {
                 return res.status(403).json({ error: "Access denied" });
             }
 
@@ -224,6 +232,10 @@ router.put(
                 (id, updates, { new: true })
                 .populate("createdBy")
                 .populate("songs");
+
+            console.log({
+                updatedPlaylist
+            });
 
             return res.json(updatedPlaylist);
         } catch (error) {

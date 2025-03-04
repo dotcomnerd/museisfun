@@ -1,4 +1,6 @@
 import { BUCKET_NAME, getPresignedUrl, R2 } from "@/lib/cloudflare";
+import { authMiddleware, optionalAuthMiddleware } from "@/lib/middleware";
+import Playlist from '@/models/playlist';
 import Song from "@/models/song";
 import User from '@/models/user';
 import { convertToObjectId, UrlValidator } from "@/util/urlValidator";
@@ -31,7 +33,14 @@ interface DownloadResult {
 }
 
 // TODO: These types are dirty, come back to this at some point.
-async function aggregateSongsWithFavorites(songs: any[], userId: string) {
+async function aggregateSongsWithFavorites(songs: any[], userId?: string) {
+    if (!userId) {
+        for (const song of songs) {
+            song.isFavorited = false;
+        }
+        return songs;
+    }
+
     const favoriteSongs = await User.findById(userId).select("favoriteSongs");
     const favoriteSongsIds = favoriteSongs?.favoriteSongs || [];
 
@@ -75,6 +84,7 @@ async function downloadSong(url: string): Promise<DownloadResult> {
             if (code === 0) {
                 try {
                     const parsed = JSON.parse(jsonData);
+                    console.log(parsed);
                     resolve({
                         ytdlp_id: parsed.id,
                         title: parsed.title,
@@ -156,7 +166,8 @@ type SongFormDataFields = {
     tags: string;
 };
 
-router.post("/api/songs", async (req, res) => {
+// Protected routes - require auth
+router.post("/api/songs", authMiddleware, async (req, res) => {
     try {
         const {
             mediaUrl: url,
@@ -221,7 +232,7 @@ router.post("/api/songs", async (req, res) => {
     }
 });
 
-router.get("/api/songs/:id/stream", async (req, res) => {
+router.get("/api/songs/:id/stream", optionalAuthMiddleware, async (req, res) => {
     try {
         const song = await Song.findById(req.params.id);
         if (!song) {
@@ -241,7 +252,7 @@ router.get("/api/songs/:id/stream", async (req, res) => {
     }
 });
 
-router.patch("/api/songs/:id", async (req, res) => {
+router.patch("/api/songs/:id", authMiddleware, async (req, res) => {
     try {
         const { id } = req.params;
         const updates = req.body;
@@ -270,11 +281,69 @@ router.patch("/api/songs/:id", async (req, res) => {
     }
 });
 
-router.get("/api/songs", async (req, res) => {
-    if (!req.auth) {
-        return res.status(401).json({ error: "Unauthorized" });
-    }
+// Public routes - no auth needed
+router.get("/api/songs/playlist/:playlistId", async (req, res) => {
     try {
+        const { playlistId } = req.params;
+        const playlist = await Playlist.findById(playlistId).populate('songs');
+
+        if (!playlist) {
+            return res.status(404).json({ error: "Playlist not found" });
+        }
+
+        if (playlist.visibility !== "public") {
+            return res.status(403).json({ error: "This playlist is not public" });
+        }
+
+        const songs = await Promise.all(playlist.songs.map(async (song: any) => {
+            if (song.r2Key && !song.stream_url) {
+                song.stream_url = await getPresignedUrl({
+                    key: song.r2Key,
+                    bucket: BUCKET_NAME,
+                    expiresIn: 60 * 60 * 24
+                });
+            }
+            return song;
+        }));
+
+        res.json(await aggregateSongsWithFavorites(songs));
+    } catch (error) {
+        console.error("Error fetching songs:", error);
+        res.status(500).json({ error: error });
+    }
+});
+
+// Optional auth routes - auth if available but not required
+router.get("/api/songs", optionalAuthMiddleware, async (req, res) => {
+    try {
+        const playlistId = req.header("x-playlist-id");
+        const isPublicPlaylist = req.header("x-playlist-public") === "true";
+
+        if (playlistId) {
+            const playlist = await Playlist.findById(playlistId).populate('songs');
+            if (!playlist) {
+                return res.status(404).json({ error: "Playlist not found" });
+            }
+
+            if (playlist.visibility === "public" || isPublicPlaylist) {
+                const songs = await Promise.all(playlist.songs.map(async (song: any) => {
+                    if (song.r2Key && !song.stream_url) {
+                        song.stream_url = await getPresignedUrl({
+                            key: song.r2Key,
+                            bucket: BUCKET_NAME,
+                            expiresIn: 60 * 60 * 24
+                        });
+                    }
+                    return song;
+                }));
+                return res.json(await aggregateSongsWithFavorites(songs, req.auth?._id));
+            }
+        }
+
+        if (!req.auth?._id) {
+            return res.status(401).json({ error: "Unauthorized" });
+        }
+
         const songs = await Song.find({ createdBy: req.auth._id });
         const songsWithFavorites = await aggregateSongsWithFavorites(songs, req.auth._id);
         res.json(songsWithFavorites);
@@ -284,7 +353,7 @@ router.get("/api/songs", async (req, res) => {
     }
 });
 
-router.delete("/api/songs/:id", async (req, res) => {
+router.delete("/api/songs/:id", authMiddleware, async (req, res) => {
     try {
         const song = await Song.findById(req.params.id);
 
@@ -317,7 +386,7 @@ export const extractors = [
     "soundcloud",
 ]
 
-router.get("/api/songs/:type", async (req, res) => {
+router.get("/api/songs/:type", authMiddleware, async (req, res) => {
     try {
         const { type } = req.params;
 
@@ -339,7 +408,7 @@ router.get("/api/songs/:type", async (req, res) => {
     }
 });
 
-router.get("/api/songs/downloads/recent", async (req, res) => {
+router.get("/api/songs/downloads/recent", authMiddleware, async (req, res) => {
     try {
         const songs = await Song.find({}).sort({ createdAt: -1 }).limit(5);
 
@@ -372,7 +441,8 @@ async function updateListeningTime(songId: string, time: number, userId: string)
     }
 }
 
-router.post("/api/songs/:id/listen", async (req, res) => {
+// Protected routes - require auth
+router.post("/api/songs/:id/listen", authMiddleware, async (req, res) => {
     const { id } = req.params;
     const { time } = req.body;
 
@@ -389,7 +459,7 @@ router.post("/api/songs/:id/listen", async (req, res) => {
     }
 });
 
-router.get("/api/songs/top/listened", async (req, res) => {
+router.get("/api/songs/top/listened", authMiddleware, async (req, res) => {
     try {
         const songs = await Song.find({}).sort({ listeningTime: -1 }).limit(5);
 
@@ -455,7 +525,7 @@ async function searchYouTube(query: string, maxResults: number = 10) {
     }
 }
 
-router.get("/api/youtube/search", async (req, res) => {
+router.get("/api/youtube/search", authMiddleware, async (req, res) => {
     try {
         const { q: query, limit } = req.query;
 
@@ -493,7 +563,7 @@ router.get("/api/youtube/search", async (req, res) => {
     }
 });
 
-router.get("/api/youtube/videos/:id", async (req, res) => {
+router.get("/api/youtube/videos/:id", authMiddleware, async (req, res) => {
     try {
         const { id } = req.params;
         const video = await getVideoDetails(id);

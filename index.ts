@@ -4,7 +4,7 @@ import express, { Request, Response } from "express";
 import helmet from "helmet";
 import path from 'path';
 import { connectToDB } from "./lib/database";
-import { authMiddleware, refreshTokenMiddleware } from "./lib/middleware";
+import { refreshTokenMiddleware } from "./lib/middleware";
 import authRouter from "./routes/auth";
 import playlistRouter from "./routes/playlists";
 import songRouter from "./routes/songs";
@@ -16,22 +16,33 @@ const __dirname = import.meta.dirname;
 const port = process.env.PORT || 3000;
 const app = express();
 
+app.options("*", cors());
+
+app.use(
+    cors({
+        origin: ["https://museisfun.com", "http://localhost:3000"],
+        methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+        allowedHeaders: ["Content-Type", "Authorization"],
+        credentials: true,
+        maxAge: 86400, // 24 hours
+    })
+);
+
 app.use(
     helmet({
         contentSecurityPolicy: {
             directives: {
                 ...helmet.contentSecurityPolicy.getDefaultDirectives(),
-                "img-src": ["'self'", "data:", "https:"],
+                "img-src": ["'self'", "data:", "https:", "blob:"],
+                "media-src": ["'self'", "https:", "blob:"],
+                "connect-src": ["'self'", "https:", "wss:", "blob:"],
             },
         },
+        crossOriginResourcePolicy: { policy: "cross-origin" },
+        crossOriginOpenerPolicy: { policy: "same-origin" },
     })
 );
 
-app.use(
-    cors({
-        origin: "*", // TODO: Change this to the frontend deployment URL
-    })
-);
 app.use(express.json({ limit: REQUEST_BODY_SIZE_LIMIT }));
 app.use(express.urlencoded({ extended: true, limit: REQUEST_BODY_SIZE_LIMIT }));
 
@@ -76,15 +87,83 @@ const colorfulLogger = (req: Request, res: Response, next: Function) => {
 
 app.use(colorfulLogger);
 
+app.use("/users", usersRouter);
+app.use("/auth", authRouter);
+app.use("/api", playlistRouter);
+app.use("/", songRouter);
+app.use("/refresh-token", refreshTokenMiddleware);
+app.get("/health", (_, res) => {
+    const formatBytes = (bytes: number, decimals = 2) => {
+        if (bytes === 0) return '0 Bytes';
+        const k = 1024;
+        const dm = decimals < 0 ? 0 : decimals;
+        const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
+    };
 
-app.use("/v2/users", usersRouter);
-app.use("/v2/auth", authRouter);
-app.use("/v2/api", playlistRouter);
-app.use("/v2", authMiddleware, songRouter);
-app.use("/v2/refresh-token", refreshTokenMiddleware);
+    const formatCpuUsage = (cpuUsage: NodeJS.CpuUsage) => {
+        const userCpuPercentage = (cpuUsage.user / 10000).toFixed(2) + '%';
+        const systemCpuPercentage = (cpuUsage.system / 10000).toFixed(2) + '%';
+        return { user: userCpuPercentage, system: systemCpuPercentage };
+    };
 
-app.get("/v2/health", (_, res) => {
-    res.status(200).send("OK");
+    const healthCheck = {
+        status: "OK",
+        uptime: process.uptime(),
+        timestamp: new Date(),
+        memoryUsage: {
+            rss: formatBytes(process.memoryUsage().rss),
+            heapTotal: formatBytes(process.memoryUsage().heapTotal),
+            heapUsed: formatBytes(process.memoryUsage().heapUsed),
+            external: formatBytes(process.memoryUsage().external),
+        },
+        cpuUsage: formatCpuUsage(process.cpuUsage()),
+    };
+
+    const htmlResponse = `
+        <!DOCTYPE html>
+        <html lang="en">
+        <head>
+            <meta charset="UTF-8">
+            <title>Health Check</title>
+            <style>
+                body { font-family: 'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif; margin: 20px; background-color: #f2f2f2; color: #000; }
+                h1 { color: #4CAF50; }
+                table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+                th, td { padding: 10px; border: 2px solid #000; text-align: left; }
+                th { background: #e0e0e0; }
+            </style>
+        </head>
+        <body>
+            <h1>Health Check</h1>
+            <table>
+                <tr>
+                    <th>Status</th>
+                    <td>${healthCheck.status}</td>
+                </tr>
+                <tr>
+                    <th>Uptime (seconds)</th>
+                    <td>${healthCheck.uptime.toFixed(2)}</td>
+                </tr>
+                <tr>
+                    <th>Timestamp</th>
+                    <td>${healthCheck.timestamp}</td>
+                </tr>
+                <tr>
+                    <th>Memory Usage</th>
+                    <td>${JSON.stringify(healthCheck.memoryUsage)}</td>
+                </tr>
+                <tr>
+                    <th>CPU Usage</th>
+                    <td>${JSON.stringify(healthCheck.cpuUsage)}</td>
+                </tr>
+            </table>
+        </body>
+        </html>
+    `;
+
+    res.status(200).send(htmlResponse);
 });
 
 app.listen(port, async () => {

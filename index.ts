@@ -16,6 +16,21 @@ const __dirname = import.meta.dirname;
 const port = process.env.PORT || 3000;
 const app = express();
 
+const runtimeEnvVars = {
+    PORT: process.env.PORT,
+}
+
+function validateRuntimeEnvVars() {
+    const missingVars = Object.entries(runtimeEnvVars).filter(([key, value]) => !value);
+    if (missingVars.length > 0) {
+        console.error("Missing required environment variables:", missingVars);
+        process.exit(1);
+    } else {
+        console.log("All required environment variables are set, starting server...");
+    }
+}
+
+validateRuntimeEnvVars();
 app.options("*", cors());
 
 app.use(

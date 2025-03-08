@@ -109,12 +109,12 @@ export function PageLayout({
             {/* Desktop Header */}
             <header className="hidden md:flex h-16 items-center px-4">
                 <div className="flex items-center gap-2 w-full">
-                    <Tooltip delayDuration={0}>
+                    <Tooltip delayDuration={100}>
                         <TooltipTrigger asChild>
                             <Button
-                                variant="ghost"
+                                variant="plain"
                                 size="icon"
-                                className="h-7 w-7 hover:text-primary"
+                                className="h-7 w-7 hover:text-primary p-2"
                                 onClick={() => sidebar?.setIsOpen()}
                             >
                                 ⌘ U

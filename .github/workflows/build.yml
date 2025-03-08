@@ -1,4 +1,4 @@
-name: Build Vite App
+name: build museisfun.com + muse-shared
 
 on:
   push:
@@ -22,16 +22,16 @@ jobs:
         with:
           bun-version: latest
 
-      - name: Install dependencies (app)
-        working-directory: ./app
-        run: bun install
-
       - name: Create symlink (shared)
         working-directory: ./shared
         run: bun link
 
       - name: Install dependencies (shared)
         working-directory: ./shared
+        run: bun install
+
+      - name: Install dependencies (app)
+        working-directory: ./app
         run: bun install
 
       - name: Build shared package

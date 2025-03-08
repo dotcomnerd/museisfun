@@ -83,3 +83,35 @@ DEFAULT: 'hsl(var(--sidebar-background))',
 ::-webkit-scrollbar {
   display: none;
 }
+
+@layer utilities {
+  .aspect-ratio-container img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .thumbnail-container {
+    overflow: hidden;
+    border-radius: var(--radius) 0 0 var(--radius);
+  }
+
+  .video-card {
+    transition: box-shadow 0.2s ease;
+  }
+
+  .video-card:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  }
+
+  .add-to-library-btn {
+    @apply flex items-center justify-center gap-2 w-full rounded-md bg-primary text-primary-foreground font-medium;
+    @apply hover:bg-primary/90 transition-colors duration-200;
+    @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2;
+    height: 36px;
+  }
+
+  .add-to-library-btn svg {
+    @apply h-4 w-4;
+  }
+}

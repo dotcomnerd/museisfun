@@ -240,8 +240,8 @@ export function YouTubeSearch() {
         <div className="relative group">
           <div
             className={cn(
-              "absolute -inset-0.5 bg-gradient-to-r from-primary/50 to-primary/30 rounded-full blur opacity-60 transition duration-1000",
-              (showInitialHint || query) ? "opacity-100" : "group-hover:opacity-100 group-hover:duration-200"
+              "absolute -inset-0.5 bg-gradient-to-r from-primary/50 to-primary/30 rounded-full blur opacity-20 transition duration-2000",
+              (showInitialHint || query) ? "opacity-40" : "group-hover:opacity-40 group-hover:duration-2000"
             )}
           ></div>
           <Input
@@ -252,8 +252,8 @@ export function YouTubeSearch() {
             onChange={(e) => setQuery(e.target.value)}
             onFocus={handleFocus}
             className={cn(
-              "h-14 md:h-16 pl-5 pr-12 text-lg rounded-full shadow-lg bg-background/80 backdrop-blur-md border-border/50 relative",
-              (showInitialHint || query) ? "focus-visible:ring-2 focus-visible:ring-primary" : "focus-visible:ring-2 focus-visible:ring-primary"
+              "h-14 md:h-16 pl-5 pr-12 text-lg rounded-full bg-background/80 backdrop-blur-md border-border/50 relative ring-primary/20 ring-1",
+              "focus-visible:ring-primary/100 focus-visible:ring-1"
             )}
           />
         </div>

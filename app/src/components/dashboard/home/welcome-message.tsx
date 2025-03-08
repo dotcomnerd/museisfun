@@ -29,7 +29,7 @@ export function WelcomeMessage({ username }: WelcomeMessageProps) {
       }}
     >
       <motion.h1
-        className="text-4xl md:text-6xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-primary via-primary/90 to-primary/70"
+        className="text-4xl md:text-6xl font-normal tracking-normal pb-3 bg-clip-text text-transparent bg-gradient-to-r from-violet-500 to-purple-600"
         initial={{ opacity: 0, scale: 0.9 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{
@@ -45,7 +45,7 @@ export function WelcomeMessage({ username }: WelcomeMessageProps) {
         animate={{ opacity: 1 }}
         transition={{ duration: 0.5, delay: 0.3 }}
       >
-        Here's what's happening with your music
+        Welcome to Muse, the best way to own your music
       </motion.p>
     </motion.div>
   );

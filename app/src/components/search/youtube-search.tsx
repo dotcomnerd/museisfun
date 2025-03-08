@@ -49,6 +49,7 @@ export function YouTubeSearch() {
         const { data } = await Fetcher.getInstance().get<{ count: number }>("/api/songs/count");
         return data.count;
       } catch (error) {
+        console.error("Failed to get song count:", error);
         return 0;
       }
     },

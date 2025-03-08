@@ -9,7 +9,7 @@ import Fetcher from '@/lib/fetcher';
 import { Song } from '@/lib/types';
 import { DashboardHeader } from '@/components/dashboard/dashboard-header';
 import { WelcomeMessage } from '@/components/dashboard/home/welcome-message';
-import { YouTubeSearch } from '@/components/search/YouTubeSearch';
+import { YouTubeSearch } from '@/components/search/youtube-search';
 import { StatsCards } from '@/components/dashboard/home/stats-cards';
 import { RecentDownloads } from '@/components/dashboard/home/recent-downloads';
 import { FavoriteTracks } from '@/components/dashboard/home/favorite-tracks';

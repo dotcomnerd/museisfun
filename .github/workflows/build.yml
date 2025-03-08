@@ -22,8 +22,20 @@ jobs:
         with:
           bun-version: latest
 
-      - name: Install dependencies
+      - name: Install dependencies (app)
         working-directory: ./app
+        run: bun install
+
+      - name: Create symlink (shared)
+        working-directory: ./shared
+        run: bun link
+
+      - name: Link shared package
+        working-directory: ./app
+        run: bun link ../shared
+
+      - name: Install dependencies (shared)
+        working-directory: ./shared
         run: bun install
 
       - name: Build shared package

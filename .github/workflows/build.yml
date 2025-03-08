@@ -30,10 +30,6 @@ jobs:
         working-directory: ./shared
         run: bun link
 
-      - name: Link shared package
-        working-directory: ./app
-        run: bun link ../shared
-
       - name: Install dependencies (shared)
         working-directory: ./shared
         run: bun install

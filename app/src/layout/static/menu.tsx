@@ -1,4 +1,3 @@
-import { CommandSearch } from "@/components/command-search";
 import { Button } from "@/components/ui/button";
 import { CollapseMenuButton } from "@/components/ui/collapse-menu-btn";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -8,12 +7,8 @@ import {
     TooltipProvider,
     TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { useSidebarToggle } from "@/hooks/use-sidebar-toggle";
-import { useStore } from "@/hooks/use-store";
 import { cn } from "@/lib/utils";
-import { useAudioStore } from "@/stores/audioStore";
 import { Ellipsis, LogOut, LucideIcon } from "lucide-react";
-import { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router";
 import { toast } from "sonner";
 import { getMenuList } from "./menu-list";
@@ -26,9 +21,6 @@ export function Menu({ isOpen }: MenuProps) {
     const pathname = useLocation().pathname;
     const menuList = getMenuList(pathname);
     const navigate = useNavigate();
-    const sidebar = useStore(useSidebarToggle, (state) => state);
-    const { currentSong } = useAudioStore();
-    const [searchOpen, setSearchOpen] = useState(false);
     const handleLogout = () => {
         localStorage.removeItem("token");
         // settings.resetSettings();
@@ -38,7 +30,6 @@ export function Menu({ isOpen }: MenuProps) {
 
     return (
         <>
-            <CommandSearch trigger={null} open={searchOpen} onOpenChange={setSearchOpen} />
             <ScrollArea className="[&>div>div[style]]:!block">
                 <nav className="h-full w-full">
                     <ul className="flex min-h-[calc(100vh-48px-36px-16px-32px)] flex-col items-start space-y-1 px-2 lg:min-h-[calc(100vh-32px-40px-32px)]">
@@ -75,7 +66,6 @@ export function Menu({ isOpen }: MenuProps) {
                                                                 variant={active ? "link" : "unstyled"}
                                                                 title={label}
                                                                 className="mb-1 h-10 w-full justify-start"
-                                                                onClick={href === "#" ? () => setSearchOpen(true) : undefined}
                                                                 asChild={href !== "#"}
                                                             >
                                                                 {href === "#" ? (

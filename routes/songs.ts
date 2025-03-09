@@ -386,6 +386,18 @@ export const extractors = [
     "soundcloud",
 ]
 
+router.get("/api/songs/aggregate/count", optionalAuthMiddleware, async (req, res) => {
+    try {
+        const count = await Song.countDocuments({
+            ...(req.auth?._id ? { createdBy: req.auth._id } : {})
+        });
+        res.json({ count });
+    } catch (error) {
+        console.error("Error counting songs:", error);
+        res.status(500).json({ error: "Failed to count songs" });
+    }
+});
+
 router.get("/api/songs/:type", authMiddleware, async (req, res) => {
     try {
         const { type } = req.params;

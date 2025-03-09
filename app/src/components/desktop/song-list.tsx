@@ -2,6 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { TableCell, TableRow } from "@/components/ui/table";
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useUser } from "@/hooks/use-user";
 import Fetcher from "@/lib/fetcher";
@@ -29,6 +30,8 @@ export function DesktopSongsList({ songs, onPlay, onDelete, playlistId }: {
   const [showPlaylistDrawer, setShowPlaylistDrawer] = useState(false);
   const [selectedSongId, setSelectedSongId] = useState<string | null>(null);
   const { data: currentUser } = useUser();
+  const [songToDelete, setSongToDelete] = useState<string | null>(null);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
   const canEditSong = (song: Song) => {
     return currentUser?._id === song.createdBy;
@@ -175,9 +178,19 @@ export function DesktopSongsList({ songs, onPlay, onDelete, playlistId }: {
     e.stopPropagation();
     const song = songs.find(s => s._id === songId);
     if (song && canEditSong(song)) {
-      onDelete(songId);
+      setSongToDelete(songId);
+      setShowDeleteDialog(true);
     }
-  }, [onDelete, songs, canEditSong]);
+  }, [songs, canEditSong]);
+
+  const confirmDelete = useCallback(() => {
+    if (songToDelete) {
+      onDelete(songToDelete);
+      setSongToDelete(null);
+      setShowDeleteDialog(false);
+      toast.success('Song deleted successfully');
+    }
+  }, [songToDelete, onDelete]);
 
   const handleEditClick = useCallback((songId: string, field: string, e: React.MouseEvent) => {
     e.stopPropagation();
@@ -428,6 +441,26 @@ export function DesktopSongsList({ songs, onPlay, onDelete, playlistId }: {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <AlertDialogContent className="bg-black/90 backdrop-blur-lg border-purple-500/50 rounded-lg">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Song</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete this song? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmDelete}
+              className="bg-destructive hover:bg-destructive/90"
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 }

@@ -11,7 +11,6 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import Fetcher from "@/lib/fetcher";
 import { extractYouTubeId, fetchYouTubeMetadata } from "@/lib/utils";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -22,8 +21,6 @@ import { toast } from "sonner";
 import MusicPlayer, { VideoMetadata } from './preview-player';
 import { addSongSchema, AddSongInput } from '@/lib/types';
 import { addSong } from '@/api/requests';
-
-const api = Fetcher.getInstance();
 
 export function AddSongDialog({ children }: { children: React.ReactNode }) {
   const [isOpen, setIsOpen] = useState(false);

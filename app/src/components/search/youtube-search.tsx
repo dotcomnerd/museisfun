@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { useDebounce } from '@/hooks/use-debounce';
 import Fetcher from '@/lib/fetcher';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Search, ThumbsUp, MessageCircle, ChevronLeft, ChevronRight, DownloadIcon, Music, YoutubeIcon, Play, Pause, Volume2 } from 'lucide-react';
+import { Search, ThumbsUp, MessageCircle, ChevronLeft, ChevronRight, DownloadIcon, Music, YoutubeIcon, Play, Pause, Volume2, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -12,9 +12,11 @@ import { Card } from '@/components/ui/card';
 import { LoadingSpinner } from '@/components/ui/video-components';
 import { PiDownloadSimple } from 'react-icons/pi';
 import { cn, extractYouTubeId, fetchYouTubeMetadata } from '@/lib/utils';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import MusicPlayer, { VideoMetadata } from '@/features/songs/preview-player';
 import { Slider } from '@/components/ui/slider';
+import { addSong } from '@/api/requests';
+import { GetRecentDownloadsResponse, Song } from 'muse-shared';
 
 export interface YouTubeVideo {
   title: string;
@@ -49,7 +51,7 @@ export function YouTubeSearch() {
   const [volume, setVolume] = useState(70);
   const [showVolumeControl, setShowVolumeControl] = useState(false);
   const playerRef = useRef<HTMLDivElement>(null);
-
+  const queryClient = useQueryClient();
   // Check if user has any songs to determine if they're new
   const { data: songCount } = useQuery<number>({
     queryKey: ["song-count"],
@@ -209,26 +211,59 @@ export function YouTubeSearch() {
   }, [debouncedQuery, searchYouTube]);
 
   const handleSelect = useCallback(async (video: YouTubeVideo) => {
+    let toastId: string | number;
     try {
-      if (import.meta.env.DEV) {
-        setQuery("");
-        setShowResults(false);
-        toast.success("Added to library", {
-          description: `"${video.title}" has been added to your library`,
-          duration: 3000,
-        });
-      } else {
-        const api = Fetcher.getInstance();
-        api.post("/api/songs", {
-          mediaUrl: video.watchUrl,
-        });
-        setQuery("");
-        setShowResults(false);
-        toast.success("Added to library", {
-          description: `"${video.title}" has been added to your library`,
-          duration: 3000,
-        });
-      }
+      setQuery("");
+      setShowResults(false);
+      toastId = toast.custom(() => (
+        <div className="fixed right-4 top-4 bg-background/80 backdrop-blur-sm border border-border rounded-lg shadow-lg p-3 z-50 flex items-center gap-3 animate-in slide-in-from-left w-80">
+          <div className="bg-primary/10 p-2 rounded-full">
+            <Loader2 className="h-4 w-4 animate-spin text-primary" />
+          </div>
+          <div>
+            <p className="text-sm font-medium">Adding to library...</p>
+          </div>
+        </div>
+      ), {
+        duration: Infinity,
+      });
+
+      const optimisticSong: Song = {
+        _id: `temp-${Date.now()}`,
+        title: video.title,
+        stream_url: video.watchUrl,
+        mediaUrl: video.watchUrl,
+        thumbnail: video.thumbnail,
+        uploader: video.channelTitle,
+        duration_string: video.duration,
+        duration: 0,
+        r2Key: "",
+        createdBy: "",
+        upload_date: "",
+        view_count: 0,
+        tags: [],
+        original_url: video.watchUrl,
+        extractor: "youtube",
+        ytdlp_id: "",
+        createdAt: new Date(),
+        updatedAt: new Date()
+      };
+
+      queryClient.setQueryData(['songs'], (oldData: Song[] = []) => [optimisticSong, ...oldData]);
+      queryClient.setQueryData(['recently-downloaded'], (oldData: GetRecentDownloadsResponse = []) => [optimisticSong, ...oldData]);
+
+      await addSong({ url: video.watchUrl });
+      queryClient.invalidateQueries({ queryKey: ['songs'] });
+      queryClient.invalidateQueries({ queryKey: ['recently-downloaded'] });
+      queryClient.invalidateQueries({ queryKey: ['muse-stats'] });
+
+      toast.dismiss(toastId);
+
+      toast.success("Added to library", {
+        description: `"${video.title}" has been added to your library`,
+        duration: 3000,
+      });
+
     } catch (error) {
       console.error("Failed to process video:", error);
       toast.error("Failed to add to library", {
@@ -237,7 +272,6 @@ export function YouTubeSearch() {
     }
   }, []);
 
-  // Pagination logic
   const totalPages = Math.ceil(results.length / resultsPerPage);
   const paginatedResults = results.slice(
     (currentPage - 1) * resultsPerPage,

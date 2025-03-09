@@ -1,4 +1,3 @@
-import { useUser } from '@/hooks/use-user';
 import Fetcher from "@/lib/fetcher";
 import { useQuery } from "@tanstack/react-query";
 import { type Playlist, type Song } from "muse-shared";
@@ -67,12 +66,12 @@ export const useAudioStore = create<AudioState>()(
     persist(
         (set, get) => {
             let audioElement: HTMLAudioElement | null = null;
-            let wakeLock: any = null;
+            let wakeLock: WakeLockSentinel | null = null;
 
             const requestWakeLock = async () => {
                 try {
                     if ('wakeLock' in navigator) {
-                        wakeLock = await (navigator as any).wakeLock.request('screen');
+                        wakeLock = await navigator.wakeLock.request('screen');
                     }
                 } catch (err) {
                     console.error('Wake Lock error:', err);
@@ -194,15 +193,15 @@ export const useAudioStore = create<AudioState>()(
                 audioElement = new Audio(song.stream_url!);
                 audioElement.volume = get().volume;
                 audioElement.preload = "auto";
-                (audioElement as any).playsInline = true;
+                (audioElement as HTMLAudioElement & { playsInline?: boolean }).playsInline = true;
 
                 audioElement.addEventListener('play', () => {
                     if (!audioElement) return;
                     try {
-                        (audioElement as any).mozAudioChannelType = 'content';
-                        (audioElement as any).preservesPitch = false;
+                        (audioElement as HTMLAudioElement & { mozAudioChannelType?: string }).mozAudioChannelType = 'content';
+                        (audioElement as HTMLAudioElement & { preservesPitch?: boolean }).preservesPitch = false;
                         audioElement.crossOrigin = "anonymous";
-                    } catch (e) {
+                    } catch {
                         console.warn('Audio channel type not supported');
                     }
                 });
@@ -334,7 +333,7 @@ export const useAudioStore = create<AudioState>()(
                                 if (audioElement) {
                                     await audioElement.play().catch(() => set({ isPlaying: false }));
                                     set({ isPlaying: true });
-                                    startListeningTimer();
+                                    startListeningTimer()
                                 }
                             });
                         })();
@@ -570,10 +569,7 @@ export const useAudioStore = create<AudioState>()(
                     }));
                 },
 
-                async updateListeningTime(songId, time) {
-                    // Only do this if the user is logged in, if so, skip
-                    const { data: currentUser } = useUser();
-                    if (!currentUser) return;
+                async updateListeningTime(songId: string, time: number) {
                     try {
                         await Fetcher.getInstance().post(`/api/songs/${songId}/listen`, { time });
                     } catch (error) {

@@ -26,7 +26,17 @@ createRoot(document.getElementById("root")!).render(
                     </TooltipProvider>
                 </QueryClientProvider>
             </ThemeProvider>
-            <Toaster richColors closeButton position="bottom-center" />
+            <Toaster richColors closeButton toastOptions={{
+                classNames: {
+                    loading: 'bg-background border border-primary/50 text-primary rounded-lg text-base',
+                    loader: 'scale-150',
+                    success: 'bg-background border border-primary/50 text-primary rounded-lg text-base',
+                    error: 'bg-background border border-destructive/50 text-destructive rounded-lg text-base',
+                    closeButton: 'text-foreground',
+                    cancelButton: 'text-foreground',
+                    default: 'bg-background border border-border/50 text-foreground rounded-lg text-base',
+                }
+            }} />
         </BrowserRouter>
     </HelmetProvider>
 );

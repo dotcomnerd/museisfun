@@ -57,7 +57,7 @@ export function StatsCards({ museStats, isLoading, isError }: StatsCardsProps) {
     },
     {
       label: 'Storage Used',
-      value: museStats?.storageUsed,
+      value: museStats?.storageUsed ? parseFloat(museStats.storageUsed.toString()) : 0,
       icon: <HardDrive className="w-6 h-6 text-primary/80" />,
       unit: "MB",
       colorClass: "before:from-green-500/20 before:to-green-600/10 hover:before:from-green-500/30 hover:before:to-green-600/20",
@@ -67,7 +67,7 @@ export function StatsCards({ museStats, isLoading, isError }: StatsCardsProps) {
     },
     {
       label: 'Listening Time',
-      value: museStats?.totalListeningTime,
+      value: museStats?.totalListeningTime ? parseFloat(museStats.totalListeningTime.toString()) : 0,
       icon: <Clock className="w-6 h-6 text-primary/80" />,
       unit: "h",
       colorClass: "before:from-amber-500/20 before:to-amber-600/10 hover:before:from-amber-500/30 hover:before:to-amber-600/20",

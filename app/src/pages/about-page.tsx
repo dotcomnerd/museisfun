@@ -153,7 +153,7 @@ export function AboutPage() {
                         </div>
                     </div>
 
-                    <div className="space-y-12 max-w-screen-xl mx-auto mx-6 md:mx-4">
+                    <div className="space-y-12 max-w-screen-xl mx-auto md:mx-4">
                         <section>
                             <p className="text-lg leading-relaxed -mt-4">
                                 If you're as old as me, you probably remember the iPod Nano. The days when music felt personal. When you could craft the perfect playlist without hitting skip limits or dealing with forced shuffles.

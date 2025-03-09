@@ -55,7 +55,7 @@ export function PageLayout({
     return (
         <div
             className={cn(
-                "flex flex-col h-full bg-cover bg-center bg-fixed bg-no-repeat"
+                "flex flex-col min-h-screen h-full bg-cover bg-center bg-fixed bg-no-repeat"
             )}
             style={{
                 backgroundImage: `linear-gradient(rgba(0, 0, 0, ${resolvedTheme === "light" ? "0.3" : "0.7"}), rgba(0, 0, 0, ${resolvedTheme === "light" ? "0.3" : "0.7"})), url('${BG_URL}')`

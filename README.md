@@ -1,13 +1,15 @@
 ![API Docs Preview](/public/og.png)
 
-# [Muse](https://api.museisfun.com)
+# [api.museisfun.com](https://api.museisfun.com)
 
 > [!NOTE]
 > This is the backend entry point for the Muse application stack. For the frontend entry point, [click here](/app/README.md).
 
-Muse is a web application that allows users to upload songs and listen to them.
+Muse is a web service that allows users to upload songs and listen to them in the browser.
 
-Unlike other music streaming services, Muse allows users to download their own music through YouTube and Soundcloud links, create playlists, and share them with others.
+Powered by [yt-dlp](https://github.com/yt-dlp/yt-dlp) and [SpotDL](https://github.com/spotDL/spotify-downloader), Muse is able to download music from YouTube, Soundcloud, and Spotify.
+
+There's also a [frontend](https://museisfun.com) that allows you to manage your music library. (PWA coming soon)
 
 ## Getting Started
 

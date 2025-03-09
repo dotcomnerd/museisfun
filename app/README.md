@@ -1,6 +1,6 @@
 ![Muse Frontend](/public/website.png)
 
-# [Muse Frontend](https://museisfun.com)
+# [museisfun.com](https://museisfun.com)
 
 > [!NOTE]
 > This is the frontend entry point for the Muse application stack. For the backend entry point, [click here](../README.md).

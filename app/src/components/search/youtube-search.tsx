@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { useDebounce } from '@/hooks/use-debounce';
 import Fetcher from '@/lib/fetcher';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Search, ThumbsUp, MessageCircle, ChevronLeft, ChevronRight, DownloadIcon, Music } from 'lucide-react';
+import { Search, ThumbsUp, MessageCircle, ChevronLeft, ChevronRight, DownloadIcon, Music, YoutubeIcon, Play, Pause, Volume2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -11,8 +11,10 @@ import { AspectRatio } from '@/components/ui/aspect-ratio';
 import { Card } from '@/components/ui/card';
 import { LoadingSpinner } from '@/components/ui/video-components';
 import { PiDownloadSimple } from 'react-icons/pi';
-import { cn } from '@/lib/utils';
+import { cn, extractYouTubeId, fetchYouTubeMetadata } from '@/lib/utils';
 import { useQuery } from '@tanstack/react-query';
+import MusicPlayer, { VideoMetadata } from '@/features/songs/preview-player';
+import { Slider } from '@/components/ui/slider';
 
 export interface YouTubeVideo {
   title: string;
@@ -40,13 +42,20 @@ export function YouTubeSearch() {
   const resultsPerPage = 3;
   const searchRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const [isYouTubeUrl, setIsYouTubeUrl] = useState(false);
+  const [detectedVideoId, setDetectedVideoId] = useState<string | null>(null);
+  const [, setPreviewMetadata] = useState<VideoMetadata>({});
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [volume, setVolume] = useState(70);
+  const [showVolumeControl, setShowVolumeControl] = useState(false);
+  const playerRef = useRef<HTMLDivElement>(null);
 
   // Check if user has any songs to determine if they're new
   const { data: songCount } = useQuery<number>({
     queryKey: ["song-count"],
     queryFn: async () => {
       try {
-        const { data } = await Fetcher.getInstance().get<{ count: number }>("/api/songs/count");
+        const { data } = await Fetcher.getInstance().get<{ count: number }>("/api/songs/aggregate/count");
         return data.count;
       } catch (error) {
         console.error("Failed to get song count:", error);
@@ -66,13 +75,88 @@ export function YouTubeSearch() {
     }
   }, [songCount]);
 
+  // Check if input is a YouTube URL
+  const checkForYouTubeUrl = useCallback((input: string) => {
+    const videoId = extractYouTubeId(input);
+    setDetectedVideoId(videoId);
+    setIsYouTubeUrl(!!videoId);
+    return videoId;
+  }, []);
+
+  const handleMetadataChange = useCallback((metadata: VideoMetadata) => {
+    if (Object.keys(metadata).length > 0) {
+      setPreviewMetadata(prev => ({...prev, ...metadata}));
+    }
+  }, []);
+
+  const togglePlayback = useCallback(() => {
+    const newPlayState = !isPlaying;
+    setIsPlaying(newPlayState);
+
+    if (playerRef.current) {
+      playerRef.current.setAttribute('data-play', newPlayState.toString());
+      playerRef.current.setAttribute('data-volume', volume.toString());
+    }
+  }, [isPlaying, volume]);
+
+  const handleVolumeChange = useCallback((value: number[]) => {
+    const newVolume = value[0];
+    setVolume(newVolume);
+
+    if (playerRef.current) {
+      playerRef.current.setAttribute('data-volume', newVolume.toString());
+    }
+  }, []);
+
   const searchYouTube = useCallback(async (searchQuery: string) => {
     if (!searchQuery) {
       setResults([]);
       setShowResults(false);
+      setIsYouTubeUrl(false);
+      setDetectedVideoId(null);
       return;
     }
 
+    // Check if the query is a YouTube URL
+    const videoId = checkForYouTubeUrl(searchQuery);
+
+    if (videoId) {
+      try {
+        setIsLoading(true);
+        // Fetch metadata for the specific video
+        let metadata: VideoMetadata = {};
+
+        try {
+          metadata = await fetchYouTubeMetadata(videoId);
+        } catch (error) {
+          console.error("Failed to fetch YouTube metadata:", error);
+        }
+
+        const videoResult: YouTubeVideo = {
+          title: metadata.title || "YouTube Video",
+          thumbnail: metadata.thumbnail || `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`,
+          watchUrl: `https://youtube.com/watch?v=${videoId}`,
+          channelTitle: metadata.author || "YouTube Channel",
+          publishedAt: new Date().toISOString(),
+          viewCount: metadata.viewCount || "0",
+          duration: metadata.duration?.toString() || "0:00",
+          likeCount: "0",
+          commentCount: "0",
+          description: "Video from YouTube",
+          channelThumbnail: undefined
+        };
+
+        setResults([videoResult]);
+        setShowResults(true);
+        setCurrentPage(1);
+        setIsLoading(false);
+        return;
+      } catch (error) {
+        console.error("Failed to fetch YouTube video metadata:", error);
+      }
+    }
+
+    // Continue with regular search if not a URL or if metadata fetch failed
     try {
       setIsLoading(true);
       if (import.meta.env.DEV) {
@@ -118,7 +202,7 @@ export function YouTubeSearch() {
       setResults([]);
       setIsLoading(false);
     }
-  }, []);
+  }, [checkForYouTubeUrl]);
 
   useEffect(() => {
     searchYouTube(debouncedQuery);
@@ -224,6 +308,122 @@ export function YouTubeSearch() {
     }
   };
 
+  // When URL is detected, show a different UI
+  const renderUrlTypeIndicator = () => {
+    if (!query) return null;
+
+    if (isYouTubeUrl && detectedVideoId) {
+      return (
+        <div className="flex items-center gap-2 mt-2 ml-3 text-xs absolute">
+          <YoutubeIcon className="h-3 w-3 text-red-500" />
+          <span className="text-muted-foreground">YouTube URL Detected</span>
+        </div>
+      );
+    }
+
+    return null;
+  };
+
+  // Render preview player UI for detected YouTube URLs
+  const renderPreviewPlayer = () => {
+    if (!isYouTubeUrl || !detectedVideoId || results.length === 0) return null;
+
+    const video = results[0];
+
+    return (
+      <motion.div
+        initial={{ opacity: 0, y: -10 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: -10 }}
+        transition={{
+          type: "spring",
+          stiffness: 400,
+          damping: 30
+        }}
+        className="absolute mt-3 left-0 right-0 bg-background/90 border border-border/50 rounded-xl shadow-xl overflow-hidden backdrop-blur-md"
+      >
+        <div className="p-4 flex gap-4">
+          <div className="relative w-[180px] h-[101px] flex-shrink-0">
+            <img
+              src={video.thumbnail}
+              alt={video.title}
+              className="w-full h-full object-cover rounded-md"
+            />
+            <div
+              className="absolute inset-0 flex items-center justify-center bg-black/40 hover:bg-black/60 transition-colors cursor-pointer rounded-md"
+              onClick={togglePlayback}
+            >
+              {isPlaying ? (
+                <Pause className="h-8 w-8 text-white" />
+              ) : (
+                <Play className="h-8 w-8 text-white" />
+              )}
+            </div>
+            {video.duration !== "0:00" && (
+              <div className="absolute bottom-1 right-1 text-xs bg-black/70 text-white px-1 rounded">
+                {video.duration}
+              </div>
+            )}
+          </div>
+
+          <div className="flex-1 min-w-0 flex flex-col">
+            <h3 className="font-medium line-clamp-1 text-sm">{video.title}</h3>
+            <p className="text-xs text-muted-foreground mt-1">{video.channelTitle}</p>
+
+            <div className="mt-auto flex items-center gap-4">
+              <div className="flex items-center">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-8 px-2 hover:bg-white/10 flex items-center gap-2"
+                  onClick={() => handleSelect(video)}
+                >
+                  <DownloadIcon className="h-4 w-4" />
+                  <span className="text-xs">Add to Library</span>
+                </Button>
+
+                <div className="relative ml-1">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 hover:bg-white/10"
+                    onClick={() => setShowVolumeControl(!showVolumeControl)}
+                  >
+                    <Volume2 className="h-4 w-4" />
+                  </Button>
+
+                  {showVolumeControl && (
+                    <div className="absolute -left-10 -bottom-14 p-3 bg-background border border-border/50 rounded-lg shadow-xl z-50" onMouseLeave={() => setShowVolumeControl(false)}>
+                      <Slider
+                        value={[volume]}
+                        max={100}
+                        step={1}
+                        orientation="horizontal"
+                        className="w-24"
+                        onValueChange={handleVolumeChange}
+                      />
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Hidden player container for YouTube preview */}
+        <div
+          id="hiddenPlayer"
+          ref={playerRef}
+          className="hidden"
+          data-play={isPlaying ? 'true' : 'false'}
+          data-volume={volume}
+        >
+          <MusicPlayer initialUrl={video.watchUrl} onMetadataChange={handleMetadataChange} isHiddenPlayer={true} />
+        </div>
+      </motion.div>
+    );
+  };
+
   return (
     <div ref={searchRef} className="relative z-50 max-w-3xl mx-auto mb-12">
       <motion.div
@@ -247,21 +447,25 @@ export function YouTubeSearch() {
           <Input
             ref={inputRef}
             type="text"
-            placeholder="Search for music..."
+            placeholder={isYouTubeUrl ? "YouTube URL detected..." : "Search for music..."}
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             onFocus={handleFocus}
             className={cn(
               "h-14 md:h-16 pl-5 pr-12 text-lg rounded-full bg-background/80 backdrop-blur-md border-border/50 relative ring-primary/20 ring-1",
-              "focus-visible:ring-primary/100 focus-visible:ring-1"
+              "focus-visible:ring-primary/100 focus-visible:ring-1",
+              isYouTubeUrl ? "border-red-500/30 ring-red-500/20" : ""
             )}
           />
         </div>
         <Search className="absolute right-5 top-1/2 transform -translate-y-1/2 h-6 w-6 text-muted-foreground" />
+        {renderUrlTypeIndicator()}
       </motion.div>
 
       <AnimatePresence>
-        {showInitialHint && !showResults && !query && (
+        {isYouTubeUrl && detectedVideoId ? renderPreviewPlayer() : null}
+
+        {showInitialHint && !showResults && !query && !isYouTubeUrl && (
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
@@ -306,7 +510,7 @@ export function YouTubeSearch() {
           </motion.div>
         )}
 
-        {showResults && (
+        {showResults && !isYouTubeUrl && (
           <motion.div
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}

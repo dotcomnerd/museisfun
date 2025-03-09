@@ -2,7 +2,6 @@ import Playlist from "@/models/playlist";
 import Song from "@/models/song";
 import User from "@/models/user";
 import mongoose from "mongoose";
-
 import { connectToUri } from "@/lib/database";
 import { config } from "dotenv";
 

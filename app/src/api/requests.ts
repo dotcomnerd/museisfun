@@ -1,10 +1,10 @@
 import { UserProfile } from '@/features/profile/nested';
 import Fetcher from '@/lib/fetcher';
-import { PutProfileResponse, Song, UpdateUserInput, UserWithId } from '@/lib/types';
+import { AddSongInput, PutProfileResponse, Song, UpdateUserInput, UserWithId } from '@/lib/types';
 import { AxiosError } from 'axios';
 import { toast } from 'sonner';
 
-export const handleError = (err: any) => {
+export const handleError = (err: unknown) => {
     if (err instanceof AxiosError) {
         toast.error(err.response?.data?.error || "Failed to fetch user details");
         if (err.response?.status === 401) {
@@ -26,6 +26,13 @@ export const getSongs = async () => {
 
 export const deleteSong = async (id: string) => {
     await api.delete(`/api/songs/${id}`);
+};
+
+export const addSong = async (data: AddSongInput) => {
+    const response = await api.post("/api/songs", {
+        mediaUrl: data.url,
+    });
+    return response.data;
 };
 
 export const getUserProfile = async (username: string) => {

@@ -19,28 +19,11 @@ import { Loader2, Music, YoutubeIcon, CloudIcon, Users, Play, Pause } from "luci
 import { useState, useEffect, useRef } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import { toast } from "sonner";
-import { z } from "zod";
 import MusicPlayer, { VideoMetadata } from './preview-player';
+import { addSongSchema, AddSongInput } from '@/lib/types';
+import { addSong } from '@/api/requests';
 
 const api = Fetcher.getInstance();
-
-const addSongSchema = z.object({
-  url: z
-    .string()
-    .url("Please enter a valid URL")
-    .refine(
-      (url) =>
-        url.includes("youtube.com") ||
-        url.includes("youtu.be") ||
-        url.includes("soundcloud.com") ||
-        url.includes("music.apple.com") ||
-        url.includes("spotify.com") ||
-        url.includes("last.fm/music"),
-      "URL must be from YouTube, SoundCloud, Apple Music, Spotify, or Last.fm"
-    ),
-});
-
-type AddSongInput = z.infer<typeof addSongSchema>;
 
 export function AddSongDialog({ children }: { children: React.ReactNode }) {
   const [isOpen, setIsOpen] = useState(false);
@@ -193,13 +176,8 @@ export function AddSongDialog({ children }: { children: React.ReactNode }) {
     }
   }, [volume]);
 
-  const addSong = useMutation({
-    mutationFn: async (data: AddSongInput) => {
-      const response = await api.post("/api/songs", {
-        mediaUrl: data.url,
-      });
-      return response.data;
-    },
+  const addSongMutation = useMutation({
+    mutationFn: addSong,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["songs"] });
       toast.success("Song added successfully");
@@ -237,7 +215,7 @@ export function AddSongDialog({ children }: { children: React.ReactNode }) {
   };
 
   const onSubmit = (data: AddSongInput) => {
-    addSong.mutate(data);
+    addSongMutation.mutate(data);
   };
 
   const handleMetadataChange = (metadata: VideoMetadata) => {
@@ -387,10 +365,10 @@ export function AddSongDialog({ children }: { children: React.ReactNode }) {
             </Button>
             <Button
               type="submit"
-              disabled={addSong.isPending}
+              disabled={addSongMutation.isPending}
               className="h-9 bg-purple-600/90 hover:bg-purple-600 text-white border-none"
             >
-              {addSong.isPending ? (
+              {addSongMutation.isPending ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Adding...
                 </>

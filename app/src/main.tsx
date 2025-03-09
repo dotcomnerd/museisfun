@@ -10,6 +10,12 @@ import { TooltipProvider } from './components/ui/tooltip';
 
 const queryClient = new QueryClient();
 
+if (import.meta.env.PROD) {
+    console.log = () => { }
+    console.error = () => { }
+    console.debug = () => { }
+}
+
 createRoot(document.getElementById("root")!).render(
     <HelmetProvider>
         <BrowserRouter>

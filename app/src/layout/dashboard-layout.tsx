@@ -118,7 +118,7 @@ export function DashboardLayout() {
     const particles = Array.from({ length: 5 }).map((_, i) => i);
 
     return (
-        <div className="bg-background w-full h-screen overflow-auto">
+        <div className="bg-background w-full overflow-auto">
             <AnimatePresence mode="wait">
                 {(isLoading || isUserLoading) ? (
                     <motion.div

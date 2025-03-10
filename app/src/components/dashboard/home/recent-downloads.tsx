@@ -15,7 +15,6 @@ import {
 } from '@/components/ui/texture-card';
 import { cn } from '@/lib/utils';
 
-// Custom wrapper that ensures dialog works
 function CustomAddSongDialog({ children }: { children: React.ReactNode }) {
   // We don't actually need the isOpen state, just need to keep
   // consistent DOM structure for querying
@@ -52,10 +51,7 @@ export function RecentDownloads({
   initializeAudio
 }: RecentDownloadsProps) {
   const navigate = useNavigate();
-
-  // Check if there are no downloads
   const isEmpty = !isLoading && !isError && (!recentlyDownloaded || recentlyDownloaded.length === 0);
-
   return (
     <motion.div
       initial={{ opacity: 0, x: -20 }}
@@ -81,7 +77,7 @@ export function RecentDownloads({
           "before:from-blue-500/10 before:to-blue-600/5 hover:before:from-blue-500/20 hover:before:to-blue-600/10"
         )}
       >
-        <TextureCardHeader className="pb-2 space-y-1 relative z-10">
+        <TextureCardHeader className="pb-2 space-y-1 relative z-10 mx-4">
           <TextureCardTitle className="flex items-center gap-2 text-2xl">
             <span className="bg-blue-500/10 p-1.5 rounded-lg">
               <Download className="h-5 w-5 text-blue-500/90" />

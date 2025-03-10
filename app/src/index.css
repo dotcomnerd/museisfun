@@ -83,7 +83,6 @@ DEFAULT: 'hsl(var(--sidebar-background))',
 ::-webkit-scrollbar {
   display: none;
 }
-
 @layer utilities {
   .aspect-ratio-container img {
     width: 100%;
@@ -115,3 +114,4 @@ DEFAULT: 'hsl(var(--sidebar-background))',
     @apply h-4 w-4;
   }
 }
+

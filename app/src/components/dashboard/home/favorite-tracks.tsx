@@ -141,7 +141,7 @@ export function FavoriteTracks({
 
               <CustomAddSongDialog>
                 <Button
-                  className="gap-2 bg-red-500/70 hover:bg-red-600/70 text-white border-red-400/20 relative z-50"
+                  className="gap-2 bg-red-500/70 hover:bg-red-600/70 text-white border-red-400/20 relative -z-10"
                   size="sm"
                 >
                   <PlusCircle className="h-4 w-4" />

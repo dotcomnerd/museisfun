@@ -3,14 +3,14 @@ import { SidebarProvider } from "@/components/ui/sidebar";
 import { useSidebarToggle } from "@/hooks/use-sidebar-toggle";
 import { useStore } from "@/hooks/use-store";
 import { useUser } from '@/hooks/use-user';
-import { type BreadcrumbSegment } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { AnimatePresence, motion } from "framer-motion";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { Navigate, Outlet, useLocation } from "react-router";
 import { toast } from 'sonner';
 import { MuseSidebar } from "./components/muse-sidebar";
 
+/*
 function formatBreadcrumbLabel(segment: string): string {
     if (!segment) return "Dashboard";
     if (segment.toLowerCase() === "dashboard") return "Dashboard";
@@ -33,6 +33,7 @@ function generateBreadcrumbs(pathname: string): BreadcrumbSegment[] {
         };
     });
 }
+*/
 
 const loadingVariants = {
     initial: { opacity: 1 },
@@ -86,10 +87,6 @@ export function DashboardLayout() {
     const location = useLocation();
     const { data: user, isLoading: isUserLoading } = useUser();
     const sidebar = useStore(useSidebarToggle, (state) => state);
-    const breadcrumbs = useMemo(
-        () => generateBreadcrumbs(location.pathname),
-        [location.pathname]
-    );
 
     const [isLoading, setIsLoading] = useState(true);
     const [progress, setProgress] = useState(0);
@@ -113,10 +110,6 @@ export function DashboardLayout() {
         }
     }, [isUserLoading, user]);
 
-    if (import.meta.env.DEV) {
-        console.log(breadcrumbs);
-    }
-
     if (!isUserLoading && !user && !location.pathname.includes("/login")) {
         toast.error("You must be logged in to access this page");
         return <Navigate to="/login" />;
@@ -125,7 +118,7 @@ export function DashboardLayout() {
     const particles = Array.from({ length: 5 }).map((_, i) => i);
 
     return (
-        <div className="bg-background w-full h-screen overflow-hidden">
+        <div className="bg-background w-full h-screen overflow-auto">
             <AnimatePresence mode="wait">
                 {(isLoading || isUserLoading) ? (
                     <motion.div
@@ -213,7 +206,7 @@ export function DashboardLayout() {
                             <MuseSidebar />
                             <main className={cn(
                                 sidebar?.isOpen === false ? "lg:ml-[90px]" : "lg:ml-72",
-                                "flex-1 transition-all pb-16 h-full overflow-hidden"
+                                "flex-1 transition-all pb-16 h-full overflow-auto"
                             )}>
                                 <div className="h-full overflow-auto">
                                     <div className="min-h-screen w-full">

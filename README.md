@@ -4,13 +4,7 @@
 
 > [!NOTE] This is the backend entry point for the Muse application stack. For the frontend entry point, [click here](/app/README.md).
 
-Welcome to Muse, a modern music platform that lets you:
-
-- Upload and stream songs
-- Import music from YouTube and SoundCloud
-- Create and organize playlists
-- Share music collections
-- Listen to your music anywhere
+Muse is a web application that allows users to upload songs and listen to them. Unlike other music streaming services, Muse allows users to download their own music through YouTube and Soundcloud links, create playlists of them, and share their playlists with others.
 
 ## Getting Started
 

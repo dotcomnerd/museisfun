@@ -20,7 +20,7 @@ export function Mockup() {
                 <Input
                   disabled
                   type="text"
-                  value="https://museisfun.fly.dev"
+                  value="https://museisfun.com"
                   readOnly
                   className="max-w-full h-6 mx-2 text-left text-sm font-light tracking-wide bg-background/50 backdrop-blur-sm border-primary/30 focus-visible:ring-primary/20 focus-visible:ring-offset-0"
                 />

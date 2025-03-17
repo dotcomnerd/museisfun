@@ -11,6 +11,9 @@ if (!uri) {
     process.exit(1);
 }
 
+/**
+ * Connect to the MongoDB database.
+ */
 export const connectToDB = async () => {
     try {
         console.log("Connecting to MongoDB...");
@@ -22,6 +25,11 @@ export const connectToDB = async () => {
     }
 };
 
+/**
+ * Connect to a specific MongoDB URI.
+ *
+ * @param {string} uri - The MongoDB URI to connect to.
+ */
 export const connectToUri = async (uri: string) => {
     try {
         await mongoose.connect(uri, { dbName: uri.includes("local") ? "test" : "muse-prod" });

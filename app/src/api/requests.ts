@@ -3,6 +3,7 @@ import Fetcher from '@/lib/fetcher';
 import { AddSongInput, PutProfileResponse, Song, UpdateUserInput, UserWithId } from '@/lib/types';
 import { AxiosError } from 'axios';
 import { toast } from 'sonner';
+import axios from 'axios';
 
 export const handleError = (err: unknown) => {
     if (err instanceof AxiosError) {
@@ -36,9 +37,19 @@ export const addSong = async (data: AddSongInput) => {
 };
 
 export const getUserProfile = async (username: string) => {
-    // TODO: Handle 404 / nonexistent user
-    const res = await api.get<UserProfile>(`/users/${username}`);
-    return res.data;
+    try {
+        // Use a raw axios instance without auth headers for public profiles
+        const url = `${api.defaults.baseURL}/users/${username}`;
+        const res = await axios.get<UserProfile>(url);
+        return res.data;
+    } catch (error) {
+        if (error instanceof AxiosError && error.response?.status === 404) {
+            // Return null for 404, let the component handle the redirect
+            return null;
+        }
+        handleError(error);
+        throw error;
+    }
 };
 
 export const getUserDetails = async () => {

@@ -1,5 +1,5 @@
 import { BUCKET_NAME, getPresignedUrl } from "@/lib/cloudflare";
-import { authMiddleware } from "@/lib/middleware";
+import { authMiddleware, optionalAuthMiddleware } from "@/lib/middleware";
 import Playlist from "@/models/playlist";
 import Song from "@/models/song";
 import { Request, Response, Router } from "express";
@@ -67,34 +67,64 @@ const getUser = async (req: Request, res: Response) => {
 
         const maybeUser = await User
             .findOne({ username })
-            .select("-password");
+            .select("-password -__v");
 
         console.log(maybeUser);
         if (!maybeUser) return res.status(404).json({ message: "User not found" });
+
+        // Check if the user is authenticated
+        const isAuthenticated = req.auth !== undefined;
+
         const songs = await Song.find({ createdBy: maybeUser._id })
             .limit(10)
             .select("title duration thumbnail uploader listeningTime createdAt updatedAt");
 
-        const userResponse = {
-            ...maybeUser.toObject(),
-            songs: songs.map(song => ({
-                _id: song._id,
-                title: song.title,
-                duration: song.duration,
-                thumbnail: song.thumbnail,
-                uploader: song.uploader,
-                listeningTime: song.listeningTime,
-                createdAt: song.createdAt,
-                updatedAt: song.updatedAt
-            }))
-        };
+        // Get the user's public playlists
+        const playlists = await Playlist.find({
+            createdBy: maybeUser._id,
+            visibility: "public"
+        })
+        .limit(10)
+        .select("title songs thumbnail createdAt updatedAt");
 
-        usersCache.set(cacheKey, {
-            user: userResponse,
-            timestamp: now
-        });
+        // Create the response object, selecting appropriate fields based on authentication
+        let userResponse;
+        if (isAuthenticated) {
+            // Authenticated users get full profile
+            userResponse = {
+                ...maybeUser.toObject(),
+                songs: songs.map(song => ({
+                    ...song.toObject(),
+                    _id: song._id.toString(),
+                })),
+                playlists: playlists.map(playlist => ({
+                    ...playlist.toObject(),
+                    _id: playlist._id.toString(),
+                })),
+            };
+        } else {
+            // Unauthenticated users only get public information
+            userResponse = {
+                _id: maybeUser._id,
+                username: maybeUser.username,
+                name: maybeUser.name,
+                pfp: maybeUser.pfp,
+                bio: maybeUser.bio,
+                songs: songs.map(song => ({
+                    ...song.toObject(),
+                    _id: song._id.toString(),
+                })),
+                playlists: playlists.map(playlist => ({
+                    ...playlist.toObject(),
+                    _id: playlist._id.toString(),
+                })),
+                createdAt: maybeUser.createdAt,
+                updatedAt: maybeUser.updatedAt,
+            };
+        }
 
-        return res.json(userResponse);
+        usersCache.set(cacheKey, { user: userResponse, timestamp: now });
+        res.json(userResponse);
     } catch (error) {
         console.error(error);
         res.status(500).json({ message: "Internal server error", error });
@@ -269,7 +299,7 @@ const getFavorites = async (req: Request, res: Response) => {
 
 
 router.get("/", authMiddleware, getUsers);
-router.get("/:username", authMiddleware, getUser);
+router.get("/:username", optionalAuthMiddleware, getUser);
 router.delete("/:id", authMiddleware, deleteUser);
 router.get("/data/stats", authMiddleware, userStatistics);
 router.post("/media/favorite/:type", authMiddleware, addNewFavorite)

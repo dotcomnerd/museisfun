@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { type Playlist, type Song } from "muse-shared";
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-
+import { useUserStore } from "./userStore";
 interface PlayerMode {
     isExpanded: boolean;
     isVisible: boolean;
@@ -141,7 +141,12 @@ export const useAudioStore = create<AudioState>()(
                 }
             };
 
-            const startListeningTimer = () => {
+            /**
+             * Starts a timer to track listening time for the current song
+             * Only tracks time if a user is logged in (determined by successful API calls)
+             */
+            const startListeningTimer = (isLoggedIn?: boolean) => {
+                if (!isLoggedIn) return;
                 const state = get();
                 if (state.listeningTimer) clearInterval(state.listeningTimer);
                 const timer = setInterval(() => {
@@ -162,7 +167,11 @@ export const useAudioStore = create<AudioState>()(
                 });
             };
 
-            const stopListeningTimer = () => {
+            /**
+             * Stops the listening time tracking timer and records final time
+             */
+            const stopListeningTimer = (isLoggedIn?: boolean) => {
+                if (!isLoggedIn) return;
                 const state = get();
                 if (state.listeningTimer) {
                     clearInterval(state.listeningTimer);
@@ -177,6 +186,11 @@ export const useAudioStore = create<AudioState>()(
                 }
             };
 
+            /**
+             * Sets up the audio element for the current song
+             * @param song - The current song to play
+             * @returns The audio element
+             */
             const setupAudioElement = async (song: Partial<Song>) => {
                 if (audioElement) {
                     stopListeningTimer();
@@ -218,6 +232,9 @@ export const useAudioStore = create<AudioState>()(
                 return audioElement;
             };
 
+            /**
+             * Handles the time update event for the audio element
+             */
             const timeUpdateHandler = () => {
                 if (audioElement) {
                     set({ currentTime: audioElement.currentTime });
@@ -231,10 +248,16 @@ export const useAudioStore = create<AudioState>()(
                 }
             };
 
+            /**
+             * Handles the loaded metadata event for the audio element
+             */
             const loadedMetadataHandler = () => {
                 if (audioElement) set({ duration: audioElement.duration });
             };
 
+            /**
+             * Handles the progress event for the audio element
+             */
             const progressHandler = () => {
                 if (audioElement) {
                     const buffered = audioElement.buffered;
@@ -244,7 +267,14 @@ export const useAudioStore = create<AudioState>()(
                 }
             };
 
+            /**
+             * Handles the buffering event for the audio element
+             */
             const bufferingHandler = () => set({ isBuffering: true });
+
+            /**
+             * Handles the playing event for the audio element
+             */
             const playingHandler = () => {
                 set({ isBuffering: false });
                 if ("mediaSession" in navigator) {
@@ -253,6 +283,9 @@ export const useAudioStore = create<AudioState>()(
                 requestWakeLock();
             };
 
+            /**
+             * Handles the ended event for the audio element
+             */ 
             const endedHandler = () => {
                 stopListeningTimer();
                 const state = get();
@@ -294,7 +327,14 @@ export const useAudioStore = create<AudioState>()(
                 listeningTimer: null,
                 lastUpdateTime: 0,
 
+                /**
+                 * Initializes the audio player with a list of songs and starts playback
+                 * @param songs - Array of songs to add to the queue
+                 * @param startIndex - Index of the song to start playing
+                 * @param playlist - Optional playlist to associate with the queue
+                 */
                 initializeAudio: (songs, startIndex, playlist): Promise<void> | void => {
+                    const user = useUserStore.getState();
                     if (playlist && isFullPlaylist(playlist)) {
                         set({
                             queue: songs,
@@ -333,7 +373,7 @@ export const useAudioStore = create<AudioState>()(
                                 if (audioElement) {
                                     await audioElement.play().catch(() => set({ isPlaying: false }));
                                     set({ isPlaying: true });
-                                    startListeningTimer()
+                                    startListeningTimer(user.user !== null)
                                 }
                             });
                         })();
@@ -342,13 +382,17 @@ export const useAudioStore = create<AudioState>()(
                     if (audioElement) {
                         audioElement.play().catch(() => {
                             set({ isPlaying: false });
-                            stopListeningTimer();
+                            stopListeningTimer(user.user !== null);
                         });
                         set({ isPlaying: true });
-                        startListeningTimer();
+                        startListeningTimer(user.user !== null);
                     }
                 },
 
+                /**
+                 * Plays a specific song from the queue by index
+                 * @param index - Index of the song in the queue to play
+                 */
                 playQueueItem: async (index: number) => {
                     const state = get();
                     const song = state.queue[index];
@@ -387,6 +431,9 @@ export const useAudioStore = create<AudioState>()(
                     startListeningTimer();
                 },
 
+                /**
+                 * Plays the current audio track
+                 */
                 play: () => {
                     if (audioElement) {
                         const playPromise = audioElement.play();
@@ -404,6 +451,9 @@ export const useAudioStore = create<AudioState>()(
                     }
                 },
 
+                /**
+                 * Pauses the current audio track
+                 */
                 pause: () => {
                     if (audioElement) {
                         stopListeningTimer();
@@ -416,6 +466,9 @@ export const useAudioStore = create<AudioState>()(
                     }
                 },
 
+                /**
+                 * Toggles between play and pause states
+                 */
                 playPause: () => {
                     const { isPlaying } = get();
                     if (isPlaying) {
@@ -425,6 +478,10 @@ export const useAudioStore = create<AudioState>()(
                     }
                 },
 
+                /**
+                 * Seeks to a specific time in the current track
+                 * @param time - Time in seconds to seek to
+                 */
                 seek: (time) => {
                     if (audioElement) {
                         audioElement.currentTime = time;
@@ -439,6 +496,10 @@ export const useAudioStore = create<AudioState>()(
                     }
                 },
 
+                /**
+                 * Sets the volume level
+                 * @param volume - Volume level (0-1)
+                 */
                 setVolume: (volume) => {
                     if (audioElement) {
                         audioElement.volume = volume;
@@ -446,6 +507,9 @@ export const useAudioStore = create<AudioState>()(
                     }
                 },
 
+                /**
+                 * Plays the next song in the queue
+                 */
                 nextSong: () => {
                     const state = get();
                     if (state.queueIndex < state.queue.length - 1) {
@@ -465,6 +529,11 @@ export const useAudioStore = create<AudioState>()(
                     }
                 },
 
+                /**
+                 * Plays the previous song or restarts the current song
+                 * If current time > 19 seconds, restarts the current song
+                 * Otherwise, plays the previous song in the queue
+                 */
                 previousSong: () => {
                     const state = get();
                     if (audioElement) {
@@ -478,6 +547,9 @@ export const useAudioStore = create<AudioState>()(
                     }
                 },
 
+                /**
+                 * Toggles shuffle mode for the queue
+                 */
                 toggleShuffle: () => {
                     const state = get();
                     const currentSong = state.queue[state.queueIndex];
@@ -507,6 +579,10 @@ export const useAudioStore = create<AudioState>()(
 
                 toggleAutoPlayOnEnd: () => set(state => ({ autoPlayOnEnd: !state.autoPlayOnEnd })),
 
+                /**
+                 * Adds a song to the end of the queue
+                 * @param song - Song to add to the queue
+                 */
                 addToQueue: (song) => {
                     set(state => ({
                         queue: [...state.queue, song],
@@ -514,6 +590,10 @@ export const useAudioStore = create<AudioState>()(
                     }));
                 },
 
+                /**
+                 * Removes a song from the queue by index
+                 * @param index - Index of the song to remove
+                 */
                 removeFromQueue: (index) => {
                     set(state => {
                         const newQueue = [...state.queue];
@@ -529,6 +609,9 @@ export const useAudioStore = create<AudioState>()(
                     });
                 },
 
+                /**
+                 * Clears the queue and stops playback
+                 */
                 clearQueue: () => {
                     stopListeningTimer();
                     if (audioElement) {
@@ -560,6 +643,10 @@ export const useAudioStore = create<AudioState>()(
                     set({ searchTerm });
                 },
 
+                /**
+                 * Updates the player mode (expanded, visible, mini)
+                 * @param mode - Partial player mode object to update
+                 */
                 setPlayerMode: (mode) => {
                     set(state => ({
                         playerMode: {
@@ -569,6 +656,12 @@ export const useAudioStore = create<AudioState>()(
                     }));
                 },
 
+                /**
+                 * Updates the listening time for a song
+                 * Only sends data if user is logged in
+                 * @param songId - ID of the song
+                 * @param time - Time in seconds to add to listening stats
+                 */
                 async updateListeningTime(songId: string, time: number) {
                     try {
                         await Fetcher.getInstance().post(`/api/songs/${songId}/listen`, { time });
@@ -591,6 +684,10 @@ export const useAudioStore = create<AudioState>()(
     )
 );
 
+/**
+ * Hook that provides methods to control the audio player
+ * @returns Object with methods to play songs
+ */
 export function usePlayerControls() {
     const api = Fetcher.getInstance();
     const { data: allSongs, refetch: fetchAllSongs } = useQuery({
@@ -603,6 +700,13 @@ export function usePlayerControls() {
     });
 
     const store = useAudioStore();
+
+    /**
+     * Plays a song by its ID, optionally within a playlist context
+     * @param songId - ID of the song to play
+     * @param playlistId - Optional playlist ID the song belongs to
+     * @param isPublic - Whether the playlist is public
+     */
     const playSong = async (songId: string, playlistId?: string, isPublic?: boolean) => {
         try {
             if (playlistId) {

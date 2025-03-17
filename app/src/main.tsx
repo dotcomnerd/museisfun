@@ -8,14 +8,24 @@ import { BrowserRouter } from "react-router";
 import { Toaster } from "sonner";
 import { TooltipProvider } from './components/ui/tooltip';
 
+/**
+ * The global query client for the app.
+ */
 const queryClient = new QueryClient();
 
+/**
+ * If the environment is production, suppress all console logs.
+ */
 if (import.meta.env.PROD) {
     console.log = () => { }
     console.error = () => { }
     console.debug = () => { }
 }
 
+/**
+ * The root element for the app.
+ * It provides the global query client, theme provider, tooltip provider, and routing.
+ */
 createRoot(document.getElementById("root")!).render(
     <HelmetProvider>
         <BrowserRouter>

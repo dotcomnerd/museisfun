@@ -121,7 +121,7 @@ export function PopularPlaylists({
           "before:from-purple-500/10 before:to-violet-600/5 hover:before:from-purple-500/20 hover:before:to-violet-600/10"
         )}
       >
-        <TextureCardHeader className={cn("relative z-10", isEmpty ? 'pb-2' : '')}>
+        <TextureCardHeader className={cn("relative z-10 mx-4", isEmpty ? 'pb-2' : '')}>
           <TextureCardTitle className="flex items-center gap-2 text-2xl">
             <span className="bg-purple-500/10 p-1.5 rounded-lg">
               <ListMusic className="h-5 w-5 text-purple-500/90" />

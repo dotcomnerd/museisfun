@@ -3,7 +3,7 @@ import { useSidebarToggle } from '@/hooks/use-sidebar-toggle';
 import { useUser } from '@/hooks/use-user';
 import { useAudioStore, usePlayerControls } from '@/stores/audioStore';
 import { useQuery } from '@tanstack/react-query';
-import { GetMostPlayedPlaylistsResponse, GetRecentDownloadsResponse, UserStatisticsResponse } from 'muse-shared';
+import { GetMostPlayedPlaylistsResponse, GetRecentDownloadsResponse } from 'muse-shared';
 import { useStore } from 'zustand';
 import Fetcher from '@/lib/fetcher';
 import { Song } from '@/lib/types';
@@ -15,13 +15,26 @@ import { RecentDownloads } from '@/components/dashboard/home/recent-downloads';
 import { FavoriteTracks } from '@/components/dashboard/home/favorite-tracks';
 import { PopularPlaylists } from '@/components/dashboard/home/popular-playlists';
 
-export function DashboardHome() {
+/**
+ * Dashboard Home Page
+ *
+ * The entry point for the dashboard.
+ * It displays:
+ * - A welcome message
+ * - A YouTube search bar
+ * - Stats cards (most played playlists, recently downloaded songs, favorite tracks, storage usage)
+ * - A list of the user's most played playlists
+ * - A list of the user's recently downloaded songs
+ * - A list of the user's favorite tracks
+ *
+ * @returns {JSX.Element} The DashboardHome component
+ */
+export function DashboardHome(): JSX.Element {
   const sidebar = useStore(useSidebarToggle, (state) => state);
   const user = useUser();
   const { initializeAudio } = useAudioStore();
   const { playSong } = usePlayerControls();
 
-  // Add keyboard shortcut for sidebar toggle
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key === 'u') {
@@ -34,20 +47,6 @@ export function DashboardHome() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [sidebar]);
 
-  // User stats queries
-  const {
-    data: museStats,
-    isLoading: museStatsLoading,
-    isError: museStatsError
-  } = useQuery<UserStatisticsResponse>({
-    queryKey: ["muse-stats"],
-    queryFn: async () => {
-      const { data } = await Fetcher.getInstance().get<UserStatisticsResponse>("/users/data/stats");
-      return data;
-    },
-    enabled: !!user?.data?._id,
-  });
-
   const {
     data: mostPlayedPlaylists,
     isLoading: mostPlayedPlaylistsLoading,
@@ -59,6 +58,7 @@ export function DashboardHome() {
       return data;
     },
     enabled: !!user?.data?._id,
+    staleTime: 5 * 60 * 1000,
   });
 
   const {
@@ -72,6 +72,7 @@ export function DashboardHome() {
       return data;
     },
     enabled: !!user?.data?._id,
+    staleTime: 5 * 60 * 1000,
   });
 
   const {
@@ -85,27 +86,21 @@ export function DashboardHome() {
       return data;
     },
     enabled: !!user?.data?._id,
+    staleTime: 5 * 60 * 1000,
   });
 
-  if (!sidebar) return null;
+  if (!sidebar) return <></>;
 
   return (
     <div className="flex min-h-screen flex-col">
       <div className="flex-1">
         <div className="flex flex-col min-h-screen bg-gradient-to-b from-background/40 via-background/30 to-background/20">
           <DashboardHeader />
-
           <main className="flex-1 overflow-x-hidden">
             <div className="container px-4 py-6 md:py-10 max-w-7xl mx-auto">
               <WelcomeMessage username={user?.data?.username} />
               <YouTubeSearch />
-
-              <StatsCards
-                museStats={museStats}
-                isLoading={museStatsLoading}
-                isError={museStatsError}
-              />
-
+              <StatsCards />
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-10">
                 <RecentDownloads
                   recentlyDownloaded={recentlyDownloaded}
@@ -113,7 +108,6 @@ export function DashboardHome() {
                   isError={recentlyDownloadedError}
                   initializeAudio={initializeAudio}
                 />
-
                 <FavoriteTracks
                   favoriteTracks={favoriteTracks}
                   isLoading={favoriteTracksLoading}
@@ -122,7 +116,6 @@ export function DashboardHome() {
                   playSong={playSong}
                 />
               </div>
-
               <PopularPlaylists
                 mostPlayedPlaylists={mostPlayedPlaylists}
                 isLoading={mostPlayedPlaylistsLoading}

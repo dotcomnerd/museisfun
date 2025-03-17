@@ -14,12 +14,19 @@ import {
 } from "@/components/ui/navigation-menu";
 import { useUser } from "@/hooks/use-user";
 import { cn } from "@/lib/utils";
+import { useUserStore } from '@/stores/userStore';
 import { useQueryClient } from "@tanstack/react-query";
 import { LogOut, Settings, User } from "lucide-react";
 import { ComponentPropsWithoutRef, ReactNode, forwardRef } from "react";
 import { Link, useNavigate } from "react-router";
 import { toast } from "sonner";
 
+/**
+ * Navigation menu item component
+ *
+ * @param href - The URL to navigate to
+ * @param children - The content to display inside the navigation menu item
+ */
 const NavItem = ({
     href,
     children,
@@ -32,11 +39,18 @@ const NavItem = ({
     </NavigationMenuLink>
 );
 
+/**
+ * List item component for navigation menu
+ *
+ * @param className - Additional CSS classes for styling
+ * @param title - The title of the list item
+ * @param children - The content to display inside the list item
+ */
 const ListItem = forwardRef<
     HTMLAnchorElement,
     ComponentPropsWithoutRef<"a"> & { title: string; href: string }
 >(({ className, title, children, href, ...props }, ref) => (
-    <li>
+    <li ref={ref as unknown as React.RefObject<HTMLLIElement>}>
         <NavigationMenuLink asChild>
             <Link
                 to={href}
@@ -56,12 +70,18 @@ const ListItem = forwardRef<
 ));
 ListItem.displayName = "ListItem";
 
+/**
+ * Navigation bar component
+ *
+ * @returns The navigation bar component (landing page)
+ */
 export const Navbar = () => {
     const { data: user, isLoading, isError } = useUser();
     const navigate = useNavigate();
     const queryClient = useQueryClient();
 
     const handleLogout = async () => {
+        useUserStore.getState().clearUser();
         queryClient.removeQueries({ queryKey: ['use-user'] });
         localStorage.removeItem("token");
         toast.success("Logged out successfully");

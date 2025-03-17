@@ -12,6 +12,7 @@ import { Ellipsis, LogOut, LucideIcon } from "lucide-react";
 import { Link, useLocation, useNavigate } from "react-router";
 import { toast } from "sonner";
 import { getMenuList } from "./menu-list";
+import { useUserStore } from '@/stores/userStore';
 
 interface MenuProps {
     isOpen: boolean | undefined;
@@ -22,6 +23,7 @@ export function Menu({ isOpen }: MenuProps) {
     const menuList = getMenuList(pathname);
     const navigate = useNavigate();
     const handleLogout = () => {
+        useUserStore.getState().clearUser();
         localStorage.removeItem("token");
         // settings.resetSettings();
         toast.success("Logged out successfully");

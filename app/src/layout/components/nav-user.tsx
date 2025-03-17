@@ -26,6 +26,7 @@ import {
 } from "@/components/ui/sidebar";
 import { User } from "@/hooks/use-user";
 import { useNavigate } from "react-router";
+import { useUserStore } from '@/stores/userStore';
 
 export function NavUser({ name, username, email, pfp, _id }: User) {
   const navigate = useNavigate();
@@ -40,6 +41,7 @@ export function NavUser({ name, username, email, pfp, _id }: User) {
 
   const handleLogout = () => {
     localStorage.removeItem("token");
+    useUserStore.getState().clearUser();
     navigate("/login", { replace: true });
   };
 

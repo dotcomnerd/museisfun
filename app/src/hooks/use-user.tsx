@@ -1,31 +1,47 @@
 import Fetcher from "@/lib/fetcher";
+import { useUserStore } from '@/stores/userStore';
 import { useQuery, UseQueryResult } from "@tanstack/react-query";
 import { AxiosError } from "axios";
 import { useNavigate } from "react-router";
 import { toast } from "sonner";
+import { z } from 'zod';
 
-export type User = {
-    _id: string;
-    email: string;
-    name: string;
-    username: string;
-    pfp?: string;
-};
+/**
+ * User schema definition representing the authenticated user data
+ * returned from the API
+ */
+export const userSchema = z.object({
+    _id: z.string(),
+    email: z.string().email(),
+    name: z.string(),
+    username: z.string(),
+    pfp: z.string().optional() // Profile picture URL (optional)
+});
 
+export type User = z.infer<typeof userSchema>;
+
+/**
+ * Custom hook to fetch and manage the current authenticated user
+ *
+ * @returns UseQueryResult containing user data or error
+ */
 export const useUser = (): UseQueryResult<User, Error> => {
     const navigate = useNavigate();
     return useQuery({
         queryKey: ["use-user"],
         queryFn: async (): Promise<User | Error> => {
-            // If the user is not within the app, don't fetch the user
             try {
                 const response = await Fetcher.getInstance().get<User>("/auth/user");
-                return response.data;
+                useUserStore.getState().user = response.data;
+                useUserStore.getState().token = localStorage.getItem("token") || null;
+                const validatedUser = userSchema.parse(response.data);
+                return validatedUser;
             } catch (err) {
                 if (err instanceof AxiosError && err.response?.status === 401) {
+                    useUserStore.getState().clearUser();
+                    localStorage.removeItem("token");
                     navigate("/login");
                     toast.error("Your session has expired. Please log in again.");
-                    localStorage.removeItem("token");
                 } else {
                     if (err instanceof AxiosError) {
                         toast.error(err.message)
@@ -36,18 +52,16 @@ export const useUser = (): UseQueryResult<User, Error> => {
         },
         enabled: !!localStorage.getItem("token"),
         retry: (failureCount, error) => {
-            // Don't retry on 401 errors
             if (error instanceof AxiosError && error.response?.status === 401) {
                 return false;
             }
-            // Retry other errors up to 2 times
             return failureCount < 2;
         },
-        staleTime: 0,
-        gcTime: 0,
-        refetchOnWindowFocus: false,
-        refetchOnMount: false,
-        refetchOnReconnect: false,
+        staleTime: 5 * 60 * 1000,
+        gcTime: 30 * 60 * 1000,
+        refetchOnWindowFocus: true,
+        refetchOnMount: true,
+        refetchOnReconnect: true,
         refetchInterval: false,
         refetchIntervalInBackground: false,
     });

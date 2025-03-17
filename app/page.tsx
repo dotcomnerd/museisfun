@@ -37,7 +37,7 @@ export default function LandingPage() {
           </div>
           <div className="mt-5 w-full flex max-sm:flex-col justify-center sm:gap-10 gap-4 text-white">
             <Link href="/login">Get Started</Link>
-            <Link href={"https://github.com/Nyumat/muse"} passHref target="_blank">
+            <Link href={"https://github.com/dotcomnerd/museisfun"} passHref target="_blank">
               Learn More
             </Link>
           </div>

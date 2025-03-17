@@ -225,7 +225,7 @@ export function AboutPage() {
                             </Button>
 
                             <Button asChild variant="outline" className="py-6">
-                                <Link to="https://github.com/nyumat/muse" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2">
+                                <Link to="https://github.com/dotcomnerd/museisfun" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2">
                                     <Github className="h-4 w-4" />
                                     View Source
                                 </Link>

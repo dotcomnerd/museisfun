@@ -218,7 +218,7 @@ export function HeroSection() {
                                         variant="secondary"
                                         className="w-full sm:w-auto font-normal group/github"
                                     >
-                                        <Link to="https://github.com/nyumat/muse" target="_blank">
+                                        <Link to="https://github.com/dotcomnerd/museisfun" target="_blank">
                                             <span className="group-hover/github:text-primary transition-colors">View Source</span>
                                         </Link>
                                     </Button>

@@ -1,4 +1,4 @@
-import { BUCKET_NAME, getPresignedUrl, R2 } from "@/lib/cloudflare";
+import { BUCKET_NAME, getPresignedUrl, getProxyUrl, R2 } from "@/lib/cloudflare";
 import { authMiddleware, optionalAuthMiddleware } from "@/lib/middleware";
 import Playlist from '@/models/playlist';
 import Song from "@/models/song";
@@ -55,6 +55,14 @@ async function aggregateSongsWithFavorites(songs: any[], userId?: string) {
         } else if (!song.r2Key) {
             // Remove songs that don't have a key
             await Song.deleteOne({ _id: song._id });
+        }
+
+        // Convert thumbnail URLs to proxy URLs if they're from our storage
+        if (song.thumbnail && song.thumbnail.includes(BUCKET_NAME)) {
+            const thumbnailKey = song.thumbnail.split('/').pop()?.split('?')[0];
+            if (thumbnailKey) {
+                song.thumbnail = getProxyUrl({ key: thumbnailKey, bucket: BUCKET_NAME });
+            }
         }
     }
 
@@ -303,6 +311,15 @@ router.get("/api/songs/playlist/:playlistId", async (req, res) => {
                     expiresIn: 60 * 60 * 24
                 });
             }
+
+            // Convert thumbnail URLs to proxy URLs if they're from our storage
+            if (song.thumbnail && song.thumbnail.includes(BUCKET_NAME)) {
+                const thumbnailKey = song.thumbnail.split('/').pop()?.split('?')[0];
+                if (thumbnailKey) {
+                    song.thumbnail = getProxyUrl({ key: thumbnailKey, bucket: BUCKET_NAME });
+                }
+            }
+
             return song;
         }));
 
@@ -334,6 +351,15 @@ router.get("/api/songs", optionalAuthMiddleware, async (req, res) => {
                             expiresIn: 60 * 60 * 24
                         });
                     }
+
+                    // Convert thumbnail URLs to proxy URLs if they're from our storage
+                    if (song.thumbnail && song.thumbnail.includes(BUCKET_NAME)) {
+                        const thumbnailKey = song.thumbnail.split('/').pop()?.split('?')[0];
+                        if (thumbnailKey) {
+                            song.thumbnail = getProxyUrl({ key: thumbnailKey, bucket: BUCKET_NAME });
+                        }
+                    }
+
                     return song;
                 }));
                 return res.json(await aggregateSongsWithFavorites(songs, req.auth?._id));
@@ -431,6 +457,14 @@ router.get("/api/songs/downloads/recent", authMiddleware, async (req, res) => {
                 // Remove songs that don't have a key
                 await Song.deleteOne({ _id: song._id });
             }
+
+            // Convert thumbnail URLs to proxy URLs if they're from our storage
+            if (song.thumbnail && song.thumbnail.includes(BUCKET_NAME)) {
+                const thumbnailKey = song.thumbnail.split('/').pop()?.split('?')[0];
+                if (thumbnailKey) {
+                    song.thumbnail = getProxyUrl({ key: thumbnailKey, bucket: BUCKET_NAME });
+                }
+            }
         }
         res.json(songs.map(({ title, uploader, thumbnail, stream_url, _id }) => ({ title, uploader, thumbnail, stream_url, _id })));
     } catch (error) {
@@ -481,6 +515,14 @@ router.get("/api/songs/top/listened", authMiddleware, async (req, res) => {
             } else if (!song.r2Key) {
                 // Remove songs that don't have a key
                 await Song.deleteOne({ _id: song._id });
+            }
+
+            // Convert thumbnail URLs to proxy URLs if they're from our storage
+            if (song.thumbnail && song.thumbnail.includes(BUCKET_NAME)) {
+                const thumbnailKey = song.thumbnail.split('/').pop()?.split('?')[0];
+                if (thumbnailKey) {
+                    song.thumbnail = getProxyUrl({ key: thumbnailKey, bucket: BUCKET_NAME });
+                }
             }
         }
         res.json(songs.map(({ title, uploader, thumbnail, stream_url, _id }) => ({ title, uploader, thumbnail, stream_url, _id })));
@@ -692,6 +734,14 @@ router.get("/api/songs/demo/random", async (req, res) => {
 
         if (song.r2Key) {
             song.stream_url = await getPresignedUrl({ key: song.r2Key, bucket: BUCKET_NAME, expiresIn: 60 * 60 * 24 }) || '';
+        }
+
+        // Convert thumbnail URLs to proxy URLs if they're from our storage
+        if (song.thumbnail && song.thumbnail.includes(BUCKET_NAME)) {
+            const thumbnailKey = song.thumbnail.split('/').pop()?.split('?')[0];
+            if (thumbnailKey) {
+                song.thumbnail = getProxyUrl({ key: thumbnailKey, bucket: BUCKET_NAME });
+            }
         }
 
         const songResponse = {

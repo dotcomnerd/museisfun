@@ -2,11 +2,11 @@ name: cloudflare image proxy tests
 
 on:
   push:
-    branches: [ main ]
+    branches: [ master ]
     paths:
       - 'proxy/**'
   pull_request:
-    branches: [ main ]
+    branches: [ master ]
     paths:
       - 'proxy/**'
   workflow_dispatch:

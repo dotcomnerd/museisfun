@@ -1,10 +1,15 @@
 ![API Docs Preview](/public/og.png)
 
-# [Muse](https://api.museisfun.com)
+# [api.museisfun.com](https://api.museisfun.com)
 
-> [!NOTE] This is the backend entry point for the Muse application stack. For the frontend entry point, [click here](/app/README.md).
+> [!NOTE]
+> This is the backend entry point for the Muse application stack. For the frontend entry point, [click here](/app/README.md).
 
-Muse is a web application that allows users to upload songs and listen to them. Unlike other music streaming services, Muse allows users to download their own music through YouTube and Soundcloud links, create playlists of them, and share their playlists with others.
+Muse is a web service that allows users to upload songs and listen to them in the browser.
+
+Powered by [yt-dlp](https://github.com/yt-dlp/yt-dlp) and [SpotDL](https://github.com/spotDL/spotify-downloader), Muse is able to download music from YouTube, Soundcloud, and Spotify.
+
+There's also a [frontend](https://museisfun.com) that allows you to manage your music library. (PWA coming soon)
 
 ## Getting Started
 
@@ -12,9 +17,11 @@ Muse is a web application that allows users to upload songs and listen to them. 
 
 - [Docker](https://www.docker.com/)
 - [Cloudflare R2](https://developers.cloudflare.com/r2/get-started/)
-- [Node.js 23.9.0 or higher (required)](https://nodejs.org/)
+- [Node.js >23.9.0](https://nodejs.org/)
 - [NPM](https://www.npmjs.com/)
+- [Bun](https://bun.sh/)
 - [Docker Compose](https://docs.docker.com/compose/)
+- [MongoDB](https://www.mongodb.com/) (optional, for local development)
 - [MongoDB Compass](https://www.mongodb.com/try/download/compass) (optional, helps visualize the collections)
 - [openssl](https://www.openssl.org/) (optional, helps generate JWT secret)
 
@@ -35,6 +42,7 @@ COVERS_BUCKET_NAME="your_covers_bucket_name"
 CLOUDFLARE_API_TOKEN="your_cloudflare_api_token"
 MONGODB_URI_LOCAL="your_mongodb_uri_local"
 MONGODB_URI_PROD="your_mongodb_uri_prod"
+YOUTUBE_API_KEY="your_youtube_api_key"
 ```
 
 ### Running the Application
@@ -42,7 +50,7 @@ MONGODB_URI_PROD="your_mongodb_uri_prod"
 1. **Clone the repository:**
 
     ```bash
-    git clone https://github.com/dotcomnerd/muse.git
+    git clone https://github.com/dotcomnerd/museisfun.git
     cd muse
     ```
 
@@ -63,5 +71,4 @@ MONGODB_URI_PROD="your_mongodb_uri_prod"
     curl http://localhost:3000/health -> OK
     ```
 
-
-For the full API spec, head to the official [Muse API Documentation](https://docs.museisfun.com).
+For the full API spec, head to the official [Muse API Documentation](https://api.museisfun.com).

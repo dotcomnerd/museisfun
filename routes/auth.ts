@@ -1,4 +1,4 @@
-import { getPresignedUrl, PFP_BUCKET_NAME, R2 } from "@/lib/cloudflare";
+import { getProxyUrl, PFP_BUCKET_NAME, R2 } from "@/lib/cloudflare";
 import { generateToken } from "@/lib/jwt";
 import { authMiddleware, refreshTokenMiddleware } from "@/lib/middleware";
 import User from "@/models/user";
@@ -174,9 +174,8 @@ router.put(
 
         updates.pfp = key;
 
-        pfpUrl = await getPresignedUrl({
+        pfpUrl = await getProxyUrl({
           key,
-          expiresIn: 60 * 60 * 24 * 7,
           bucket: PFP_BUCKET_NAME,
         });
 

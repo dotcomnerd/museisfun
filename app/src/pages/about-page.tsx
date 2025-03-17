@@ -136,24 +136,30 @@ export function AboutPage() {
                             alt="Muse Interface"
                             className="object-cover w-full h-full hidden dark:block"
                         />
+                        <div className="absolute inset-0 bg-black/80" />
                         <div className="absolute inset-0 bg-gradient-to-t from-background via-background/50 to-transparent" />
+                        <div className="absolute inset-0 flex items-center justify-center -mt-12">
+                            <h1 className="text-4xl md:text-6xl font-bold tracking-tight dark:text-primary">
+                                Muse
+                            </h1>
+                        </div>
                         <div className="absolute bottom-8 left-8 right-8">
                             <h1 className="text-xl md:text-3xl font-bold tracking-tight dark:text-white mb-4">
-                                The end to your monthly music subscription(s)
+                                One place for all your music, forever.
                             </h1>
                             <p className="dark:text-lg dark:text-white/80 text-md text-muted-foreground">
-                                Break free from the constraints of traditional streaming services.
+                                With Muse, break free from the constraints of traditional streaming services.
                             </p>
                         </div>
                     </div>
 
-                    <div className="space-y-12 max-w-screen-xl mx-auto mx-6 md:mx-4">
+                    <div className="space-y-12 max-w-screen-xl mx-auto md:mx-4">
                         <section>
                             <p className="text-lg leading-relaxed -mt-4">
-                                Remember when music felt personal? When you could craft the perfect playlist without hitting skip limits or dealing with forced shuffles?
+                                If you're as old as me, you probably remember the iPod Nano. The days when music felt personal. When you could craft the perfect playlist without hitting skip limits or dealing with forced shuffles.
                                 <br />
                                 <span className="font-bold block my-4">Muse brings that freedom back.</span>
-                                I built this platform to put you back in control of your music library. <br/> <br/> Literally, just create an account, and you can
+                                I built the Muse platform to put us all back in control of our music libraries. <br/> <br/> No seriously, just create an account, and you can
                                 build a collection of your favorite tracks from YouTube and SoundCloud.
                             </p>
                         </section>
@@ -172,33 +178,28 @@ export function AboutPage() {
                                     <p>Create collections that tell your story. Rename, sort, and arrange your music your way.</p>
                                 </div>
                                 <div className="space-y-3">
-                                    <h3 className="text-xl font-semibold">Cloud Sync</h3>
-                                    <p>Your Muse library follows you everywhere. <br/>Add tracks offline, then pick up right where you left off on any device.</p>
-                                </div>
-                                <div className="space-y-3">
                                     <h3 className="text-xl font-semibold">Zero Cost</h3>
                                     <p>All features, no fees. Music shouldn't come with a subscription. In fact, it shouldn't cost anything  - in my opinion.</p>
                                 </div>
 
                                 <div className="space-y-3">
                                     <h3 className="text-xl font-semibold">...and more!</h3>
-                                    <p>I'm always adding new features and improving the platform. I bet that every time you come back, there'll
-                                         be something new.</p>
+                                    <p>I'll continue adding new features and improving the platform as time allows. I bet that every time you come back, there'll be something new.</p>
                                 </div>
                             </div>
                         </section>
 
                         <section>
                             <h2 className="text-3xl font-bold tracking-tight mb-6">
-                                The Road Ahead
+                                What's next?
                             </h2>
                             <p className="text-lg leading-relaxed mb-6">
-                                In my vision, the features I have planned will transform how we discover, share, and enjoy our favorite tracks:
+                                This project is no where near done. I have a lot of ideas for the future, but I'm not sure when I'll get around to implementing them. Stuff like:
                             </p>
                             <ul className="space-y-4 list-none pl-0">
                                 <li className="flex items-center gap-3">
                                     <div className="h-2 w-2 rounded-full bg-primary"></div>
-                                    <span>Collaborative playlists with friends in real-time</span>
+                                    <span>Collaborative playlists with your friends in real-time</span>
                                 </li>
                                 <li className="flex items-center gap-3">
                                     <div className="h-2 w-2 rounded-full bg-primary"></div>

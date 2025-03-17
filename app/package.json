@@ -52,7 +52,7 @@
     "framer-motion": "^12.0.5",
     "input-otp": "^1.4.1",
     "lucide-react": "^0.462.0",
-    "muse-shared": "file:../shared",
+    "muse-shared": "link:muse-shared",
     "nanoid": "^5.0.9",
     "next-themes": "^0.4.3",
     "react": "^18.3.1",

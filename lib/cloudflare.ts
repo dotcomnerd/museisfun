@@ -36,6 +36,11 @@ interface PresignedUrlParams {
     bucket: string;
 }
 
+interface ProxyUrlParams {
+    key: string;
+    bucket: string;
+}
+
 export async function getPresignedUrl({
     key,
     bucket,
@@ -59,3 +64,8 @@ export async function getPresignedUrl({
 export const BUCKET_NAME = process.env.R2_BUCKET_NAME!;
 export const PFP_BUCKET_NAME = process.env.PFP_BUCKET_NAME!;
 export const COVERS_BUCKET_NAME = process.env.COVERS_BUCKET_NAME!;
+
+export function getProxyUrl({ key, bucket }: ProxyUrlParams): string {
+    const PROXY_URL = process.env.NODE_ENV === "production" ? process.env.PROD_IMAGE_PROXY_URL! : process.env.LOCAL_IMAGE_PROXY_URL!;
+    return `${PROXY_URL}/images/${key}`;
+}

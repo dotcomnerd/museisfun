@@ -31,6 +31,7 @@ import { Suspense } from "react";
 import { Link, useNavigate } from "react-router";
 import { toast } from "sonner";
 import { Menu } from "./menu";
+import { useUserStore } from '@/stores/userStore';
 export function SheetMenu() {
     return (
         <Sheet>
@@ -91,6 +92,7 @@ export function UserNav() {
     };
 
     const handleLogout = () => {
+        useUserStore.getState().clearUser();
         localStorage.removeItem("token");
         toast.success("Logged out successfully");
         navigate("/login");

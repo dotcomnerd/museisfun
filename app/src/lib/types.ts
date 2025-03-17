@@ -119,3 +119,21 @@ export const updateUserSchema = z
     );
 
 export type UpdateUserInput = z.infer<typeof updateUserSchema>;
+
+export const addSongSchema = z.object({
+  url: z
+    .string()
+    .url("Please enter a valid URL")
+    .refine(
+      (url) =>
+        url.includes("youtube.com") ||
+        url.includes("youtu.be") ||
+        url.includes("soundcloud.com") ||
+        url.includes("music.apple.com") ||
+        url.includes("spotify.com") ||
+        url.includes("last.fm/music"),
+      "URL must be from YouTube, SoundCloud, Apple Music, Spotify, or Last.fm"
+    ),
+});
+
+export type AddSongInput = z.infer<typeof addSongSchema>;

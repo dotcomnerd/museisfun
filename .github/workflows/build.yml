@@ -1,0 +1,43 @@
+name: build museisfun.com + muse-shared
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '23.6.0'
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v1
+        with:
+          bun-version: latest
+
+      - name: Create symlink (shared)
+        working-directory: ./shared
+        run: bun link
+
+      - name: Install dependencies (shared)
+        working-directory: ./shared
+        run: bun install
+
+      - name: Install dependencies (app)
+        working-directory: ./app
+        run: bun install
+
+      - name: Build shared package
+        working-directory: ./shared
+        run: bun run build
+
+      - name: Build app
+        working-directory: ./app
+        run: bun run build

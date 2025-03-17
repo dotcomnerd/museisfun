@@ -55,7 +55,7 @@ export function PageLayout({
     return (
         <div
             className={cn(
-                "flex flex-col h-full bg-cover bg-center bg-fixed bg-no-repeat"
+                "flex flex-col min-h-screen h-full bg-cover bg-center bg-fixed bg-no-repeat"
             )}
             style={{
                 backgroundImage: `linear-gradient(rgba(0, 0, 0, ${resolvedTheme === "light" ? "0.3" : "0.7"}), rgba(0, 0, 0, ${resolvedTheme === "light" ? "0.3" : "0.7"})), url('${BG_URL}')`
@@ -109,12 +109,12 @@ export function PageLayout({
             {/* Desktop Header */}
             <header className="hidden md:flex h-16 items-center px-4">
                 <div className="flex items-center gap-2 w-full">
-                    <Tooltip delayDuration={0}>
+                    <Tooltip delayDuration={100}>
                         <TooltipTrigger asChild>
                             <Button
-                                variant="ghost"
+                                variant="plain"
                                 size="icon"
-                                className="h-7 w-7 hover:text-primary"
+                                className="h-7 w-7 hover:text-primary p-2"
                                 onClick={() => sidebar?.setIsOpen()}
                             >
                                 ⌘ U

@@ -1,10 +1,11 @@
 import { UserProfile } from '@/features/profile/nested';
 import Fetcher from '@/lib/fetcher';
-import { PutProfileResponse, Song, UpdateUserInput, UserWithId } from '@/lib/types';
+import { AddSongInput, PutProfileResponse, Song, UpdateUserInput, UserWithId } from '@/lib/types';
 import { AxiosError } from 'axios';
 import { toast } from 'sonner';
+import axios from 'axios';
 
-export const handleError = (err: any) => {
+export const handleError = (err: unknown) => {
     if (err instanceof AxiosError) {
         toast.error(err.response?.data?.error || "Failed to fetch user details");
         if (err.response?.status === 401) {
@@ -28,10 +29,27 @@ export const deleteSong = async (id: string) => {
     await api.delete(`/api/songs/${id}`);
 };
 
+export const addSong = async (data: AddSongInput) => {
+    const response = await api.post("/api/songs", {
+        mediaUrl: data.url,
+    });
+    return response.data;
+};
+
 export const getUserProfile = async (username: string) => {
-    // TODO: Handle 404 / nonexistent user
-    const res = await api.get<UserProfile>(`/users/${username}`);
-    return res.data;
+    try {
+        // Use a raw axios instance without auth headers for public profiles
+        const url = `${api.defaults.baseURL}/users/${username}`;
+        const res = await axios.get<UserProfile>(url);
+        return res.data;
+    } catch (error) {
+        if (error instanceof AxiosError && error.response?.status === 404) {
+            // Return null for 404, let the component handle the redirect
+            return null;
+        }
+        handleError(error);
+        throw error;
+    }
 };
 
 export const getUserDetails = async () => {

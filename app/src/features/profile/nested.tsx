@@ -3,9 +3,18 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { useUser } from "@/hooks/use-user";
-import { ArrowLeft, Loader2, Music, Pencil } from "lucide-react";
+import { ArrowLeft, Loader2, Music, Pencil, PlayCircle } from "lucide-react";
 import { type Song } from "muse-shared";
 import { useNavigate, useParams } from "react-router";
+
+interface Playlist {
+  _id: string;
+  title: string;
+  songs: string[];
+  thumbnail: string;
+  createdAt: string;
+  updatedAt: string;
+}
 
 export interface UserProfile {
   _id: string;
@@ -15,6 +24,7 @@ export interface UserProfile {
   bio: string;
   pfp: string;
   songs: Song[];
+  playlists?: Playlist[];
   createdAt: string;
   updatedAt: string;
 }
@@ -34,7 +44,7 @@ export function ProfileViewNested({
   const { id } = useParams<{ id: string }>();
   const { data: currentUser } = useUser();
 
-  const isOwnProfile = currentUser?._id === id;
+  const isOwnProfile = currentUser && currentUser._id === id;
 
   if (isLoading) {
     return (
@@ -69,7 +79,7 @@ export function ProfileViewNested({
       )}
       <Card className="bg-black/10 backdrop-blur-md border-none shadow-sm shadow-purple-500/50 border-t-2 border-t-purple-500">
         <CardHeader className="flex flex-row items-center justify-between">
-          {isOwnProfile && (
+          {isOwnProfile && currentUser && (
             <Button
               variant="link"
               title="Edit Profile"
@@ -161,6 +171,49 @@ export function ProfileViewNested({
                 <p className="text-muted-foreground">No songs uploaded yet.</p>
               )}
             </div>
+
+            {userData.playlists && userData.playlists.length > 0 && (
+              <>
+                <Separator />
+
+                <div>
+                  <h4 className="text-sm font-medium mb-4">
+                    {userData.name}'s Public Playlists
+                  </h4>
+                  <div className="space-y-1">
+                    {userData.playlists.map((playlist) => (
+                      <div
+                        key={playlist._id}
+                        className="group flex items-center justify-between p-2 rounded-md hover:bg-white/5 transition-colors"
+                      >
+                        <div className="flex items-center gap-3">
+                          <PlayCircle className="h-4 w-4 text-purple-500" />
+                          <div className="flex flex-col">
+                            <span className="font-medium text-sm">
+                              {playlist.title}
+                            </span>
+                            <span className="text-xs text-muted-foreground">
+                              {playlist.songs.length} songs • Created{" "}
+                              {new Date(playlist.createdAt).toLocaleDateString()}
+                            </span>
+                          </div>
+                        </div>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="opacity-0 group-hover:opacity-100 transition-opacity"
+                          onClick={() => {
+                            navigate(`/playlists/${playlist._id}`);
+                          }}
+                        >
+                          View
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </>
+            )}
           </div>
         </CardContent>
       </Card>

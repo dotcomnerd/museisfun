@@ -1,4 +1,4 @@
-import { BUCKET_NAME, COVERS_BUCKET_NAME, getPresignedUrl, R2 } from "@/lib/cloudflare";
+import { BUCKET_NAME, COVERS_BUCKET_NAME, getPresignedUrl, getProxyUrl, R2 } from "@/lib/cloudflare";
 import { authMiddleware, optionalAuthMiddleware } from "@/lib/middleware";
 import Playlist, { PlaylistModel } from "@/models/playlist";
 import { SongModel } from "@/models/song";
@@ -50,9 +50,8 @@ router.post(
                     })
                 );
 
-                coverUrl = await getPresignedUrl({
+                coverUrl = await getProxyUrl({
                     key,
-                    expiresIn: 60 * 60 * 24 * 7,
                     bucket: COVERS_BUCKET_NAME
                 });
             }
@@ -221,9 +220,8 @@ router.put(
                         ContentType: req.file.mimetype,
                     })
                 );
-                updates.coverImage = await getPresignedUrl({
+                updates.coverImage = await getProxyUrl({
                     key,
-                    expiresIn: 60 * 60 * 24 * 7,
                     bucket: COVERS_BUCKET_NAME
                 });
             }

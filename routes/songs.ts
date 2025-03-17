@@ -1,4 +1,4 @@
-import { BUCKET_NAME, getPresignedUrl, R2 } from "@/lib/cloudflare";
+import { BUCKET_NAME, getPresignedUrl, getProxyUrl, R2 } from "@/lib/cloudflare";
 import { authMiddleware, optionalAuthMiddleware } from "@/lib/middleware";
 import Playlist from '@/models/playlist';
 import Song from "@/models/song";
@@ -55,6 +55,14 @@ async function aggregateSongsWithFavorites(songs: any[], userId?: string) {
         } else if (!song.r2Key) {
             // Remove songs that don't have a key
             await Song.deleteOne({ _id: song._id });
+        }
+
+        // Convert thumbnail URLs to proxy URLs if they're from our storage
+        if (song.thumbnail && song.thumbnail.includes(BUCKET_NAME)) {
+            const thumbnailKey = song.thumbnail.split('/').pop()?.split('?')[0];
+            if (thumbnailKey) {
+                song.thumbnail = getProxyUrl({ key: thumbnailKey, bucket: BUCKET_NAME });
+            }
         }
     }
 
@@ -303,6 +311,15 @@ router.get("/api/songs/playlist/:playlistId", async (req, res) => {
                     expiresIn: 60 * 60 * 24
                 });
             }
+
+            // Convert thumbnail URLs to proxy URLs if they're from our storage
+            if (song.thumbnail && song.thumbnail.includes(BUCKET_NAME)) {
+                const thumbnailKey = song.thumbnail.split('/').pop()?.split('?')[0];
+                if (thumbnailKey) {
+                    song.thumbnail = getProxyUrl({ key: thumbnailKey, bucket: BUCKET_NAME });
+                }
+            }
+
             return song;
         }));
 
@@ -334,6 +351,15 @@ router.get("/api/songs", optionalAuthMiddleware, async (req, res) => {
                             expiresIn: 60 * 60 * 24
                         });
                     }
+
+                    // Convert thumbnail URLs to proxy URLs if they're from our storage
+                    if (song.thumbnail && song.thumbnail.includes(BUCKET_NAME)) {
+                        const thumbnailKey = song.thumbnail.split('/').pop()?.split('?')[0];
+                        if (thumbnailKey) {
+                            song.thumbnail = getProxyUrl({ key: thumbnailKey, bucket: BUCKET_NAME });
+                        }
+                    }
+
                     return song;
                 }));
                 return res.json(await aggregateSongsWithFavorites(songs, req.auth?._id));
@@ -386,6 +412,18 @@ export const extractors = [
     "soundcloud",
 ]
 
+router.get("/api/songs/aggregate/count", optionalAuthMiddleware, async (req, res) => {
+    try {
+        const count = await Song.countDocuments({
+            ...(req.auth?._id ? { createdBy: req.auth._id } : {})
+        });
+        res.json({ count });
+    } catch (error) {
+        console.error("Error counting songs:", error);
+        res.status(500).json({ error: "Failed to count songs" });
+    }
+});
+
 router.get("/api/songs/:type", authMiddleware, async (req, res) => {
     try {
         const { type } = req.params;
@@ -418,6 +456,14 @@ router.get("/api/songs/downloads/recent", authMiddleware, async (req, res) => {
             } else if (!song.r2Key) {
                 // Remove songs that don't have a key
                 await Song.deleteOne({ _id: song._id });
+            }
+
+            // Convert thumbnail URLs to proxy URLs if they're from our storage
+            if (song.thumbnail && song.thumbnail.includes(BUCKET_NAME)) {
+                const thumbnailKey = song.thumbnail.split('/').pop()?.split('?')[0];
+                if (thumbnailKey) {
+                    song.thumbnail = getProxyUrl({ key: thumbnailKey, bucket: BUCKET_NAME });
+                }
             }
         }
         res.json(songs.map(({ title, uploader, thumbnail, stream_url, _id }) => ({ title, uploader, thumbnail, stream_url, _id })));
@@ -470,6 +516,14 @@ router.get("/api/songs/top/listened", authMiddleware, async (req, res) => {
                 // Remove songs that don't have a key
                 await Song.deleteOne({ _id: song._id });
             }
+
+            // Convert thumbnail URLs to proxy URLs if they're from our storage
+            if (song.thumbnail && song.thumbnail.includes(BUCKET_NAME)) {
+                const thumbnailKey = song.thumbnail.split('/').pop()?.split('?')[0];
+                if (thumbnailKey) {
+                    song.thumbnail = getProxyUrl({ key: thumbnailKey, bucket: BUCKET_NAME });
+                }
+            }
         }
         res.json(songs.map(({ title, uploader, thumbnail, stream_url, _id }) => ({ title, uploader, thumbnail, stream_url, _id })));
     } catch (error) {
@@ -482,6 +536,14 @@ interface SimpleSongResult {
     title: string;
     thumbnail: string;
     watchUrl: string;
+    channelTitle: string;
+    publishedAt: string;
+    viewCount: string;
+    duration: string;
+    likeCount: string;
+    commentCount: string;
+    description: string;
+    channelThumbnail?: string;
 }
 
 async function getVideoDetails(id: string) {
@@ -497,6 +559,26 @@ async function getVideoDetails(id: string) {
 
     return response.data.items[0];
 }
+
+async function getChannelThumbnail(channelId: string) {
+    try {
+        const response = await youtube.channels.list({
+            key: API_KEY,
+            part: ['snippet'],
+            id: [channelId]
+        });
+
+        if (!response.data.items || response.data.items.length === 0) {
+            return undefined;
+        }
+
+        return response.data.items[0].snippet?.thumbnails?.default?.url || undefined;
+    } catch (error) {
+        console.error('Error fetching channel thumbnail:', error);
+        return undefined;
+    }
+}
+
 
 async function searchYouTube(query: string, maxResults: number = 10) {
     try {
@@ -516,8 +598,12 @@ async function searchYouTube(query: string, maxResults: number = 10) {
         return response.data.items.map(item => ({
             id: item.id?.videoId || '',
             title: item.snippet?.title || '',
-            thumbnail: item.snippet?.thumbnails?.default?.url || '',
+            thumbnail: item.snippet?.thumbnails?.high?.url || item.snippet?.thumbnails?.default?.url || '',
             watchUrl: `https://www.youtube.com/watch?v=${item.id?.videoId}`,
+            channelId: item.snippet?.channelId || '',
+            channelTitle: item.snippet?.channelTitle || '',
+            publishedAt: item.snippet?.publishedAt || '',
+            description: item.snippet?.description || '',
         }));
     } catch (error) {
         console.error('YouTube API Error:', error);
@@ -544,13 +630,36 @@ router.get("/api/youtube/search", authMiddleware, async (req, res) => {
 
         const videoDetails = await Promise.all(songIds.map(id => getVideoDetails(id)));
 
-        const simplifiedResults: SimpleSongResult[] = videoDetails
+        // Get channel thumbnails in parallel
+        const channelIds = results.map(result => result.channelId).filter(Boolean);
+        const uniqueChannelIds = [...new Set(channelIds)];
+        const channelThumbnails = await Promise.all(uniqueChannelIds.map(id => getChannelThumbnail(id)));
+
+        // Create a map of channel IDs to thumbnails
+        const channelThumbnailMap = uniqueChannelIds.reduce((map, id, index) => {
+            map[id] = channelThumbnails[index];
+            return map;
+        }, {} as Record<string, string | undefined>);
+
+        const simplifiedResults = videoDetails
             .filter((video): video is NonNullable<typeof video> => video !== null)
-            .map(video => ({
-                title: video.snippet?.title || '',
-                thumbnail: video.snippet?.thumbnails?.high?.url || '',
-                watchUrl: `https://www.youtube.com/watch?v=${video.id}`
-            }));
+            .map((video, index) => {
+                const result = results[index];
+                const channelId = result.channelId;
+                return {
+                    title: video.snippet?.title || '',
+                    thumbnail: video.snippet?.thumbnails?.high?.url || video.snippet?.thumbnails?.default?.url || '',
+                    watchUrl: `https://www.youtube.com/watch?v=${video.id}`,
+                    channelTitle: video.snippet?.channelTitle || '',
+                    publishedAt: video.snippet?.publishedAt || '',
+                    viewCount: video.statistics?.viewCount || '0',
+                    duration: formatDuration(video.contentDetails?.duration || 'PT0S'),
+                    likeCount: video.statistics?.likeCount || '0',
+                    commentCount: video.statistics?.commentCount || '0',
+                    description: video.snippet?.description || '',
+                    channelThumbnail: channelId ? channelThumbnailMap[channelId] : undefined,
+                };
+            }) as SimpleSongResult[];
 
         res.json(simplifiedResults);
 
@@ -558,7 +667,7 @@ router.get("/api/youtube/search", authMiddleware, async (req, res) => {
         console.error("Error searching YouTube:", error);
         res.status(500).json({
             error: "Failed to search YouTube",
-            details: error instanceof Error ? error.message : "Unknown error"
+            message: error instanceof Error ? error.message : 'Unknown error'
         });
     }
 });
@@ -575,7 +684,14 @@ router.get("/api/youtube/videos/:id", authMiddleware, async (req, res) => {
         const simplifiedVideo: SimpleSongResult = {
             title: video.snippet?.title || '',
             thumbnail: video.snippet?.thumbnails?.high?.url || '',
-            watchUrl: `https://www.youtube.com/watch?v=${video.id}`
+            watchUrl: `https://www.youtube.com/watch?v=${video.id}`,
+            channelTitle: video.snippet?.channelTitle || '',
+            publishedAt: video.snippet?.publishedAt || '',
+            viewCount: video.statistics?.viewCount || '0',
+            duration: formatDuration(video.contentDetails?.duration || 'PT0S'),
+            likeCount: video.statistics?.likeCount || '0',
+            commentCount: video.statistics?.commentCount || '0',
+            description: video.snippet?.description || '',
         };
 
         res.json(simplifiedVideo);
@@ -620,6 +736,14 @@ router.get("/api/songs/demo/random", async (req, res) => {
             song.stream_url = await getPresignedUrl({ key: song.r2Key, bucket: BUCKET_NAME, expiresIn: 60 * 60 * 24 }) || '';
         }
 
+        // Convert thumbnail URLs to proxy URLs if they're from our storage
+        if (song.thumbnail && song.thumbnail.includes(BUCKET_NAME)) {
+            const thumbnailKey = song.thumbnail.split('/').pop()?.split('?')[0];
+            if (thumbnailKey) {
+                song.thumbnail = getProxyUrl({ key: thumbnailKey, bucket: BUCKET_NAME });
+            }
+        }
+
         const songResponse = {
             _id: song._id,
             title: song.title,
@@ -640,5 +764,21 @@ router.get("/api/songs/demo/random", async (req, res) => {
         res.status(500).json({ error: error });
     }
 });
+
+function formatDuration(isoDuration: string): string {
+    // Parse ISO 8601 duration format (e.g., PT1H2M3S)
+    const match = isoDuration.match(/PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?/);
+    if (!match) return "0:00";
+
+    const hours = match[1] ? parseInt(match[1]) : 0;
+    const minutes = match[2] ? parseInt(match[2]) : 0;
+    const seconds = match[3] ? parseInt(match[3]) : 0;
+
+    if (hours > 0) {
+        return `${hours}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+    } else {
+        return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+    }
+}
 
 export default router;

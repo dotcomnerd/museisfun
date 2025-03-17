@@ -18,7 +18,6 @@ import { Mockup } from './mockup';
  * type FeatureFlag = "mockup" | "marquee" | "desktop-feats" | "comparison";
  *
  */
-
 export function HeroSection() {
     const { data: user } = useUser();
     const isMobile = useIsMobile();

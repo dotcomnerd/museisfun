@@ -21,18 +21,16 @@ import {
   LockIcon,
   LogOut,
   Music,
-  Settings,
-  Shield,
-  Trash2,
+  Settings, Trash2,
   User,
-  UsersIcon,
-  Volume2,
+  UsersIcon
 } from "lucide-react";
 import { useNavigate, useLocation } from "react-router";
 import { toast } from "sonner";
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import { useEffect, useRef } from "react";
+import { useEffect } from "react";
+import { useUserStore } from '@/stores/userStore';
 
 type PrivacySettings = {
   profileVisibility: "private" | "friends" | "public";
@@ -118,6 +116,7 @@ export function SettingsView() {
   }, [location]);
 
   const handleLogout = () => {
+    useUserStore.getState().clearUser();
     localStorage.removeItem("authToken");
     settings.resetSettings();
     toast.success("Logged out successfully");

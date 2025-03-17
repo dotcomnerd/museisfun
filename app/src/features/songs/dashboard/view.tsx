@@ -1,7 +1,7 @@
 import { deleteSong, getSongs } from '@/api/requests';
 import { DesktopSongsList } from '@/components/desktop/song-list';
 import { MobileSongsList } from '@/components/mobile/song-list';
-import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList } from '@/components/ui/breadcrumb';
+import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbSeparator, BreadcrumbPage } from '@/components/ui/breadcrumb';
 import { Button } from "@/components/ui/button";
 import {
     DropdownMenu,
@@ -20,6 +20,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ChevronDown, ChevronLeft, ChevronRight, ChevronUp, Plus } from "lucide-react";
 import { Song, type SortKey } from 'muse-shared';
 import React, { useCallback, useMemo, useState } from "react";
+import { Link } from 'react-router';
 
 export function SongsView() {
     const [searchTerm, setSearchTerm] = useState("");
@@ -115,15 +116,23 @@ export function SongsView() {
 
     return (
         <div className="flex flex-col h-full">
-            <PageLayout breadcrumbs={
-                <Breadcrumb>
-                    <BreadcrumbList>
-                        <BreadcrumbItem>
-                            <BreadcrumbLink>Songs</BreadcrumbLink>
-                        </BreadcrumbItem>
-                    </BreadcrumbList>
-                </Breadcrumb>
-            }>
+            <PageLayout
+                breadcrumbs={
+                    <Breadcrumb>
+                        <BreadcrumbList>
+                            <BreadcrumbItem>
+                                <BreadcrumbLink asChild>
+                                    <Link to="/dashboard">Dashboard</Link>
+                                </BreadcrumbLink>
+                            </BreadcrumbItem>
+                            <BreadcrumbSeparator />
+                            <BreadcrumbItem>
+                                <BreadcrumbPage>Songs</BreadcrumbPage>
+                            </BreadcrumbItem>
+                        </BreadcrumbList>
+                    </Breadcrumb>
+                }
+            >
                 <div className="flex flex-col flex-1 h-full">
                     <div className="flex-1 min-h-0 overflow-hidden flex flex-col">
                         <div className="md:hidden h-full overflow-y-auto">

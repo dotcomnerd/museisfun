@@ -1,50 +1,59 @@
-# React + TypeScript + Vite
+![Muse Frontend](/public/website.png)
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+# [museisfun.com](https://museisfun.com)
 
-Currently, two official plugins are available:
+> [!NOTE]
+> This is the frontend entry point for the Muse application stack. For the backend entry point, [click here](../README.md).
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+Muse is a web application that allows users to upload songs and listen to them. The frontend is built with React, TypeScript, and Vite.
 
-## Expanding the ESLint configuration
+Unlike other music streaming services, Muse allows users to download their own music through YouTube and Soundcloud links, create playlists, and share them with others.
 
-If you are developing a production application, we recommend updating the configuration to enable type aware lint rules:
+## Getting Started
 
-- Configure the top-level `parserOptions` property like this:
+### Prerequisites
 
-```js
-export default tseslint.config({
-  languageOptions: {
-    // other options...
-    parserOptions: {
-      project: ['./tsconfig.node.json', './tsconfig.app.json'],
-      tsconfigRootDir: import.meta.dirname,
-    },
-  },
-})
+- [Node.js >20.9.0](https://nodejs.org/)
+- [NPM](https://www.npmjs.com/)
+- [Bun](https://bun.sh/)
+
+### Environment Variables
+
+Create a `.env.local` file in the app directory and add the necessary environment variables.
+
+```env
+VITE_DEV_BASE_URL="http://localhost:3000" # Localhost
+VITE_PROD_BASE_URL="https://api.museisfun.com" # Production
 ```
 
-- Replace `tseslint.configs.recommended` to `tseslint.configs.recommendedTypeChecked` or `tseslint.configs.strictTypeChecked`
-- Optionally add `...tseslint.configs.stylisticTypeChecked`
-- Install [eslint-plugin-react](https://github.com/jsx-eslint/eslint-plugin-react) and update the config:
+### Running the Frontend
 
-```js
-// eslint.config.js
-import react from 'eslint-plugin-react'
+1. **Install dependencies:**
 
-export default tseslint.config({
-  // Set the react version
-  settings: { react: { version: '18.3' } },
-  plugins: {
-    // Add the react plugin
-    react,
-  },
-  rules: {
-    // other rules...
-    // Enable its recommended rules
-    ...react.configs.recommended.rules,
-    ...react.configs['jsx-runtime'].rules,
-  },
-})
+    ```bash
+    cd app
+    bun install
+    ```
+
+2. **Start the development server:**
+
+    ```bash
+    bun dev
+    ```
+
+3. **Access the application:**
+
+    Open [http://localhost:5173](http://localhost:5173) with your browser to see the result.
+
+### Building for Production
+
+```bash
+bun build
+```
+
+### Testing workflow's locally (act)
+
+```bash
+brew install act
+act -j build -P ubuntu-latest=ghcr.io/catthehacker/ubuntu:act-latest
 ```

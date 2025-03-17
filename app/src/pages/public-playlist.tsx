@@ -31,7 +31,7 @@ import {
   Music, Plus, Users
 } from "lucide-react";
 import { Playlist, Song } from "muse-shared";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router";
 import { toast } from "sonner";
 
@@ -222,7 +222,7 @@ export function PublicPlaylistView() {
                       <div className="flex items-center gap-2">
                         <span>Created by</span>
                         <Link
-                          to={`/dashboard/profile/${playlist.createdBy.username}`}
+                          to={`/profile/${playlist.createdBy.username}`}
                           className="font-medium text-foreground hover:text-purple-500 transition-colors"
                         >
                           <div className="flex items-center gap-2">

@@ -35,7 +35,7 @@ app.options("*", cors());
 
 app.use(
     cors({
-        origin: ["https://museisfun.com", "http://localhost:3000", "http://localhost:5173"],
+        origin: ["https://museisfun.com", "http://localhost:3000", "http://localhost:5173", "http://api.museisfun.com"],
         methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
         allowedHeaders: ["Content-Type", "Authorization"],
         credentials: true,

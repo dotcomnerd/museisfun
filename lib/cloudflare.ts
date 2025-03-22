@@ -223,8 +223,9 @@ export function getProxyUrl({ key, bucket }: ProxyUrlParams): string {
         : process.env.LOCAL_IMAGE_PROXY_URL;
 
     // In development, use muse-test bucket for non-song assets
+    // In production, use the bucket name directly without adding "muse-" prefix again
     const bucketName = process.env.NODE_ENV === "production"
-        ? `muse-${bucket}`
+        ? bucket  // Use bucket name directly without adding "muse-" prefix
         : "muse-test";
 
     // Return the full URL

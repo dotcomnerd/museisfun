@@ -4,6 +4,7 @@ import { lazy, Suspense } from 'react';
 
 const Features = lazy(() => import('@/features/landing/features-all').then(module => ({ default: module.Features })));
 const Footer = lazy(() => import('@/features/landing/footer').then(module => ({ default: module.Footer })));
+const CTA = lazy(() => import('@/features/landing/cta').then(module => ({ default: module.CallToAction })));
 
 export function LandingPage() {
     return (
@@ -16,6 +17,7 @@ export function LandingPage() {
               </div>
             }>
                 <Features />
+                <CTA />
                 <Footer />
             </Suspense>
         </div>

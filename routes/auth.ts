@@ -1,12 +1,12 @@
-import { getProxyUrl, PFP_BUCKET_NAME, R2 } from "@/lib/cloudflare";
+import { getProxyUrl, PFP_BUCKET_NAME, uploadToR2, deleteFromR2, extractKeyFromProxyUrl } from "@/lib/cloudflare";
 import { generateToken } from "@/lib/jwt";
 import { authMiddleware, refreshTokenMiddleware } from "@/lib/middleware";
 import User from "@/models/user";
-import { PutObjectCommand } from "@aws-sdk/client-s3";
 import bcrypt from "bcryptjs";
 import { Request, RequestHandler, Response, Router } from "express";
 import { Error } from "mongoose";
 import multer from "multer";
+import crypto from "crypto";
 
 const router = Router();
 
@@ -161,16 +161,41 @@ router.put(
       }
 
       if (req.file) {
+        // If the user already has a profile pic, delete it first
+        const currentUser = await User.findById(userId);
+        if (currentUser && currentUser.pfp) {
+          try {
+            // Extract the key from the URL
+            const key = extractKeyFromProxyUrl(currentUser.pfp);
+
+            if (key) {
+              // Delete the old profile pic
+              await deleteFromR2({
+                key,
+                bucket: PFP_BUCKET_NAME
+              });
+              console.log(`Successfully deleted old profile picture: ${key}`);
+            }
+          } catch (error) {
+            console.error("Failed to delete old profile picture:", error);
+            // Continue with upload even if delete fails
+          }
+        }
+
         const fileExtension = req.file.originalname.split(".").pop();
         const key = `pfp/${userId}/${crypto.randomUUID()}.${fileExtension}`;
-        await R2.send(
-          new PutObjectCommand({
-            Bucket: PFP_BUCKET_NAME,
-            Key: key,
-            Body: req.file.buffer,
-            ContentType: req.file.mimetype,
-          })
-        );
+
+        // Use the new uploadToR2 function that handles local development
+        const result = await uploadToR2({
+          file: req.file.buffer,
+          key,
+          bucket: PFP_BUCKET_NAME,
+          contentType: req.file.mimetype
+        });
+
+        if (!result.success) {
+          throw new Error("Failed to upload profile picture");
+        }
 
         updates.pfp = key;
 

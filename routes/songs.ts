@@ -381,7 +381,12 @@ router.get("/api/songs", optionalAuthMiddleware, async (req, res) => {
 
 router.delete("/api/songs/:id", authMiddleware, async (req, res) => {
     try {
-        const song = await Song.findById(req.params.id);
+        const { id } = req.params;
+        const user = req.auth;
+
+        if (!user) return res.status(401).json({ error: "Unauthorized" });
+
+        const song = await Song.findById(id);
 
         if (!song) {
             return res.status(404).json({ error: "Song not found" });
@@ -391,6 +396,12 @@ router.delete("/api/songs/:id", authMiddleware, async (req, res) => {
             return res.status(404).json({ error: "Song not found" });
         }
 
+        // Check if the user is the creator of the song
+        const songCreator = song.createdBy?.toString() || "";
+        if (songCreator !== user._id.toString()) {
+            return res.status(403).json({ error: "Access denied" });
+        }
+
         await R2.send(
             new DeleteObjectCommand({
                 Bucket: BUCKET_NAME,
@@ -398,7 +409,7 @@ router.delete("/api/songs/:id", authMiddleware, async (req, res) => {
             })
         );
 
-        await Song.deleteOne({ _id: req.params.id });
+        await Song.deleteOne({ _id: id });
 
         res.json({ message: "Song deleted successfully" });
     } catch (error) {

@@ -150,7 +150,7 @@ export function SoundCloudSongsView() {
                   songs={currentSongs}
                   onPlay={playSong}
                   onDelete={handleDelete}
-                  currentSong={currentSong}
+                  currentSong={currentSong as (Song | null)}
                 />
               </div>
             </div>

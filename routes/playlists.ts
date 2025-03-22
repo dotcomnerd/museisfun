@@ -1,10 +1,9 @@
-import { BUCKET_NAME, COVERS_BUCKET_NAME, getPresignedUrl, getProxyUrl, R2 } from "@/lib/cloudflare";
+import { BUCKET_NAME, COVERS_BUCKET_NAME, deleteFromR2, extractKeyFromProxyUrl, getPresignedUrl, getProxyUrl, TEST_BUCKET_NAME, uploadToR2 } from "@/lib/cloudflare";
 import { authMiddleware, optionalAuthMiddleware } from "@/lib/middleware";
 import Playlist, { PlaylistModel } from "@/models/playlist";
 import { SongModel } from "@/models/song";
 import { UserModel } from "@/models/user";
 import { convertToObjectId } from "@/util/urlValidator";
-import { DeleteObjectCommand, PutObjectCommand } from "@aws-sdk/client-s3";
 import crypto from "crypto";
 import { Request, Response, Router } from "express";
 import multer from "multer";
@@ -40,20 +39,33 @@ router.post(
 
             if (req.file) {
                 const fileExtension = req.file.originalname.split(".").pop();
-                const key = `covers/${crypto.randomUUID()}.${fileExtension}`;
-                await R2.send(
-                    new PutObjectCommand({
-                        Bucket: COVERS_BUCKET_NAME,
-                        Key: key,
-                        Body: req.file.buffer,
-                        ContentType: req.file.mimetype,
-                    })
-                );
+                // Simple key format with UUID and extension
+                const key = `images/${crypto.randomUUID()}.${fileExtension}`;
 
-                coverUrl = await getProxyUrl({
-                    key,
-                    bucket: COVERS_BUCKET_NAME
-                });
+                // Use TEST_BUCKET_NAME in development, COVERS_BUCKET_NAME in production
+                const bucketName = process.env.NODE_ENV === "production" ? COVERS_BUCKET_NAME : TEST_BUCKET_NAME;
+
+                try {
+                    // Use the new uploadToR2 function that handles local development
+                    const result = await uploadToR2({
+                        file: req.file.buffer,
+                        key,
+                        bucket: bucketName,
+                        contentType: req.file.mimetype
+                    });
+
+                    if (!result.success) {
+                        throw new Error("Failed to upload cover image");
+                    }
+
+                    coverUrl = await getProxyUrl({
+                        key,
+                        bucket: "covers"
+                    });
+                } catch (error) {
+                    console.error("Failed to upload cover image:", error);
+                    return res.status(500).json({ error: "Failed to upload cover image" });
+                }
             }
 
             const newPlaylist = new Playlist({
@@ -110,6 +122,18 @@ router.get(
                             expiresIn: 60 * 60 * 24
                         });
                     }
+
+                    // Handle song thumbnails
+                    if (song.thumbnail && song.thumbnail.includes(BUCKET_NAME)) {
+                        const thumbnailKey = song.thumbnail.split('/').pop()?.split('?')[0];
+                        if (thumbnailKey) {
+                            song.thumbnail = await getPresignedUrl({
+                                key: thumbnailKey,
+                                bucket: BUCKET_NAME,
+                                expiresIn: 60 * 60 * 24
+                            });
+                        }
+                    }
                 }
             }
 
@@ -164,6 +188,18 @@ router.get(
                         expiresIn: 60 * 60 * 24
                     });
                 }
+
+                // Handle song thumbnails
+                if (song.thumbnail && song.thumbnail.includes(BUCKET_NAME)) {
+                    const thumbnailKey = song.thumbnail.split('/').pop()?.split('?')[0];
+                    if (thumbnailKey) {
+                        song.thumbnail = await getPresignedUrl({
+                            key: thumbnailKey,
+                            bucket: BUCKET_NAME,
+                            expiresIn: 60 * 60 * 24
+                        });
+                    }
+                }
             }
             return res.json(playlist);
         } catch (error) {
@@ -184,6 +220,14 @@ router.put(
             const user = req.auth;
             if (!user) return res.status(401).json({ error: "Unauthorized" });
 
+            console.log("Update playlist request body:", {
+                id,
+                name: req.body.name,
+                description: req.body.description,
+                visibility: req.body.visibility,
+                isPublic: req.body.isPublic
+            });
+
             const playlist = await Playlist.findById(id);
             if (!playlist) {
                 return res.status(404).json({ error: "Playlist not found" });
@@ -196,34 +240,64 @@ router.put(
             const updates: Partial<PlaylistModel> = {};
             if (req.body.name) updates.name = req.body.name;
             if (req.body.description) updates.description = req.body.description;
-            if (req.body.isPublic) updates.visibility = req.body.isPublic ? "public" : "private";
+
+            // Fix visibility update logic to use the direct visibility field
+            if (req.body.visibility) {
+                updates.visibility = req.body.visibility;
+            } else if (req.body.isPublic !== undefined) {
+                // Keep backward compatibility with isPublic for any older code
+                updates.visibility = req.body.isPublic ? "public" : "private";
+            }
 
             if (req.file) {
-                const maybeCover = playlist.coverImage ?? '';
-                if (maybeCover !== "" && maybeCover.includes("covers/")) {
-                    const key = `covers/${maybeCover.split("/").pop()?.split("?")[0]}`;
-                    await R2.send(
-                        new DeleteObjectCommand({
-                            Bucket: COVERS_BUCKET_NAME,
-                            Key: key,
-                        })
-                    );
+                // Delete the old cover image if it exists
+                if (playlist.coverImage) {
+                    try {
+                        // Extract the key from the URL
+                        const key = extractKeyFromProxyUrl(playlist.coverImage);
+
+                        if (key) {
+                            // Use our new deleteFromR2 function to delete from the appropriate bucket
+                            const bucketName = process.env.NODE_ENV === "production" ? COVERS_BUCKET_NAME : TEST_BUCKET_NAME;
+                            await deleteFromR2({
+                                key,
+                                bucket: bucketName
+                            });
+                        }
+                    } catch (error) {
+                        console.error("Failed to delete old cover image:", error);
+                        // Continue with upload even if delete fails
+                    }
                 }
 
+                // Upload the new cover image with simple path
                 const fileExtension = req.file.originalname.split(".").pop();
-                const key = `covers/${crypto.randomUUID()}.${fileExtension}`;
-                await R2.send(
-                    new PutObjectCommand({
-                        Bucket: COVERS_BUCKET_NAME,
-                        Key: key,
-                        Body: req.file.buffer,
-                        ContentType: req.file.mimetype,
-                    })
-                );
-                updates.coverImage = await getProxyUrl({
-                    key,
-                    bucket: COVERS_BUCKET_NAME
-                });
+                const key = `images/${crypto.randomUUID()}.${fileExtension}`;
+
+                try {
+                    // Use TEST_BUCKET_NAME in development, COVERS_BUCKET_NAME in production
+                    const bucketName = process.env.NODE_ENV === "production" ? COVERS_BUCKET_NAME : TEST_BUCKET_NAME;
+
+                    // Use the new uploadToR2 function that handles local development
+                    const result = await uploadToR2({
+                        file: req.file.buffer,
+                        key,
+                        bucket: bucketName,
+                        contentType: req.file.mimetype
+                    });
+
+                    if (!result.success) {
+                        throw new Error("Failed to upload cover image");
+                    }
+
+                    updates.coverImage = await getProxyUrl({
+                        key,
+                        bucket: "covers"
+                    });
+                } catch (error) {
+                    console.error("Failed to upload new cover image:", error);
+                    return res.status(500).json({ error: "Failed to upload cover image" });
+                }
             }
 
             const updatedPlaylist = await Playlist.findByIdAndUpdate
@@ -333,14 +407,25 @@ router.delete(
                 return res.status(403).json({ error: "Access denied" });
             }
 
+            // Delete the cover image if it exists
             if (playlist.coverImage) {
-                const key = playlist.coverImage.split("/").pop();
-                await R2.send(
-                    new DeleteObjectCommand({
-                        Bucket: COVERS_BUCKET_NAME,
-                        Key: key,
-                    })
-                );
+                try {
+                    // Extract the key from the URL
+                    const key = extractKeyFromProxyUrl(playlist.coverImage);
+
+                    if (key) {
+                        // Use our new deleteFromR2 function to delete from the appropriate bucket
+                        const bucketName = process.env.NODE_ENV === "production" ? COVERS_BUCKET_NAME : TEST_BUCKET_NAME;
+                        await deleteFromR2({
+                            key,
+                            bucket: bucketName
+                        });
+                        console.log(`Successfully deleted cover image: ${key}`);
+                    }
+                } catch (error) {
+                    console.error("Failed to delete cover image:", error);
+                    // Continue with playlist deletion even if image delete fails
+                }
             }
 
             await Playlist.findByIdAndDelete(id);
@@ -373,6 +458,18 @@ router.get("/playlists/:userId/most-played", authMiddleware, async (req: Request
                             bucket: BUCKET_NAME,
                             expiresIn: 60 * 60 * 24
                         });
+                    }
+
+                    // Handle song thumbnails
+                    if (song.thumbnail && song.thumbnail.includes(BUCKET_NAME)) {
+                        const thumbnailKey = song.thumbnail.split('/').pop()?.split('?')[0];
+                        if (thumbnailKey) {
+                            song.thumbnail = await getPresignedUrl({
+                                key: thumbnailKey,
+                                bucket: BUCKET_NAME,
+                                expiresIn: 60 * 60 * 24
+                            });
+                        }
                     }
                 }
             }

@@ -86,10 +86,6 @@ export function PlaylistViewNested() {
         retry: false,
     });
 
-    if (!currentUser && playlist?.visibility === "private" && !isLoading) {
-        toast.error("You must be signed in to view this playlist");
-        return <Navigate to={`/login?redirect=/dashboard/playlists/${id}`} />;
-    }
 
     const { data: availableSongs } = useQuery<Song[]>({
         queryKey: ["songs"],
@@ -156,12 +152,31 @@ export function PlaylistViewNested() {
     const handleUpdatePlaylist = (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         const formData = new FormData(e.currentTarget);
+
+        // Check if there's a visibility value
+        const visibility = formData.get('visibility');
+        if (visibility) {
+            console.log(`Updating playlist visibility to: ${visibility}`);
+        } else {
+            // If visibility is missing, try to get it from the form element
+            const visibilitySelect = e.currentTarget.querySelector('select[name="visibility"]') as HTMLSelectElement;
+            if (visibilitySelect && visibilitySelect.value) {
+                formData.set('visibility', visibilitySelect.value);
+                console.log(`Adding missing visibility value: ${visibilitySelect.value}`);
+            }
+        }
+
         updatePlaylist.mutate(formData);
     };
 
     const handleReorder = async (newOrder: Song[]) => {
         setSongs(newOrder);
     };
+    
+    if (!currentUser && playlist?.visibility === "private" && !isLoading) {
+        toast.error("You must be signed in to view this playlist");
+        return <Navigate to={`/login?redirect=/dashboard/playlists/${id}`} />;
+    }
 
     if (!playlist && !isLoading) {
         return (<NotFoundPage/>)

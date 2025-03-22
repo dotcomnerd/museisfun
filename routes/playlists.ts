@@ -58,7 +58,7 @@ router.post(
                         throw new Error("Failed to upload cover image");
                     }
 
-                    coverUrl = await getProxyUrl({
+                    coverUrl = getProxyUrl({
                         key,
                         bucket: "covers"
                     });
@@ -290,7 +290,7 @@ router.put(
                         throw new Error("Failed to upload cover image");
                     }
 
-                    updates.coverImage = await getProxyUrl({
+                    updates.coverImage = getProxyUrl({
                         key,
                         bucket: "covers"
                     });

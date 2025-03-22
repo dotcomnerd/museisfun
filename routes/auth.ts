@@ -199,10 +199,14 @@ router.put(
 
         updates.pfp = key;
 
-        pfpUrl = await getProxyUrl({
+        pfpUrl = getProxyUrl({
           key,
           bucket: PFP_BUCKET_NAME,
         });
+
+        if (!pfpUrl) {
+          throw new Error("Failed to create profile picture proxy URL");
+        }
 
         updates.pfp = pfpUrl;
       }

@@ -55,26 +55,55 @@ async function main(userId: string) {
         await mongoose.connection.close();
         await connectToUri(MONGODB_PROD_URI);
 
-        await User.findOneAndReplace(
-            { _id: syncedData.user._id },
-            syncedData.user,
-            { upsert: true }
-        );
+        const existingUser = await User.findOne({ username: syncedData.user.username });
 
-        for (const song of syncedData.songs) {
-            await Song.findOneAndReplace(
-                { _id: song._id },
-                song,
-                { upsert: true }
-            );
-        }
+        if (existingUser) {
+            const { _id, username, ...userDataToUpdate } = syncedData.user;
 
-        for (const playlist of syncedData.playlists) {
-            await Playlist.findOneAndReplace(
-                { _id: playlist._id },
-                playlist,
-                { upsert: true }
+            await User.findByIdAndUpdate(
+                existingUser._id,
+                userDataToUpdate,
+                { new: true }
             );
+
+            const prodUserId = existingUser._id;
+
+            for (const song of syncedData.songs) {
+                song.createdBy = prodUserId;
+                await Song.findOneAndReplace(
+                    { _id: song._id },
+                    song,
+                    { upsert: true }
+                );
+            }
+
+            for (const playlist of syncedData.playlists) {
+                playlist.createdBy = prodUserId;
+                await Playlist.findOneAndReplace(
+                    { _id: playlist._id },
+                    playlist,
+                    { upsert: true }
+                );
+            }
+        } else {
+            await User.create(syncedData.user);
+            console.log('User created');
+
+            for (const song of syncedData.songs) {
+                await Song.findOneAndReplace(
+                    { _id: song._id },
+                    song,
+                    { upsert: true }
+                );
+            }
+
+            for (const playlist of syncedData.playlists) {
+                await Playlist.findOneAndReplace(
+                    { _id: playlist._id },
+                    playlist,
+                    { upsert: true }
+                );
+            }
         }
 
         console.log('Sync completed successfully');

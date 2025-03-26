@@ -29,7 +29,7 @@ export default {
 
 		// Handle routes
 		if (path === '/' || path === '') {
-			return new Response('R2 Proxy Service', {
+			return new Response('Image Proxy Service', {
 				headers: { 'Content-Type': 'text/plain' },
 			});
 		}
@@ -38,34 +38,54 @@ export default {
 		const pathParts = path.split('/').filter((p) => p);
 
 		if (pathParts.length < 1) {
-			return new Response('Not Found', { status: 404 });
+			return new Response('Invalid path', { status: 400 });
 		}
 
-		let bucketName = pathParts[0];
 		let bucket: R2Bucket;
-		let objectKey = '';
+		let objectKey: string;
 
-		// Join the remaining path parts to form the object key
-		if (pathParts.length > 1) {
-			objectKey = pathParts.slice(1).join('/');
-		}
-
-		// Map bucket path to R2 bucket binding
-		if (bucketName === 'muse-test') {
+		// In development, always use test bucket
+		if (request.url.includes('localhost')) {
 			bucket = env.TEST_BUCKET;
-		} else if (bucketName === 'muse-songs') {
-			bucket = env.SONGS_BUCKET;
-		} else if (bucketName === 'muse-covers') {
-			bucket = env.COVERS_BUCKET;
-		} else if (bucketName === 'muse-pfps') {
-			bucket = env.PFP_BUCKET;
-		} else {
-			// If no valid bucket, return 404
-			return new Response('Bucket Not Found', { status: 404 });
-		}
 
-		if (!bucket) {
-			return new Response('Bucket binding not available', { status: 500 });
+			// Handle /images/ prefix
+			if (pathParts[0] === 'images') {
+				pathParts.shift();
+				if (pathParts.length === 0) {
+					return new Response('Invalid path', { status: 400 });
+				}
+			}
+			objectKey = pathParts.join('/');
+		} else {
+			// In production, use specific buckets
+			if (pathParts[0] === 'images') {
+				pathParts.shift();
+				if (pathParts.length === 0) {
+					return new Response('Invalid path', { status: 400 });
+				}
+				const type = pathParts[0] as string;
+				if (type === 'covers') {
+					bucket = env.COVERS_BUCKET;
+				} else if (type === 'pfps') {
+					bucket = env.PFP_BUCKET;
+				} else {
+					return new Response('Invalid image type', { status: 400 });
+				}
+				pathParts.shift();
+			} else {
+				const bucketName = pathParts[0];
+				if (bucketName === 'muse-covers') {
+					bucket = env.COVERS_BUCKET;
+				} else if (bucketName === 'muse-pfps') {
+					bucket = env.PFP_BUCKET;
+				} else if (bucketName === 'muse-songs') {
+					bucket = env.SONGS_BUCKET;
+				} else {
+					return new Response('Invalid bucket', { status: 400 });
+				}
+				pathParts.shift();
+			}
+			objectKey = pathParts.join('/');
 		}
 
 		if (!objectKey) {
@@ -76,26 +96,9 @@ export default {
 		let object;
 		try {
 			object = await bucket.get(objectKey);
-
-			// If object not found and we're in development, explicitly try again
-			if (!object && request.url.includes('localhost')) {
-				try {
-					console.log(`Object not found in local bucket, trying with key: ${objectKey}`);
-					// Try again with different key variations
-					if (objectKey.includes('/')) {
-						// Try without path structure
-						object = await bucket.get(objectKey.split('/').pop()!);
-					} else {
-						// Try with 'images/' prefix
-						object = await bucket.get(`images/${objectKey}`);
-					}
-				} catch (e) {
-					// Ignore errors in fallback attempt
-				}
-			}
 		} catch (error) {
 			console.error('Error fetching object:', error);
-			// Continue to the 404 response below
+			return new Response('Error fetching object', { status: 500 });
 		}
 
 		if (!object) {

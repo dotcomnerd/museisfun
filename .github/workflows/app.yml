@@ -1,13 +1,25 @@
-name: build museisfun.com + muse-shared
+name: Build museisfun.com
 
 on:
   push:
     branches:
       - master
+    paths:
+      - 'app/**'
+  pull_request:
+    branches:
+      - master
+    paths:
+      - 'app/**'
+  workflow_dispatch:
 
 jobs:
   build:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./app
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -22,22 +34,15 @@ jobs:
         with:
           bun-version: latest
 
-      - name: Create symlink (shared)
+      - name: Install shared package dependencies
         working-directory: ./shared
-        run: bun link
+        run: |
+          bun install
+          bun link
+          bun run build
 
-      - name: Install dependencies (shared)
-        working-directory: ./shared
+      - name: Install app dependencies
         run: bun install
-
-      - name: Install dependencies (app)
-        working-directory: ./app
-        run: bun install
-
-      - name: Build shared package
-        working-directory: ./shared
-        run: bun run build
 
       - name: Build app
-        working-directory: ./app
         run: bun run build
